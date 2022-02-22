@@ -1,0 +1,30 @@
+GameObject:
+  tag: ground
+  components:
+  - $Transform
+  - $MeshRenderer
+  - $BoxCollider
+  - $RigidBody
+  
+Transform:
+  euler: [0,0,0]
+  scale: [100,100,100]
+  
+MeshRenderer:
+  mesh: engine\models\1x1Plane.glb$Mesh
+  material: $M1
+  
+Material$M1:
+  shader: engine\shaders\main.asset
+  colorTex: engine\textures\white.png
+  
+
+RigidBody:
+  isStatic: true
+  restitution: 0.0
+  friction: 0.0
+  mass: 50
+
+BoxCollider:
+  size: [1, 1, 1]
+  center: [0, -0.5,0]

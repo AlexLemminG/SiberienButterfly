@@ -1,0 +1,28 @@
+Scene:
+  sphericalHarmonics: engine\nightHarmonics.asset
+  prefabInstances:
+    - prefab: prefabs\player.asset # should not be used in scene!!!
+      overrides:
+        Transform:
+          pos: [0,1,0] #overrides
+  gameObjects:
+    - engine\test\pbrScene\camera.asset
+    - prefabs\groundPlane.asset
+    # - engine\test\pbrScene\ballLight1.asset
+    # - engine\test\pbrScene\ballLight2.asset
+    # - engine\test\pbrScene\ballLight3.asset
+    # - engine\test\pbrScene\ballLight4.asset
+    - $Light
+    
+    
+GameObject$Light:
+    tag: DirLight2
+    components:
+     - $DirLightTransform
+     - $DirLight
+Transform$DirLightTransform:
+    euler: [65,36,-50]
+DirLight:
+    color: 0xD7F6FFEE
+    dir: [0,-1,0]
+    drawShadows: true
