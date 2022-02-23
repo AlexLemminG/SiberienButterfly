@@ -5,13 +5,28 @@ GameObject:
     - $Transform
     - $TopDownCameraRig
 Camera:
-  clearColor: 0x111111ff
-  fov: 80
+  clearColor:
+    r: 0.42471045
+    g: 0.2722082
+    b: 0.41352305
+    a: 1
+  fov: 71.75106
   nearPlane: 0.01
   farPlane: 1000
 Transform:
-  pos: [15, 7.9, 18.7]
-  euler: [0, -90, 80]
+  pos:
+    - 15
+    - 60.172
+    - 18.7
+  euler:
+    - 0
+    - -90
+    - 80
 TopDownCameraRig:
   targetTag: player
-  offset: [5,20,0]
+  offset:
+    - 5
+    - 20
+    - 0
+  lerpT: 3
+  collisionLerpT: 3

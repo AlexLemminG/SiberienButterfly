@@ -1,26 +1,46 @@
 Scene:
   sphericalHarmonics: engine\nightHarmonics.asset
   prefabInstances:
-    - prefab: prefabs\player.asset # should not be used in scene!!!
+    - prefab: prefabs\player.asset
       overrides:
         Transform:
-          pos: [0,1,0] #overrides
+          pos:
+            - 0
+            - 1
+            - 0
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
     - prefabs\torch.asset
     - prefabs\torch2.asset
     - $Light
-    
-    
 GameObject$Light:
-    tag: DirLight2
-    components:
-     - $DirLightTransform
-     - $DirLight
+  tag: DirLight
+  components:
+    - $DirLightTransform
+    - $DirLight
 Transform$DirLightTransform:
-    euler: [65,36,-50]
+  euler:
+    - 23.140997
+    - 49.39188
+    - -90.000404
+  pos:
+    - -10.037189
+    - 0
+    - 7.8597984
+  scale:
+    - 0.99999994
+    - 0.99999994
+    - 0.99999994
 DirLight:
-    color: 0xD7F6FFEE
-    dir: [0,-1,0]
-    drawShadows: true
+  color:
+    r: 0.99999
+    g: 0.9999975
+    b: 1
+    a: 0.93333334
+  dir:
+    - 0
+    - -1
+    - 0
+  drawShadows: 1
+  intensity: 1
