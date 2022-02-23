@@ -1,0 +1,11 @@
+GameObject:
+  tag: ground
+  components:
+  - $Transform
+  - $PointLight
+  
+Transform:
+  pos: [-3,1,0]
+  scale: [1,1,1]
+  
+PointLight:

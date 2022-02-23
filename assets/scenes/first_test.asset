@@ -8,6 +8,8 @@ Scene:
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
+    - prefabs\torch.asset
+    - prefabs\torch2.asset
     - $Light
     
     
