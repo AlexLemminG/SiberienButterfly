@@ -16,7 +16,7 @@ MeshRenderer:
   
 Material$M1:
   shader: engine\shaders\main.asset
-  colorTex: engine\textures\white.png
+  colorTex: engine\textures\uv.png
   
 
 RigidBody:

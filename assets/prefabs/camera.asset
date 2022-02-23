@@ -3,6 +3,7 @@ GameObject:
   components:
     - $Camera
     - $Transform
+    - $TopDownCameraRig
 Camera:
   clearColor: 0x111111ff
   fov: 80
@@ -10,4 +11,7 @@ Camera:
   farPlane: 1000
 Transform:
   pos: [15, 7.9, 18.7]
-  euler: [-180, -66, -180]
+  euler: [0, -90, 80]
+TopDownCameraRig:
+  targetTag: player
+  offset: [5,20,0]

@@ -6,10 +6,12 @@ GameObject:
   - $PlayerController
   - $SphereCollider
   - $RigidBody
+
 Transform:
+  scale: [0.7,1.5,0.7]
   
 MeshRenderer:
-  mesh: engine\models\Icosphere.glb$Icosphere
+  mesh: engine\models\Cube.glb$Mesh
   material: $M1
   
 Material$M1:
@@ -19,7 +21,7 @@ Material$M1:
 PlayerController:
     speed: 10
 SphereCollider:
-  radius: 1
+  radius: 0.5
   center: [0, 0.0, 0]
 
 RigidBody:

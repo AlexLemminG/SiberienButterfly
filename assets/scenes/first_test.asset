@@ -6,12 +6,8 @@ Scene:
         Transform:
           pos: [0,1,0] #overrides
   gameObjects:
-    - engine\test\pbrScene\camera.asset
+    - prefabs\camera.asset
     - prefabs\groundPlane.asset
-    # - engine\test\pbrScene\ballLight1.asset
-    # - engine\test\pbrScene\ballLight2.asset
-    # - engine\test\pbrScene\ballLight3.asset
-    # - engine\test\pbrScene\ballLight4.asset
     - $Light
     
     

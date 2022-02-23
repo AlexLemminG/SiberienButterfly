@@ -105,29 +105,15 @@ void PlayerController::UpdateMovement() {
 void PlayerController::UpdateLook() {
 	Matrix4 matrix = rigidBody->GetTransform();
 
-	Vector3 playerPos = GetPos(matrix);
+	Vector3 lookDir = rigidBody->GetLinearVelocity();
+	lookDir.y = 0.f;
 
-	if (!Camera::GetMain()) {
+	if (lookDir.Length() < 0.01f) {
 		return;
 	}
 
-	auto ray = Camera::GetMain()->ScreenPointToRay(Input::GetMousePosition());
-	auto plane = Plane{ playerPos , Vector3_up };
+	SetRot(matrix, Quaternion::LookAt(lookDir, Vector3_up));
 
-	float dist;
-	if (!plane.Raycast(ray, dist)) {
-		return;
-	}
-
-
-	auto deltaPos = ray.GetPoint(dist) - playerPos;
-
-	if (deltaPos.Length() < 0.1f) {
-		return;
-	}
-
-	SetRot(matrix, Quaternion::LookAt(deltaPos, Vector3_up));
-	//gameObject()->transform()->matrix = matrix;
 	rigidBody->SetTransform(matrix);
 
 }
