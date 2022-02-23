@@ -22,7 +22,6 @@ void PlayerController::OnEnable() {
 }
 
 
-
 void PlayerController::Update() {
 
 	if (CanJump()) {
@@ -36,6 +35,18 @@ void PlayerController::Update() {
 	}
 	else {
 		speed = defaultSpeed;
+	}
+
+
+	auto ray = Camera::GetMain()->ScreenPointToRay(Input::GetMousePosition());
+	auto plane = Plane(Vector3_zero, Vector3_up);
+	float distance;
+	if (plane.Raycast(ray, distance)) {
+		Vector3 pos = ray.GetPoint(distance);
+		Vector3 minPos = Vector3(Mathf::Floor(pos.x), Mathf::Floor(pos.y), Mathf::Floor(pos.z));
+
+		AABB box = AABB(minPos, minPos + Vector3_one);
+		Dbg::Draw(box);
 	}
 }
 
@@ -52,6 +63,7 @@ void PlayerController::FixedUpdate() {
 		rigidBody->OverrideWorldGravity(Physics::GetGravity() * gravityMultiplier);
 	}
 	rigidBody->SetAngularFactor(Vector3(0, 1, 0));
+
 }
 
 void PlayerController::UpdateMovement() {
