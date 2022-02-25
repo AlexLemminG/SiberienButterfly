@@ -11,8 +11,8 @@ PointLight:
 Transform:
   pos:
     - 17
-    - -1.1304214
-    - 11.828007
+    - 0
+    - 17.5
   euler:
     - 0
     - -0

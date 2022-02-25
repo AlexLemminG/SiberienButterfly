@@ -11,7 +11,7 @@ Transform:
   scale: [0.7,1.5,0.7]
   
 MeshRenderer:
-  mesh: engine\models\Cube.glb$Mesh
+  mesh: models\b.blend$Suzanne
   material: $M1
   
 Material$M1:
