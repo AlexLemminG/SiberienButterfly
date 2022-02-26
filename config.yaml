@@ -10,6 +10,6 @@ godMode: true
 soundEnabled: false
 showFps: true
 msaa: 1
-debugGraphics: true
+debugGraphics: false
 libraries:
   - Butterfly.dll
