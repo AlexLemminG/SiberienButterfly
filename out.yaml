@@ -1,27 +1,74 @@
-GameObject:
-  tag: light
+Scene:
+  sphericalHarmonics: engine\nightHarmonics.asset
+  prefabInstances:
+    - prefab: prefabs\player.asset
+      overrides:
+        Transform:
+          pos:
+            - 0
+            - 1
+            - 0
+    - prefab: prefabs\column.asset
+      overrides:
+        Transform:
+          pos:
+            - 3
+            - 0
+            - 3
+    - prefab: prefabs\column.asset
+      overrides:
+        Transform:
+          pos:
+            - -3
+            - 0
+            - -3
+    - prefab: prefabs\column.asset
+      overrides:
+        Transform:
+          pos:
+            - 3
+            - 0
+            - -3
+    - prefab: prefabs\column.asset
+      overrides:
+        Transform:
+          pos:
+            - -3
+            - 0
+            - 3
+  gameObjects:
+    - prefabs\camera.asset
+    - prefabs\groundPlane.asset
+    - prefabs\torch.asset
+    - prefabs\torch2.asset
+    - $Light
+GameObject$Light:
+  tag: DirLight
   components:
-    - $Transform
-    - $PointLight
-Transform:
-  pos:
-    - -11.198011
-    - -0.93001366
-    - -7.216502
-  scale:
-    - 1
-    - 1
-    - 1
+    - $DirLightTransform
+    - $DirLight
+Transform$DirLightTransform:
   euler:
+    - 23.140997
+    - 49.39188
+    - -90.000404
+  pos:
+    - -10.037189
     - 0
-    - -0
-    - 0
-PointLight:
+    - 7.8597984
+  scale:
+    - 0.99999994
+    - 0.99999994
+    - 0.99999994
+DirLight:
   color:
-    r: 0.034540355
-    g: 1
-    b: 0.02702701
-    a: 1
-  intensity: 2867.3801
-  radius: 1932.2388
-  innerRadius: 7.011785
+    r: 0.46081606
+    g: 0.7638575
+    b: 0.8648649
+    a: 0.93333334
+  dir:
+    - 0
+    - -1
+    - 0
+  drawShadows: 1
+  intensity: 1

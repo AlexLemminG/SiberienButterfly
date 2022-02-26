@@ -115,6 +115,7 @@ vec3 dirLight(vec3 w_normal, vec3 w_pos)
 	
 	float visibility;
 	
+	//TODO as func and not like this
 #include "fs_shadowmaps_color_lighting_main.sh"
 
 	return lightColor.xyz * visibility;

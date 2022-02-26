@@ -16,7 +16,7 @@ Transform:
     - 99.52369
   pos:
     - 0
-    - -1
+    - 0
     - 0
 MeshRenderer:
   mesh: engine\models\1x1Plane.glb$Mesh

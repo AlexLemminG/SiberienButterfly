@@ -6,7 +6,7 @@ GameObject:
 Transform:
   pos:
     - -11.198011
-    - -0.93001366
+    - 8.812
     - -7.216502
   scale:
     - 1
@@ -22,6 +22,6 @@ PointLight:
     g: 1
     b: 0.02702701
     a: 1
-  intensity: 2867.3801
+  intensity: 2367.7263
   radius: 1932.2388
-  innerRadius: 7.011785
+  innerRadius: 1.6743827

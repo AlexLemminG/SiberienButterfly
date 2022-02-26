@@ -1,0 +1,24 @@
+GameObject:
+  tag: column
+  components:
+  - $Transform
+  - $MeshRenderer
+  - $MeshCollider
+  - $RigidBody
+
+Transform:
+  scale: [0.7,1.5,0.7]
+  
+MeshRenderer:
+  mesh: models\column.blend$Column
+  material: $M1
+  
+Material$M1:
+  shader: engine\shaders\main.asset
+  colorTex: engine\textures\white.png
+  
+MeshCollider:
+    mesh: models\column.blend$Column
+
+RigidBody:
+  isStatic: true

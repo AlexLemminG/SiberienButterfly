@@ -1,0 +1,33 @@
+PhysicsSettings:
+  layers:
+    - name: default
+      doNotCollideWith:
+        - playerBullet
+    - name: player
+      doNotCollideWith:
+        - playerBullet
+        - enemyCorpse
+        - grenade
+    - name: enemy
+      doNotCollideWith:
+        - grenade
+    - name: playerBullet
+      doNotCollideWith:
+        - player
+        - default
+        - grenade
+    - name: enemyCorpse
+      collideWith:
+        - all
+    - name: grenade
+      doNotCollideWith:
+        - default
+        - player
+        - enemy
+        - playerBullet
+    - name: staticGeom
+      doNotCollideWith:
+        - staticGeom
+ShadowSettings:
+  resolution: 1024
+  numSplits: 1
