@@ -29,5 +29,9 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  resolution: 1024
+  resolution: 2048
   numSplits: 1
+  far: 30
+  near: 1
+  stabilize: 1
+  splitDistribution: 0

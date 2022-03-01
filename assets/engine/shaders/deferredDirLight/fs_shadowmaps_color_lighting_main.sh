@@ -42,7 +42,10 @@ if(u_hasShadowMap > 0.0){
 	bool selection2 = all(lessThan(texcoord3, vec2_splat(0.99))) && all(greaterThan(texcoord3, vec2_splat(0.01)));
 	bool selection3 = all(lessThan(texcoord4, vec2_splat(0.99))) && all(greaterThan(texcoord4, vec2_splat(0.01)));
 
-	selection0 = true;
+	//TODO numSplits as parameter
+	selection1 = false;
+	selection2 = false;
+	selection3 = false;
 
 	if (selection0)
 	{
@@ -92,7 +95,7 @@ if(u_hasShadowMap > 0.0){
 						, u_shadowMapHardness
 						);
 	}
-	else //selection3
+	else if(selection3)
 	{
 		vec4 shadowcoord = v_texcoord4;
 
@@ -107,6 +110,12 @@ if(u_hasShadowMap > 0.0){
 						, u_shadowMapMinVariance
 						, u_shadowMapHardness
 						);
+	}else{
+		vec4 shadowcoord = v_texcoord4;
+
+		float coverage = texcoordInRange(shadowcoord.xy/shadowcoord.w) * 0.4;
+		colorCoverage = vec3(coverage, -coverage, -coverage);
+		visibility = 1.0;
 	}
 #elif SM_OMNI
 	vec2 texelSize = vec2_splat(u_shadowMapTexelSize/4.0);
@@ -174,34 +183,7 @@ if(u_hasShadowMap > 0.0){
 					, u_shadowMapHardness
 					);
 #endif
-
-	vec3 v = v_view;
-	vec3 vd = -normalize(v_view);
-	vec3 n = w_normal;
-	Light light = evalLight(v, u_lightPosition, u_spotDirection, u_spotInner, u_spotOuter, u_lightAttnParams);
-
-	vec2 lc = lit(light.ld, n, vd, u_materialKs.w) * light.attn;
-	Shader shader = evalShader(lc.x, lc.y);
-
-	//Fog.
-	vec3 fogColor = vec3_splat(0.0);
-	float fogDensity = 0.0035;
-	float LOG2 = 1.442695;
-	float z = length(v);
-	float fogFactor = clamp(1.0/exp2(fogDensity*fogDensity*z*z*LOG2), 0.0, 1.0);
-
-	vec3 color = u_color.xyz;
-
-	vec3 ambient = shader.ambi * color;
-	vec3 brdf    = (shader.diff + shader.spec) * color * visibility;
-
-	vec3 final = toGamma(abs(ambient + brdf)) + (colorCoverage * u_shadowMapShowCoverage);
-	//gl_FragColor.xyz = mix(fogColor, final, fogFactor);
-	//gl_FragColor.w = 1.0;
-	
-	
-	//gl_FragColor.rgb = vec3_splat(visibility);
-	//gl_FragColor.y = v_texcoord3.y;
+	//visibility = (1.0 + colorCoverage.x)*0.5*0.5 + (1.0 + colorCoverage.y)*0.5*0.25;// + (1.0 + colorCoverage.z)*0.5*0.125;
 }else{
 	//u_hasShadowMap == 0.0
 	visibility = 1.0;

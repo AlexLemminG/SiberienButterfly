@@ -229,7 +229,7 @@ vec3 CalcDirLightPBR(Surface surface, vec3 viewDir){
 	}
 	
 	vec3 lightDir = -u_lightDir[0].xyz; //CalcLightPBR expects inverted
-	vec3 lightRadiance = u_lightColor[0].rgb;
+	vec3 lightRadiance = u_lightColor[0].rgb * visibility;
 	
 	return CalcLightPBR(lightRadiance, lightDir, 0.0, 0.0, surface, viewDir);
 }

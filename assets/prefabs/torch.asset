@@ -6,22 +6,22 @@ GameObject:
 Transform:
   pos:
     - 13.173731
-    - 10.226
+    - 3.1208496
     - 6.438242
   scale:
+    - 0.9999962
     - 1
-    - 1
-    - 1
+    - 0.9999962
   euler:
     - 0
-    - -0
+    - 0
     - 0
 PointLight:
-  intensity: 892.44366
-  radius: 30.75051
+  intensity: 2329.7197
+  radius: 37.906567
   color:
     r: 1
-    g: 0.17374516
-    b: 0.28859138
+    g: 0.04633206
+    b: 0.1788882
     a: 1
-  innerRadius: 2.158021
+  innerRadius: 0.26982346
