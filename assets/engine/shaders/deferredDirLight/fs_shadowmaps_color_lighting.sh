@@ -47,7 +47,8 @@ Shader evalShader(float _diff, float _spec)
 	return shader;
 }
 
-float computeVisibility(sampler2D _sampler
+float computeVisibility(sampler2DShadow _sampler
+					  , sampler2D _samplerSimple
 					  , vec4 _shadowCoord
 					  , float _bias
 					  , vec4 _samplingParams
@@ -68,7 +69,7 @@ float computeVisibility(sampler2D _sampler
 #if SM_HARD
 	visibility = hardShadow(_sampler, shadowcoord, _bias);
 #elif SM_PCF
-	visibility = PCF(_sampler, shadowcoord, _bias, _samplingParams, _texelSize);
+	visibility = PCF(_sampler, _samplerSimple, shadowcoord, _bias, _samplingParams, _texelSize);
 #elif SM_VSM
 	visibility = VSM(_sampler, shadowcoord, _bias, _depthMultiplier, _minVariance);
 #elif SM_ESM

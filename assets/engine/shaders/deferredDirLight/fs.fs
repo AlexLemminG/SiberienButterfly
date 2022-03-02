@@ -56,9 +56,10 @@ uniform mat4 u_shadowMapMtx1;
 uniform mat4 u_shadowMapMtx2;
 uniform mat4 u_shadowMapMtx3;
 
-#define SM_HARD 1
-#define SM_LINEAR 1
+//#define SM_HARD 1
+//#define SM_LINEAR 1
 #define SM_CSM 1
+#define SM_PCF 1
 
 #include "fs_shadowmaps_color_lighting.sh"
 

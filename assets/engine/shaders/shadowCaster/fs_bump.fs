@@ -9,5 +9,5 @@ $input v_depth
 
 void main()
 {
-	gl_FragColor = packFloatToRgba(v_depth);
+	gl_FragColor = v_depth;
 }

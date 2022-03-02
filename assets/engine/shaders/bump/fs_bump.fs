@@ -18,10 +18,13 @@ USAMPLER2D(s_texItems, 6);
 SAMPLER2D(s_texLightParams, 7);
 
 //TODO one big shadowmap with different + uvs
-SAMPLER2D(s_shadowMap0, 8);
-SAMPLER2D(s_shadowMap1, 9);
-SAMPLER2D(s_shadowMap2, 10);
-SAMPLER2D(s_shadowMap3, 11);
+SAMPLER2DSHADOW(s_shadowMap0, 8);
+SAMPLER2DSHADOW(s_shadowMap1, 9);
+SAMPLER2DSHADOW(s_shadowMap2, 10);
+SAMPLER2DSHADOW(s_shadowMap3, 11);
+
+uniform SamplerState s_shadowMap0SimpleSampler : REGISTER(s, 12);
+static BgfxSampler2D s_shadowMap0Simple = { s_shadowMap0SimpleSampler, s_shadowMap0Texture };
 
 #include "../deferredDirLight/fs.fs"
 
@@ -254,7 +257,7 @@ vec4 CalcPBR(Surface surface){
 	color.rgb += SampleSH(surface.normal, u_sphericalHarmonics) * surface.albedo.rgb; //TODO PBR
 	
 	color.rgb += surface.emissive.rgb;
-	
+	//color.rgb = vec3_splat(dirLightVisibility(surface.pos));
 	return color;
 }
 
