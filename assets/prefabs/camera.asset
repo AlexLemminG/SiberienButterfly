@@ -15,9 +15,9 @@ Camera:
   farPlane: 1000
 Transform:
   pos:
-    - 15
-    - 60.172
-    - 18.7
+    - 5
+    - 20.75
+    - 0
   euler:
     - 0
     - -90

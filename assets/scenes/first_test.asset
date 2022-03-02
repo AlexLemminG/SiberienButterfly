@@ -72,3 +72,4 @@ DirLight:
     - 0
   drawShadows: 1
   intensity: 4.736977
+  shadowBias: 0.002

@@ -43,7 +43,7 @@ if(u_hasShadowMap > 0.0){
 	bool selection3 = all(lessThan(texcoord4, vec2_splat(0.99))) && all(greaterThan(texcoord4, vec2_splat(0.01)));
 
 	//TODO numSplits as parameter
-	selection1 = false;
+	//selection1 = false;
 	selection2 = false;
 	selection3 = false;
 

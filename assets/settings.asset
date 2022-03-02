@@ -30,8 +30,9 @@ PhysicsSettings:
         - staticGeom
 ShadowSettings:
   resolution: 2048
-  numSplits: 1
-  far: 30
-  near: 1
-  stabilize: 1
+  numSplits: 2
+  far: 100
+  near: 0.4684151
+  stabilize: 0
   splitDistribution: 0
+  near_far: 56.51387
