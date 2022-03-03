@@ -6,8 +6,18 @@ Scene:
         Transform:
           pos:
             - 0
-            - 1
+            - 0.0537737
             - 0
+          euler:
+            - 0
+            - -0
+            - 0
+          scale:
+            - 1
+            - 1
+            - 1
+        Animator:
+          speed: 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -15,6 +25,14 @@ Scene:
             - 3
             - 0
             - 3
+          euler:
+            - 0
+            - -0
+            - 0
+          scale:
+            - 0.7
+            - 1.5
+            - 0.7
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -72,4 +90,4 @@ DirLight:
     - 0
   drawShadows: 1
   intensity: 4.736977
-  shadowBias: 0.002
+  shadowBias: 0.001

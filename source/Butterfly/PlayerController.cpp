@@ -13,6 +13,7 @@
 #include "SceneManager.h"
 #include "MeshRenderer.h"
 #include "Sound.h"
+#include "Animation.h"
 #include "Light.h"
 #include <BoxCollider.h>
 
@@ -28,6 +29,9 @@ void PlayerController::Update() {
 		if (Input::GetKeyDown(SDL_Scancode::SDL_SCANCODE_SPACE)) {
 			Jump();
 		}
+	}
+	if (Input::GetKeyDown(SDL_Scancode::SDL_SCANCODE_F)) {
+		hasItem = !hasItem;
 	}
 
 	if (Input::GetKey(SDL_Scancode::SDL_SCANCODE_LSHIFT)) {
@@ -111,6 +115,19 @@ void PlayerController::UpdateMovement() {
 	vel.z = deltaPos.z;
 
 	rigidBody->SetLinearVelocity(vel);
+
+
+	auto animator = gameObject()->GetComponent<Animator>();
+	float currentSpeed = vel.Length();
+	if (currentSpeed > 0.1f) {
+		animator->speed = 1.8f;
+
+		animator->SetAnimation(hasItem ? runAnimationWithItem : runAnimation);
+	}
+	else {
+		animator->speed = 1.0f;
+		animator->SetAnimation(hasItem ? standAnimationWithItem : standAnimation);
+	}
 }
 
 
