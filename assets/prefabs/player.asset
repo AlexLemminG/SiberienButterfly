@@ -19,7 +19,8 @@ Material$M1:
   shader: engine\shaders\main.asset
   colorTex: engine\textures\white.png
 PlayerController:
-  speed: 9.082612
+  speed: 9.0
+  speedWithItem: 4.5
   runAnimation: models\Vintik.blend$Run
   standAnimation: models\Vintik.blend$Stand
   runAnimationWithItem: models\Vintik.blend$RunWithItem

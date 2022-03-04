@@ -1,0 +1,21 @@
+GameObject:
+  tag: apple
+  components:
+  - $Transform
+  - $MeshRenderer
+  - $ParentedTransform
+
+Transform: ~
+  
+MeshRenderer:
+  mesh: models\apple.blend$Mesh
+  material: $M1
+  
+Material$M1:
+  shader: engine\shaders\main.asset
+  colorTex: engine\textures\white.png
+
+ParentedTransform:
+  localMatrix:
+    pos: [0,0,0]
+    euler: [0,0,0]

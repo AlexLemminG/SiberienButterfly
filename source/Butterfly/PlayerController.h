@@ -21,6 +21,7 @@ private:
 	bool IsOnGround() { return true; } //TODO
 
 	float speed = 1.f;
+	float speedWithItem = 1.f;
 	float jumpVelocity = 10.f;
 	float lastJumpTime = 0.f;
 	float jumpDelay = 0.25f;
@@ -30,6 +31,7 @@ private:
 
 	REFLECT_BEGIN(PlayerController);
 	REFLECT_VAR(speed);
+	REFLECT_VAR(speedWithItem);
 	REFLECT_VAR(jumpVelocity);
 	REFLECT_VAR(jumpPushImpulse);
 	REFLECT_VAR(jumpPushRadius);

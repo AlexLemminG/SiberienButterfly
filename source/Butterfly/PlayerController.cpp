@@ -15,6 +15,8 @@
 #include "Sound.h"
 #include "Animation.h"
 #include "Light.h"
+#include "Mesh.h"
+#include "ParentedTransform.h"
 #include <BoxCollider.h>
 
 void PlayerController::OnEnable() {
@@ -31,14 +33,32 @@ void PlayerController::Update() {
 		}
 	}
 	if (Input::GetKeyDown(SDL_Scancode::SDL_SCANCODE_F)) {
-		hasItem = !hasItem;
+		auto apple = Scene::Get()->FindGameObjectByTag("apple");
+		if (apple != nullptr) {
+			if (hasItem) {
+				apple->GetComponent<ParentedTransform>()->SetParent(nullptr);
+				apple->transform()->SetPosition(gameObject()->transform()->GetPosition() + gameObject()->transform()->GetForward() * 1.5f);
+				apple->transform()->SetEulerAngles(Vector3_zero);
+			}
+			else {
+				int idx = 0;
+				const auto& bones = gameObject()->GetComponent<MeshRenderer>()->mesh->bones;
+				for (auto bone : bones) {
+					if (bone.name == "ItemAttachPoint") {
+						idx = bone.idx;
+						break;
+					}
+				}
+				apple->GetComponent<ParentedTransform>()->SetParent(gameObject()->GetComponent<MeshRenderer>(), idx);
+			}
+			hasItem = !hasItem;
+			auto animator = gameObject()->GetComponent<Animator>();
+			animator->SetAnimation(hasItem ? standAnimationWithItem : standAnimation);
+		}
 	}
-
+	speed = hasItem ? speedWithItem : defaultSpeed;
 	if (Input::GetKey(SDL_Scancode::SDL_SCANCODE_LSHIFT)) {
-		speed = defaultSpeed * 3.f;
-	}
-	else {
-		speed = defaultSpeed;
+		speed *= 3.f;
 	}
 
 
@@ -121,7 +141,6 @@ void PlayerController::UpdateMovement() {
 	float currentSpeed = vel.Length();
 	if (currentSpeed > 0.1f) {
 		animator->speed = 1.8f;
-
 		animator->SetAnimation(hasItem ? runAnimationWithItem : runAnimation);
 	}
 	else {

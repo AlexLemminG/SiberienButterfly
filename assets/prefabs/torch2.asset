@@ -5,9 +5,9 @@ GameObject:
     - $PointLight
 Transform:
   pos:
-    - -11.198011
-    - 3.975502
-    - -7.216502
+    - 0.34791678
+    - 7.1743174
+    - -0.22808558
   scale:
     - 1
     - 1
@@ -18,10 +18,10 @@ Transform:
     - 0
 PointLight:
   color:
-    r: 0.101528764
-    g: 0.05019307
+    r: 0.119694054
+    g: 0.06949806
     b: 1
     a: 1
-  intensity: 8040.112
-  radius: 61.984932
-  innerRadius: 0.27176133
+  intensity: 595.6212
+  radius: 500
+  innerRadius: 1.6752217

@@ -54,6 +54,13 @@ Scene:
             - -3
             - 0
             - 3
+    - prefab: prefabs\apple.asset
+      overrides:
+        Transform:
+          pos:
+            - -1.123628
+            - 0
+            - -4.3402977
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
@@ -80,14 +87,14 @@ Transform$DirLightTransform:
     - 0.99999994
 DirLight:
   color:
-    r: 0.46081606
-    g: 0.7638575
-    b: 0.8648649
+    r: 0
+    g: 1
+    b: 0.01544404
     a: 0.93333334
   dir:
     - 0
     - -1
     - 0
   drawShadows: 1
-  intensity: 4.736977
+  intensity: 0.35999998
   shadowBias: 0.001
