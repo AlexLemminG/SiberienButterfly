@@ -4,7 +4,7 @@ GameObject:
     - $Transform
     - $MeshRenderer
     - $PlayerController
-    - $SphereCollider
+    - $CapsuleCollider
     - $RigidBody
     - $Animator
 Transform:
@@ -25,18 +25,19 @@ PlayerController:
   standAnimation: models\Vintik.blend$Stand
   runAnimationWithItem: models\Vintik.blend$RunWithItem
   standAnimationWithItem: models\Vintik.blend$StandWithItem
-SphereCollider:
-  radius: 0.9095011
+CapsuleCollider:
+  radius: 0.34
   center:
     - 0
-    - 0.879
+    - 1.02
     - 0
+  height: 1.4869586
 RigidBody:
   isStatic: false
   isKinematic: false
   restitution: 0.0
   friction: 0.0
-  mass: 50
+  mass: 25
   layer: player
 Animator:
   speed: 1

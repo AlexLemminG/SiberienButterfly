@@ -131,11 +131,11 @@ void PlayerController::UpdateMovement() {
 	}
 
 	auto vel = rigidBody->GetLinearVelocity();
-	vel.x = deltaPos.x;
-	vel.z = deltaPos.z;
+	vel.x = Mathf::Lerp(vel.x, deltaPos.x, 0.8f);
+	vel.z = Mathf::Lerp(vel.z, deltaPos.z, 0.8f);
+	vel.y = Mathf::Min(vel.y, 0.f);
 
 	rigidBody->SetLinearVelocity(vel);
-
 
 	auto animator = gameObject()->GetComponent<Animator>();
 	float currentSpeed = vel.Length();
@@ -161,7 +161,7 @@ void PlayerController::UpdateLook() {
 	}
 
 	SetRot(matrix, Quaternion::LookAt(lookDir, Vector3_up));
-
+	rigidBody->SetAngularVelocity(Vector3_zero);
 	rigidBody->SetTransform(matrix);
 
 }

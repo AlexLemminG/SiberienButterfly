@@ -5,9 +5,17 @@ Scene:
       overrides:
         Transform:
           pos:
+            - -0.026768953
+            - 0.05377346
+            - 0.36981428
+          euler:
             - 0
-            - 0.0537737
+            - -0
             - 0
+          scale:
+            - 1
+            - 1
+            - 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -24,8 +32,6 @@ Scene:
             - -3
             - 0
             - -3
-        RigidBody:
-          isStatic: 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -46,8 +52,9 @@ Scene:
             - 0
             - 2
             - 0
-          mass: 500
+          mass: 1000
           friction: 1
+          restitution: 0
         MeshCollider:
           isConvex: 1
     - prefab: prefabs\apple.asset
@@ -83,14 +90,14 @@ Transform$DirLightTransform:
     - 0.99999994
 DirLight:
   color:
-    r: 0
-    g: 1
-    b: 0.01544404
+    r: 0.08108109
+    g: 0.2655745
+    b: 1
     a: 0.93333334
   dir:
     - 0
     - -1
     - 0
   drawShadows: 1
-  intensity: 0.35999998
+  intensity: 1.6071113
   shadowBias: 0.001

@@ -3,3 +3,4 @@
 /library/
 *.blend1
 renderdoc.dll
+dbgvars.yaml
