@@ -36,9 +36,4 @@ ShadowSettings:
   stabilize: 1
   splitDistribution: 0
   near_far: 100
-  pcfParams:
-    - 2
-    - 2
-    - 10
-    - 10
   pcfOffset: 0.5

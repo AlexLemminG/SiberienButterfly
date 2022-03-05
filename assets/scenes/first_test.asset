@@ -8,16 +8,6 @@ Scene:
             - 0
             - 0.0537737
             - 0
-          euler:
-            - 0
-            - -0
-            - 0
-          scale:
-            - 1
-            - 1
-            - 1
-        Animator:
-          speed: 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -25,14 +15,8 @@ Scene:
             - 3
             - 0
             - 3
-          euler:
-            - 0
-            - -0
-            - 0
-          scale:
-            - 0.7
-            - 1.5
-            - 0.7
+        RigidBody:
+          isStatic: 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -40,6 +24,8 @@ Scene:
             - -3
             - 0
             - -3
+        RigidBody:
+          isStatic: 1
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -54,6 +40,16 @@ Scene:
             - -3
             - 0
             - 3
+        RigidBody:
+          isStatic: 0
+          centerOfMass:
+            - 0
+            - 2
+            - 0
+          mass: 500
+          friction: 1
+        MeshCollider:
+          isConvex: 1
     - prefab: prefabs\apple.asset
       overrides:
         Transform:

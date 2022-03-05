@@ -6,12 +6,12 @@ GameObject:
     - $TopDownCameraRig
 Camera:
   clearColor:
-    r: 0.42471045
-    g: 0.2722082
-    b: 0.41352305
+    r: 0.23022912
+    g: 0.3011583
+    b: 0.2674738
     a: 1
   fov: 71.75106
-  nearPlane: 0.01
+  nearPlane: 1.2769767
   farPlane: 1000
 Transform:
   pos:

@@ -18,10 +18,10 @@ Transform:
     - 0
 PointLight:
   intensity: 95496.17
-  radius: 3.8687916
+  radius: 5.090253
   color:
-    r: 1
-    g: 0.04633206
-    b: 0.1788882
+    r: 0.0039215684
+    g: 1
+    b: 0.050795853
     a: 1
   innerRadius: 0.15982346
