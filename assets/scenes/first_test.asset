@@ -62,8 +62,17 @@ Scene:
         Transform:
           pos:
             - -1.123628
-            - 0
+            - 2.1770806
             - -4.3402977
+          euler:
+            - 6.8586075e-07
+            - -0
+            - 0
+          scale:
+            - 0.9999832
+            - 0.99999523
+            - 0.99998546
+        SpotLight: {}
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
@@ -74,7 +83,7 @@ GameObject$Light:
   tag: DirLight
   components:
     - $DirLightTransform
-    - $DirLight
+    - $0
 Transform$DirLightTransform:
   euler:
     - 23.140997
@@ -88,16 +97,5 @@ Transform$DirLightTransform:
     - 0.99999994
     - 0.99999994
     - 0.99999994
-DirLight:
-  color:
-    r: 0.08108109
-    g: 0.2655745
-    b: 1
-    a: 0.93333334
-  dir:
-    - 0
-    - -1
-    - 0
+DirLight$0:
   drawShadows: 1
-  intensity: 1.6071113
-  shadowBias: 0.001

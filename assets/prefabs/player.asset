@@ -7,6 +7,7 @@ GameObject:
     - $CapsuleCollider
     - $RigidBody
     - $Animator
+    - $SpotLight
 Transform:
   scale:
     - 1
@@ -42,3 +43,14 @@ RigidBody:
 Animator:
   speed: 1
   defaultAnimation: models\Vintik.blend$Stand
+SpotLight$SpotLight:
+  intensity: 372.08127
+  radius: 17.363949
+  innerAngle: 51.36299
+  outerAngle: 146.7556
+  innerRadius: 0.37
+  color:
+    r: 0.25112927
+    g: 0.01544404
+    b: 1
+    a: 1

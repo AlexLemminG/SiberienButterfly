@@ -1,5 +1,5 @@
 GameObject:
-  tag: light
+  tag: torch2
   components:
     - $Transform
     - $PointLight

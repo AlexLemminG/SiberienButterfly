@@ -5,11 +5,11 @@ maximumDeltaTime: 0.05
 fixedDeltaTime: 0.016666666666
 fullscreen: false
 debugSceneLoading: false
-vsync: true
+vsync: false
 godMode: true
 soundEnabled: false
 showFps: true
-msaa: 16
+msaa: 0
 debugGraphics: false
 libraries:
   - Butterfly.dll
