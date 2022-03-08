@@ -29,14 +29,9 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  resolution: 2048
-  numSplits: 1
-  far: 39.725613
-  near: 0.84000003
+  far: 30
   stabilize: 1
-  splitDistribution: 0
   near_far: 100
+  near: 1
   pcfOffset: 0.5
-TimeSettings:
-  maximumDeltaTime: 0.05
-  fixedDeltaTime: 0.016666666666
+TimeSettings: {}

@@ -3,7 +3,7 @@
 scene: scenes\first_test
 fullscreen: false
 debugSceneLoading: false
-vsync: false
+vsync: true
 godMode: true
 soundEnabled: false
 showFps: true
