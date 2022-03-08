@@ -37,3 +37,6 @@ ShadowSettings:
   splitDistribution: 0
   near_far: 100
   pcfOffset: 0.5
+TimeSettings:
+  maximumDeltaTime: 0.05
+  fixedDeltaTime: 0.016666666666
