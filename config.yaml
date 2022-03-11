@@ -1,6 +1,7 @@
 # scene: engine\test\viviModel\scene #engine\modelPreview\scene #gameplayScene
 # scene: engine\test\pbrScene\scene #engine\modelPreview\scene #gameplayScene
 scene: scenes\first_test
+# scene: gameplayScene
 fullscreen: false
 debugSceneLoading: false
 vsync: true
@@ -11,3 +12,9 @@ msaa: 0
 debugGraphics: false
 libraries:
   - Butterfly.dll
+  # - Game.dll
+mountDirs:
+  - engine/assets
+  - assets
+#  - assets.zip
+#  - assets_no_compression.zip

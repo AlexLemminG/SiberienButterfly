@@ -1,3 +1,0 @@
-Shader:
-  vs: engine\shaders\bump\vs_bump.vs
-  fs: engine\shaders\bump\fs_bump.fs

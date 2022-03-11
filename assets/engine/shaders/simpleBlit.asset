@@ -1,3 +1,0 @@
-Shader:
-  vs: engine\shaders\simpleBlit\vs.vs
-  fs: engine\shaders\simpleBlit\fs.fs

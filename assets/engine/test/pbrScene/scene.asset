@@ -1,9 +1,0 @@
-Scene:
-  sphericalHarmonics: engine\nightHarmonics.asset
-  gameObjects:
-    - engine\test\pbrScene\camera.asset
-    - engine\test\pbrScene\pbrBalls.asset
-    - engine\test\pbrScene\ballLight1.asset
-    - engine\test\pbrScene\ballLight2.asset
-    - engine\test\pbrScene\ballLight3.asset
-    - engine\test\pbrScene\ballLight4.asset
