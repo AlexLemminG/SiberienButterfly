@@ -35,4 +35,12 @@ ShadowSettings:
   near: 1
   pcfOffset: 0.5
 TimeSettings: {}
-RenderSettings: {}
+RenderSettings:
+  msaa: 16
+  test: 6
+  backend: 2
+  vsync: 0
+  bgfxDebugStats: 0
+  maxAnisotropy: 1
+  frustumCulling: 1
+  tryToMinimizeStateChanges: 1
