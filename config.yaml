@@ -4,17 +4,18 @@
 scene: gameplayScene
 fullscreen: false
 debugSceneLoading: false
-vsync: true
 godMode: true
 soundEnabled: false
 showFps: true
-msaa: 0
-debugGraphics: false
+assetConvertionEnabled: true
 libraries:
 #  - Butterfly.dll
   - Game.dll
-mountDirs:
+mountAssets:
   - engine/assets
   - assets
-#  - assets.zip
+  # - assets.zip
+  # - assets_game.zip
 #  - assets_no_compression.zip
+mountLibraries:
+  - library

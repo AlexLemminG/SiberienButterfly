@@ -1,6 +1,8 @@
 /bin/
 /temp/
 /library/
+/build/
 *.blend1
 renderdoc.dll
 dbgvars.yaml
+build.zip
