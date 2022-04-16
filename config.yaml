@@ -13,9 +13,9 @@ libraries:
   - Game.dll
 mountAssets:
   - engine/assets
-  - assets
-  # - assets.zip
-  # - assets_game.zip
-#  - assets_no_compression.zip
+  # - build/assets.zip
+  # - assets
+  # - build/assets_game.zip
+  # - assets_no_compression.zip
 mountLibraries:
   - library
