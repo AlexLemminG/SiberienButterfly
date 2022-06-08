@@ -2,6 +2,7 @@
 /temp/
 /library/
 /build/
+/.build/
 *.blend1
 renderdoc.dll
 dbgvars.yaml
