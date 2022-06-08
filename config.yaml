@@ -1,20 +1,21 @@
 # scene: engine\test\viviModel\scene #engine\modelPreview\scene #gameplayScene
 # scene: engine\test\pbrScene\scene #engine\modelPreview\scene #gameplayScene
-scene: engine\test\sponza-gltf-pbr\scene
+# scene: engine\test\sponza-gltf-pbr\scene
 # scene: gameplayScene
+scene: scenes\first_test
 fullscreen: false
 debugSceneLoading: false
 godMode: true
 soundEnabled: false
 showFps: true
 assetConvertionEnabled: true
-libraries: []
-#  - Butterfly.dll
+libraries:
+  - Butterflyd.dll
   # - Game.dll
 mountAssets:
   - engine/assets
   # - build/assets.zip
-  # - assets
+  - assets
   # - build/assets_game.zip
   # - assets_no_compression.zip
 mountLibraries:

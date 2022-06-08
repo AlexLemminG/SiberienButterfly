@@ -7,7 +7,7 @@ link_directories("${Assimp_BINARY_DIR}/lib")#TODO assimp is a special boy for so
 
 file(GLOB BUTTERFLY_SRC "*.*")
 source_group("Butterfly" FILES ${BUTTERFLY_SRC})
-add_library(Butterfly ${BUTTERFLY_SRC})
+add_library(Butterfly SHARED ${BUTTERFLY_SRC})
 
 target_link_libraries(Butterfly SiberienEngine)
 
