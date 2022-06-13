@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
 
-
 set(CMAKE_BUILD_TYPE "Debug")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -22,4 +21,4 @@ if (MSVC)
 endif()
 
 add_subdirectory(engine/source)
-add_subdirectory(source)
+add_subdirectory(source/Butterfly)
