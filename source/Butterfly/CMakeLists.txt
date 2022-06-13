@@ -10,6 +10,12 @@ file(GLOB BUTTERFLY_SRC "*.*")
 source_group("Butterfly" FILES ${BUTTERFLY_SRC})
 add_library(Butterfly SHARED ${BUTTERFLY_SRC})
 
+
+
+SET_PROPERTY(TARGET Butterfly PROPERTY RELWITHDEBINFO_POSTFIX  "")
+SET_PROPERTY(TARGET Butterfly PROPERTY DEBUG_POSTFIX  "")
+SET_PROPERTY(TARGET Butterfly PROPERTY MINSIZEREL_POSTFIX  "")
+
 target_link_libraries(Butterfly PRIVATE SiberienEngine)
 
 #TODO both SEngine and SiberienEngine exist and not interchangable is weird
