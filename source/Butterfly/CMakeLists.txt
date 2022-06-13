@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 #TODO linker breaks with unresolved _purecall
-project(Butterfly)
+project(Butterfly LANGUAGES CXX)
 link_directories("${CMAKE_BINARY_DIR}/lib")
 link_directories("${Assimp_BINARY_DIR}/lib")#TODO assimp is a special boy for some reason
 
@@ -10,10 +10,10 @@ file(GLOB BUTTERFLY_SRC "*.*")
 source_group("Butterfly" FILES ${BUTTERFLY_SRC})
 add_library(Butterfly SHARED ${BUTTERFLY_SRC})
 
-target_link_libraries(Butterfly SiberienEngine)
+target_link_libraries(Butterfly PRIVATE SiberienEngine)
 
 #TODO both SEngine and SiberienEngine exist and not interchangable is weird
-target_include_directories(Butterfly PRIVATE "${SEngine_SOURCE_DIR}")
+# target_include_directories(Butterfly PRIVATE "${SEngine_SOURCE_DIR}")
 
 #TODO as list in engine cmakelists
 # target_include_directories(Butterfly PRIVATE "${Optick_SOURCE_DIR}/src")
