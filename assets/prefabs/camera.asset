@@ -21,7 +21,7 @@ Transform:
   euler:
     - 0
     - -90
-    - 79.99998
+    - 75
   scale:
     - 0.9999999
     - 0.99999994
@@ -29,8 +29,8 @@ Transform:
 TopDownCameraRig:
   targetTag: player
   offset:
-    - 5
-    - 20
+    - 2.7
+    - 8.7
     - 0
   lerpT: 3
   collisionLerpT: 3

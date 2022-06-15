@@ -3,27 +3,24 @@ GameObject:
   components:
     - $Transform
     - $MeshRenderer
-    - $BoxCollider
-    - $RigidBody
+    # - $BoxCollider
+    # - $RigidBody
 Transform:
   euler:
     - 0
-    - 0
+    - -0
     - 0
   scale:
-    - 99.999
     - 1
-    - 99.999
+    - 1
+    - 1
   pos:
     - 0
-    - -0.079
+    - 0
     - 0
 MeshRenderer:
   mesh: engine\models\1x1Plane.glb$Mesh
-  material: $M1
-Material$M1:
-  shader: engine\shaders\main.asset
-  colorTex: engine\textures\uv.png
+  material: materials\grid.asset
 RigidBody:
   isStatic: 1
 BoxCollider:

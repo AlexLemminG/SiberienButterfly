@@ -1,0 +1,26 @@
+GameObject:
+  tag: Grid
+  components:
+    - $Transform
+    - $Grid
+    - $GridDrawer
+Transform:
+  pos:
+    - 0
+    - 0
+    - 0
+  euler:
+    - 0
+    - -0
+    - 0
+  scale:
+    - 1
+    - 1
+    - 1
+Grid:
+  mesh: models/GridCells.blend
+  cellDescs:
+    - type: 1
+      meshName: Ground
+GridDrawer:
+  gridCellPrefab: prefabs/gridCell.asset

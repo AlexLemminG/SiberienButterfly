@@ -17,6 +17,7 @@
 #include "Light.h"
 #include "Mesh.h"
 #include "ParentedTransform.h"
+#include "Grid.h"
 #include <BoxCollider.h>
 
 void PlayerController::OnEnable() {
@@ -70,7 +71,7 @@ void PlayerController::Update() {
 		Vector3 minPos = Vector3(Mathf::Floor(pos.x), Mathf::Floor(pos.y), Mathf::Floor(pos.z));
 
 		AABB box = AABB(minPos, minPos + Vector3_one);
-		Dbg::Draw(box);
+		//Dbg::Draw(box);
 	}
 }
 
