@@ -20,5 +20,5 @@ if (MSVC)
     add_definitions("/MP")
 endif()
 
-add_subdirectory(engine/source)
+add_subdirectory(engine)
 add_subdirectory(source/Butterfly)
