@@ -4,6 +4,7 @@ GameObject:
     - $Transform
     - $MeshRenderer
     - $ParentedTransform
+    - $LuaComponent
 Transform: ~
 MeshRenderer:
   mesh: models\apple.blend$Mesh
@@ -21,3 +22,5 @@ ParentedTransform:
       - 0
       - 0
       - 0
+LuaComponent$LuaComponent:
+  script: Apple
