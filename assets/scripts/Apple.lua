@@ -35,7 +35,14 @@ function Apple:OnEnable()
 	print("Hello from Apple 2")
 	
 	-- test:gc()
-	self:gameObject()
+	local go = self:gameObject()
+	local trans = go:GetComponent("Transform")
+	print(trans)
+	local pos = trans:GetPosition()
+	print(pos)
+	pos = -pos
+	trans:SetPosition(pos)
+	print(pos)
 end
 
 return Apple
