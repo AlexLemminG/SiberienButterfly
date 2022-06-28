@@ -1,4 +1,7 @@
-local Apple = {}
+local Apple = {
+	someField = "hello Apple Field",
+	someInt = 44
+}
 local Component = require("Component")
 
 setmetatable(Apple, Component)
@@ -17,8 +20,10 @@ end
 
 function Apple:OnEnable()
 
-	print("Hello from Apple 1")
+	print("Hello from Apple 1 ", someInt)
 	local test = Foo()
+	
+	-- gameObject()
 	
 	local fooRest = 33
 	fooRest = test:foo(3)
@@ -28,7 +33,9 @@ function Apple:OnEnable()
 	print("goo result = ", gooRest)
 	test:boo()
 	print("Hello from Apple 2")
-
+	
+	-- test:gc()
+	self:gameObject()
 end
 
 return Apple
