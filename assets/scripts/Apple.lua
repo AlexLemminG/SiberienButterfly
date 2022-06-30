@@ -15,7 +15,9 @@ function Apple:new(o)
 end
 
 function Apple:Update()
-	-- print("AppleUpdate")
+	local trans = self:gameObject():GetComponent("Transform")
+	local velocity = vector(3,0,-2)
+	trans:SetPosition(trans:GetPosition() + velocity * deltaTime())
 end
 
 function Apple:OnEnable()
