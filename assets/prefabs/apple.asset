@@ -22,5 +22,10 @@ ParentedTransform:
       - 0
       - 0
       - 0
-LuaComponent$LuaComponent:
-  script: Apple
+LuaComponent:
+  script: Appledf
+  luaObj:
+    scriptName: Apple
+    data:
+      editor:
+        i: 3333
