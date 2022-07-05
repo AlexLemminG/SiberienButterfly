@@ -1,4 +1,3 @@
-require("LuaPanda").start("127.0.0.1", 8818)
 
 local Apple = {
     followSpeed = 1.0,
@@ -48,15 +47,18 @@ end
 function Apple:Update()
     local trans = self:gameObject():GetComponent("Transform")
     local velocity = vector(3, 0, -2)
-    local posT = time() * 5
+    local posT = Time():time() * 5
     local pos = vector(math.sin(posT), 0.0, math.cos(posT))
 
     local player = self:gameObject():GetScene():FindGameObjectByTag("player")
     local newPos = lerp(trans:GetPosition(), player:GetComponent("Transform"):GetPosition(),
-        deltaTime() * self.followSpeed)
+        Time():deltaTime() * self.followSpeed)
     trans:SetPosition(newPos)
     -- trans:SetPosition(pos)
     -- print(dump(self.editor))
+	
+	-- print(Input():GetKey("Z"))
+	-- print(Time():time())
 
     local t = Transform()
 end
@@ -64,7 +66,7 @@ end
 function Apple:OnEnable()
 
     print("Hello from Apple 1 ", self.someInt)
-    local test = Foo()
+    local test = Foo() --TODO some error here
 
     -- gameObject()
 
