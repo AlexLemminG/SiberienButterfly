@@ -1,0 +1,9 @@
+GameObject:
+  tag: '[Game]'
+  components:
+    - $Transform
+    - $LuaComponent
+Transform: ~
+LuaComponent:
+  luaObj:
+    scriptName: Game

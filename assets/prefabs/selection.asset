@@ -1,0 +1,9 @@
+GameObject:
+  tag: selection
+  components:
+    - $Transform
+    - $MeshRenderer
+Transform: ~
+MeshRenderer:
+  mesh: models\GridCells.blend$SelectionBox
+  material: materials\grid.asset

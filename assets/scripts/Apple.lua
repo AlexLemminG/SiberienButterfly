@@ -44,50 +44,67 @@ function lerp(a, b, t)
     return a * (1.0 - t) + b * t
 end
 
+function GetGrid()
+	return Grid()
+end
+
+
 function Apple:Update()
-    local trans = self:gameObject():GetComponent("Transform")
-    local velocity = vector(3, 0, -2)
-    local posT = Time():time() * 5
-    local pos = vector(math.sin(posT), 0.0, math.cos(posT))
+    -- local trans = self:gameObject():GetComponent("Transform")
+    -- local velocity = vector(3, 0, -2)
+    -- local posT = Time():time() * 5
+    -- local pos = vector(math.sin(posT), 0.0, math.cos(posT))
 
-    local player = self:gameObject():GetScene():FindGameObjectByTag("player")
-    local newPos = lerp(trans:GetPosition(), player:GetComponent("Transform"):GetPosition(),
-        Time():deltaTime() * self.followSpeed)
-    trans:SetPosition(newPos)
-    -- trans:SetPosition(pos)
-    -- print(dump(self.editor))
+    -- local player = self:gameObject():GetScene():FindGameObjectByTag("player")
+    -- local newPos = lerp(trans:GetPosition(), player:GetComponent("Transform"):GetPosition(),
+        -- Time():deltaTime() * self.followSpeed)
+    -- trans:SetPosition(newPos)
+    -- -- trans:SetPosition(pos)
+    -- -- print(dump(self.editor))
 	
-	-- print(Input():GetKey("Z"))
-	-- print(Time():time())
+	-- -- print(Input():GetKey("Z"))
+	-- -- print(Time():time())
 
-    local t = Transform()
+    -- local t = Transform()
+	
+	-- print(self.grid == Grid():Get())
 end
 
 function Apple:OnEnable()
+    -- print("WHYYYYYYYYYYYYYYYYYYYYYYY")
+    -- print(dump(Grid():GetCell({x=3,y=4})))
+    -- local cell = Grid():GetCell({x=4,y=4})
+    -- local cell2 = GridCell()
+    -- cell2.type = 3
+    -- Grid():SetCell(cell2)
+	-- self.f = 3
+    -- print("Hello from Apple 1 ", self.someInt)
+    -- local test = Foo() --TODO some error here
 
-    print("Hello from Apple 1 ", self.someInt)
-    local test = Foo() --TODO some error here
+    -- -- gameObject()
 
-    -- gameObject()
+    -- local fooRest = 33
+    -- fooRest = test:foo(3)
+    -- print("foo result = ", fooRest)
 
-    local fooRest = 33
-    fooRest = test:foo(3)
-    print("foo result = ", fooRest)
+    -- local gooRest = test:goo(3, 0.14)
+    -- print("goo result = ", gooRest)
+    -- test:boo()
+    -- print("Hello from Apple 2")
 
-    local gooRest = test:goo(3, 0.14)
-    print("goo result = ", gooRest)
-    test:boo()
-    print("Hello from Apple 2")
-
-    -- test:gc()
-    local go = self:gameObject()
-    local trans = go:GetComponent("Transform")
-    print(trans)
-    local pos = trans:GetPosition()
-    print(pos)
-    pos = -pos
-    trans:SetPosition(pos)
-    print(pos)
+    -- -- test:gc()
+	-- print(self)
+    -- print(self.gameObject)
+    -- local go = self:gameObject()
+    -- local trans = go:GetComponent("Transform")
+    -- print(trans)
+    -- local pos = trans:GetPosition()
+    -- print(pos)
+    -- pos = -pos
+    -- trans:SetPosition(pos)
+    -- print(pos)
+	
+	-- self.grid = GetGrid()
 end
 
 return Apple

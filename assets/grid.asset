@@ -1,0 +1,5 @@
+GridSettings:
+  mesh: models/GridCells.blend
+  cellDescs:
+    - type: 1
+      meshName: Ground

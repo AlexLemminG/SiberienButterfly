@@ -101,6 +101,7 @@ Scene:
     - prefabs\torch.asset
     - prefabs\torch2.asset
     - $Light
+    - prefabs\game.asset
 GameObject$Light:
   tag: DirLight
   components:
