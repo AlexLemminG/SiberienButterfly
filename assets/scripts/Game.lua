@@ -44,9 +44,12 @@ function Game:OnEnable()
 	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
 	
 	self.luaPlayerGO = Instantiate(self.characterPrefab)
-	local pointLight = self.luaPlayerGO:AddComponent("PointLight")
+
+	self.luaPlayerGO.tag = "LuaPlayer"
+	-- local pointLight = self.luaPlayerGO:AddComponent("PointLight")
 	local playerScript = self.luaPlayerGO:AddComponent("LuaComponent")
-	playerScript.luaObj = { scriptName = "Character", data = {scale = 0.8}}
+	
+	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
 	-- playerScript.scriptName = "Character"	--- TODO support from engine
 	-- playerScript.scale = 0.8
 

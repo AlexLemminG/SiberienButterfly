@@ -38,3 +38,5 @@ Animator:
 LuaComponent$LuaComponent:
   luaObj:
     scriptName: Character
+    data:
+      scale: 1
