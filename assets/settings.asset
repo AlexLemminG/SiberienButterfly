@@ -38,5 +38,5 @@ TimeSettings: {}
 RenderSettings:
   test: 6
   backend: 2
-  vsync: 1
+  vsync: 0
   debug: 0

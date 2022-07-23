@@ -2,7 +2,9 @@
 local Game = {
 	playerGO = nil,
 	selectionGO = nil,
-	grid = nil
+	grid = nil,
+	characterPrefab = nil,
+	luaPlayerGO = nil
 }
 local Component = require("Component")
 setmetatable(Game, Component)
@@ -13,6 +15,15 @@ function Game:new(o)
     setmetatable(o, self)
     return o
 end
+
+local A = { a = 1 }
+A.__index = A
+local B = { b = 2 }
+B.__index = B
+setmetatable(B, A)
+local C = { c = 3 }
+setmetatable(C, B)
+print("C==========================================", C.a)
 
 
 function Game:OnEnable()
@@ -29,6 +40,17 @@ function Game:OnEnable()
 	
 	self.grid = Grid()
 	print("trans = ", selectionTrans)
+	
+	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+	
+	self.luaPlayerGO = Instantiate(self.characterPrefab)
+	local pointLight = self.luaPlayerGO:AddComponent("PointLight")
+	local playerScript = self.luaPlayerGO:AddComponent("LuaComponent")
+	playerScript.luaObj = { scriptName = "Character", data = {scale = 0.8}}
+	-- playerScript.scriptName = "Character"	--- TODO support from engine
+	-- playerScript.scale = 0.8
+
+	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 end
 
 
@@ -36,28 +58,28 @@ function Game:OnDisable()
 	if self.selectionGO ~= nil then
 		self:gameObject():GetScene():RemoveGameObject(self.selectionGO)
 	end
+	if self.luaPlayerGO ~= nil then
+		self:gameObject():GetScene():RemoveGameObject(self.luaPlayerGO)
+	end
 end
 
 
 function Game:Update()
-	local selectionTrans = self.selectionGO:GetComponent("Transform")
-	local playerTrans = self.playerGO:GetComponent("Transform")
+	-- local selectionTrans = self.selectionGO:GetComponent("Transform")
+	-- local playerTrans = self.playerGO:GetComponent("Transform")
 	
-	local cellPos = self.grid:GetClosestIntPos(playerTrans:GetPosition())
-	local pos = self.grid:GetCellWorldCenter(cellPos)
+	-- local cellPos = self.grid:GetClosestIntPos(playerTrans:GetPosition())
+	-- local pos = self.grid:GetCellWorldCenter(cellPos)
 	
-	pos = pos + vector(0,0.0,0)
-	selectionTrans:SetPosition(pos)
+	-- pos = pos + vector(0,0.0,0)
+	-- selectionTrans:SetPosition(pos)
 
-	if Input():GetKeyDown("Space") then
-		print("Jump")
-		local cell = self.grid:GetCell(cellPos)
-		cell.type = (cell.type + 1) % 2
-		self.grid:SetCell(cell)
-	end
-	-- print(Grid(), " ", self.grid)
-
-	-- print("h")
+	-- if Input():GetKeyDown("Space") then
+		-- print("Jump")
+		-- local cell = self.grid:GetCell(cellPos)
+		-- cell.type = (cell.type + 1) % 2
+		-- self.grid:SetCell(cell)
+	-- end
 end
 
 return Game

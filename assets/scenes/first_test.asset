@@ -1,6 +1,8 @@
 Scene:
   sphericalHarmonics: engine\nightHarmonics.asset
   prefabInstances:
+    - prefab: prefabs\character.asset
+      overrides: ~
     - prefab: prefabs\grid.asset
       overrides: ~
     - prefab: prefabs\player.asset
