@@ -17,7 +17,7 @@ function PlayerController:OnEnable()
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 end
 
-local function Length(v : vector)
+function Length(v : vector)
 	return math.sqrt (v.x*v.x + v.y*v.y + v.z*v.z)
 end
 function Lerp(a,b,t) return a * (1-t) + b * t end
@@ -47,14 +47,11 @@ function PlayerController:Update()
 	deltaPos = vector(-deltaPos.z, deltaPos.y, deltaPos.x)
 	deltaPos = deltaPos * self.speed
 
-	local velocity = self.rigidBody:GetLinearVelocity()
-	local newVelocity = Lerp(velocity, deltaPos, 0.8)
-	newVelocity = vector(newVelocity.x, math.min(velocity.y, 0), newVelocity.z)
-	self.rigidBody:SetLinearVelocity(newVelocity)
-
-	self.rigidBody:SetAngularVelocity(vector(0,0,0))
+	local character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
+	character:Move(deltaPos)
 
 	
+	-- print(character.standWithItemAnimation)
 end
 
 return PlayerController
