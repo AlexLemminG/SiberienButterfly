@@ -58,6 +58,7 @@ function Character:Move(deltaPos : vector)
 	else
 		self.animator:SetAnimation(self.standAnimation) 
 	end
+	self.animator.speed = 2.0
 end
 
 return Character

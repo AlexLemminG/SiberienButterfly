@@ -1,28 +1,8 @@
 Scene:
   sphericalHarmonics: engine\nightHarmonics.asset
   prefabInstances:
-    - prefab: prefabs\character.asset
-      overrides: ~
     - prefab: prefabs\grid.asset
       overrides: ~
-    - prefab: prefabs\player.asset
-      overrides:
-        Transform:
-          pos:
-            - -0.026768953
-            - 0.05377346
-            - 0.36981428
-          euler:
-            - 0
-            - 0
-            - 0
-          scale:
-            - 0.5
-            - 0.5
-            - 0.5
-        PlayerController:
-          speed: 2.5
-          speedWithItem: 2
     - prefab: prefabs\column.asset
       overrides:
         Transform:
