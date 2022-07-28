@@ -3,6 +3,7 @@ GameObject:
   components:
     - $Transform
     - $GridDrawer
+    - $Grid
 Transform:
   pos:
     - 0
@@ -18,3 +19,4 @@ Transform:
     - 1
 GridDrawer:
   gridCellPrefab: prefabs/gridCell.asset
+Grid$Grid: ~

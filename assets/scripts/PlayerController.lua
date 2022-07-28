@@ -1,3 +1,6 @@
+local CellType = require("CellType")
+local Grid = require("Grid")
+local World = require("World")
 
 local PlayerController = {
 	speed = 3,
@@ -63,10 +66,8 @@ function PlayerController:Update()
 
 	local character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
 	character:Move(deltaPos)
-
 	
-
-	local grid = Grid()	
+	local grid = World.items
 	local selectionTrans = self.selectionGO:GetComponent("Transform")
 	
 	local cellPos = grid:GetClosestIntPos(self.transform:GetPosition())
@@ -77,7 +78,9 @@ function PlayerController:Update()
 
 	local cell = grid:GetCell(cellPos)
 	if Input():GetKeyDown("Space") then
-		cell.type = (cell.type + 1) % 2
+		local t = cell.type
+		cell.type = character.item
+		character.item = t
 		grid:SetCell(cell)
 	end
 end

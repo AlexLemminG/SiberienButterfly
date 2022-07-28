@@ -7,10 +7,20 @@
 #include "Resources.h"
 #include "../../engine/source/libs/luau/VM/src/ltable.h"
 
-DECLARE_TEXT_ASSET(Grid);
+DECLARE_TEXT_ASSET(GridSystem);
 DECLARE_TEXT_ASSET(GridSettings);
-REGISTER_GAME_SYSTEM(Grid);
+REGISTER_GAME_SYSTEM(GridSystem);
 DECLARE_TEXT_ASSET(GridDrawer);
+DECLARE_TEXT_ASSET(Grid);
+
+std::shared_ptr<Grid> GridSystem::GetGrid(const std::string& name) {
+    for (auto grid : grids) {
+        if (grid->gameObject()->tag == name) {
+            return grid;
+        }
+    }
+    return nullptr;
+}
 
 void GridDrawer::OnEnable() {
 }
@@ -24,7 +34,12 @@ void GridDrawer::OnDisable() {
 
 // TODO on before camera render actually
 void GridDrawer::Update() {
-    auto* grid = Grid::Get();
+    auto grid = gameObject()->GetComponent<Grid>();
+    if (grid == nullptr) {
+        LogError("no Grid with gridDrawer");
+        return;
+    }
+    auto gridSystem = GridSystem::Get();
     auto prefabRenderer = gridCellPrefab->GetComponent<MeshRenderer>();
     while (pooledRenderers.size() < grid->cells.size()) {
         pooledRenderers.emplace_back(prefabRenderer->mesh, prefabRenderer->material);
@@ -35,14 +50,14 @@ void GridDrawer::Update() {
         const auto& cell = grid->cells[i];
         auto& renderer = pooledRenderers[i];
 
-        const auto& name = grid->GetDesc((GridCellType)cell.type).meshName;
+        const auto& name = gridSystem->GetDesc((GridCellType)cell.type).meshName;
 
         if (renderer.mesh != nullptr) {
             renderer.OnDisable();
         }
         renderer.mesh = nullptr;
         renderer.m_transform->SetPosition(grid->GetCellWorldCenter(cell.pos));
-        for (const auto& mesh : grid->settings->mesh->meshes) {
+        for (const auto& mesh : gridSystem->settings->mesh->meshes) {
             if (mesh->name == name) {
                 renderer.mesh = mesh;
                 // HACK to add to renderers list
@@ -53,21 +68,27 @@ void GridDrawer::Update() {
     }
 }
 
-const GridCellDesc& Grid::GetDesc(GridCellType type) const {
+const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
     for (const auto& desc : settings->cellDescs) {
         if (desc.type == type) {
             return desc;
         }
     }
     static const GridCellDesc emptyDesc{};
+
     return emptyDesc;
 }
 
-bool Grid::Init() {
-    auto L = LuaSystem::Get()->L;
-
-    Luna::RegisterShared<Grid>(L);
-    Luna::Register<GridCell>(L);
+void Grid::OnEnable() {
+    std::shared_ptr<Grid> thisShared;
+    for (auto c : gameObject()->components) {
+        if (c.get() == this) {
+            thisShared = std::dynamic_pointer_cast<Grid>(c);
+            break;
+        }
+    }
+    ASSERT(thisShared);
+    GridSystem::Get()->grids.push_back(thisShared);
 
     for (int x = 0; x < sizeX; x++) {
         for (int y = 0; y < sizeY; y++) {
@@ -77,6 +98,18 @@ bool Grid::Init() {
             cell.type = (int)GridCellType::GROUND;
         }
     }
+}
+void Grid::OnDisable() {
+    auto& grids = GridSystem::Get()->grids;
+    grids.erase(std::find_if(grids.begin(), grids.end(), [this](auto x) { return x.get() == this; }));
+}
+
+bool GridSystem::Init() {
+    auto L = LuaSystem::Get()->L;
+
+    Luna::RegisterShared<GridSystem>(L);
+    Luna::RegisterShared<Grid>(L);
+    Luna::Register<GridCell>(L);
 
     settings = AssetDatabase::Get()->Load<GridSettings>("grid.asset");  // TODO make visible from inspector
 
@@ -86,7 +119,7 @@ bool Grid::Init() {
     return true;
 }
 
-void Grid::Term() {
+void GridSystem::Term() {
     settings = nullptr;
 }
 

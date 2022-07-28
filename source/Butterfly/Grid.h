@@ -6,106 +6,117 @@
 #include "Transform.h"
 #include "System.h"
 
-enum class GridCellType : int
-{
-	NONE,
-	GROUND
+enum class GridCellType : int {
+    NONE,
+    GROUND
 };
 REFLECT_ENUM(GridCellType);
 
-
 class GridCellMeshRenderer : public MeshRendererAbstract {
-public:
-	GridCellMeshRenderer() :MeshRendererAbstract() {
-		m_transform = &transform;
-		SetEnabled(true);
-	}
-	~GridCellMeshRenderer() {
-		SetEnabled(false);
-	}
-	GridCellMeshRenderer(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) : GridCellMeshRenderer() {
-		this->mesh = mesh;
-		this->material = material;
-	}
-	GridCellMeshRenderer(GridCellMeshRenderer&& other) : GridCellMeshRenderer(other.mesh, other.material) {
-		this->transform = other.transform;
-	}
-	GridCellMeshRenderer(const GridCellMeshRenderer& other) : GridCellMeshRenderer(other.mesh, other.material) {
-		this->transform = other.transform;
-	}
-	Transform transform;
+   public:
+    GridCellMeshRenderer() : MeshRendererAbstract() {
+        m_transform = &transform;
+        SetEnabled(true);
+    }
+    ~GridCellMeshRenderer() {
+        SetEnabled(false);
+    }
+    GridCellMeshRenderer(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) : GridCellMeshRenderer() {
+        this->mesh = mesh;
+        this->material = material;
+    }
+    GridCellMeshRenderer(GridCellMeshRenderer&& other) : GridCellMeshRenderer(other.mesh, other.material) {
+        this->transform = other.transform;
+    }
+    GridCellMeshRenderer(const GridCellMeshRenderer& other) : GridCellMeshRenderer(other.mesh, other.material) {
+        this->transform = other.transform;
+    }
+    Transform transform;
 };
 
 class GridCellDesc {
-public:
-	GridCellType type;
-	std::string meshName;
-	REFLECT_BEGIN(GridCellDesc);
-	REFLECT_VAR(type);
-	REFLECT_VAR(meshName);
-	REFLECT_END();
+   public:
+    GridCellType type;
+    std::string meshName;
+    REFLECT_BEGIN(GridCellDesc);
+    REFLECT_VAR(type);
+    REFLECT_VAR(meshName);
+    REFLECT_END();
 };
 
 class GridCell {
-public:
-	int type = (int)GridCellType::NONE;
-	Vector2Int pos; // TODO only for intermediate form
-	float z;
+   public:
+    int type = (int)GridCellType::NONE;
+    Vector2Int pos;  // TODO only for intermediate form
+    float z;
 
-	REFLECT_BEGIN(GridCell);
-	REFLECT_VAR(type);
-	REFLECT_VAR(pos);
-	REFLECT_END();
+    REFLECT_BEGIN(GridCell);
+    REFLECT_VAR(type);
+    REFLECT_VAR(pos);
+    REFLECT_END();
 };
 class GridSettings : public Object {
-public:
-	std::shared_ptr<FullMeshAsset> mesh;
-	std::vector<GridCellDesc> cellDescs;
-	REFLECT_BEGIN(GridSettings);
-	REFLECT_VAR(mesh);
-	REFLECT_VAR(cellDescs);
-	REFLECT_END();
+   public:
+    std::shared_ptr<FullMeshAsset> mesh;
+    std::vector<GridCellDesc> cellDescs;
+    REFLECT_BEGIN(GridSettings);
+    REFLECT_VAR(mesh);
+    REFLECT_VAR(cellDescs);
+    REFLECT_END();
 };
-class Grid : public GameSystem<Grid> {
+class Grid : public Component {
 public:
+    virtual void OnEnable() override;
+    virtual void OnDisable() override;
 
-	const GridCellDesc& GetDesc(GridCellType type) const;
+    GridCell GetCell(Vector2Int pos) const;
+    void SetCell(const GridCell& cell);
 
-	bool Init() override;
-	void Term() override;
+    Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
+    Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
 
+    std::vector<GridCell> cells;
 
-	GridCell GetCell(Vector2Int pos) const;
-	void SetCell(const GridCell& cell);
+    int sizeX = 20;
+    int sizeY = 20;
 
-	Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
-	Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
+    REFLECT_BEGIN(Grid);
+    REFLECT_METHOD(GetClosestIntPos);
+    REFLECT_METHOD(GetCellWorldCenter);
+    REFLECT_METHOD(GetCell);
+    REFLECT_METHOD(SetCell);
+    REFLECT_END();
+};
 
-	std::vector<GridCell> cells;
-	std::shared_ptr<GridSettings> settings;
+class GridSystem : public GameSystem<GridSystem> {
+   public:
+    const GridCellDesc& GetDesc(GridCellType type) const;
 
-	int sizeX = 20;
-	int sizeY = 20;
+    bool Init() override;
+    void Term() override;
 
-	REFLECT_BEGIN(Grid);
-	REFLECT_METHOD(GetClosestIntPos);
-	REFLECT_METHOD(GetCellWorldCenter);
-	REFLECT_METHOD(GetCell);
-	REFLECT_METHOD(SetCell);
-	REFLECT_END();
+    std::shared_ptr<GridSettings> settings;
+
+    std::vector<std::shared_ptr<Grid>> grids;
+
+    std::shared_ptr<Grid> GetGrid(const std::string& name);
+
+    REFLECT_BEGIN(GridSystem);
+    REFLECT_METHOD(GetGrid);
+    REFLECT_END();
 };
 
 class GridDrawer : public Component {
-public:
-	void OnEnable() override;
-	void OnDisable() override;
-	void Update() override;
+   public:
+    void OnEnable() override;
+    void OnDisable() override;
+    void Update() override;
 
-private:
-	std::shared_ptr<GameObject> gridCellPrefab;
-	std::vector<GridCellMeshRenderer> pooledRenderers;
+   private:
+    std::shared_ptr<GameObject> gridCellPrefab;
+    std::vector<GridCellMeshRenderer> pooledRenderers;
 
-	REFLECT_BEGIN(GridDrawer);
-	REFLECT_VAR(gridCellPrefab);
-	REFLECT_END();
+    REFLECT_BEGIN(GridDrawer);
+    REFLECT_VAR(gridCellPrefab);
+    REFLECT_END();
 };

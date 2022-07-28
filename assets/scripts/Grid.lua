@@ -12,7 +12,6 @@ end
 
 local Vector2Int = {}
 Vector2Int.__index = Vector2Int
-print("SDFSDF")
 function Vector2Int.new(_x, _y)
 	local self = {x = _x, y = _y}
     
@@ -27,33 +26,11 @@ function Vector2Int.Zero() : Vector2Int
 	return Vector2Int.new(0,0)
 end
 
-local CellType = enum {
-	"NONE",
-	"GROUND"
-}
-
 type GridCell = {
 	type : number,
 	pos : Vector2Int
 }
--- print(CellType.NONE)
--- print(CellType.GROUND)
 
-local g : GridCell = { type = 0, pos = Vector2Int.new(1,2) }
-g.type = CellType.GROUND
+local Grid = {}
 
-local v : Vector2Int = Vector2Int.Zero()
-
-print("GGGGGGGGGGGg = ", typeof(v))
-
-local function vec2(x, y)
-    local t = {}
-    t.x = x
-    t.y = y
-    return t
-end
-
-local v1 = Vector2Int.new(1, 2)
-local v2 = Vector2Int.new(1, 2)
-print(v1:add(v2).z)
-print(g.type)
+return Grid

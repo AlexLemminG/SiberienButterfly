@@ -1,4 +1,4 @@
-
+local World = require("World")
 local Game = {
 	playerGO = nil,
 	grid = nil,
@@ -35,6 +35,8 @@ function Game:OnEnable()
 	-- playerScript.scale = 0.8
 
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
+
+	World:Init()
 end
 
 

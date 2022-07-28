@@ -1,3 +1,4 @@
+local CellType = require("CellType")
 
 local Character = {
 	runAnimation = nil,
@@ -5,7 +6,8 @@ local Character = {
 	runWithItemAnimation = nil,
 	standWithItemAnimation = nil,
 	animator = nil,
-	rigidBody = nil
+	rigidBody = nil,
+	item = CellType.NONE
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -53,11 +55,20 @@ function Character:Move(deltaPos : vector)
 
 	self.rigidBody:SetAngularVelocity(vector(0,0,0))
 
+	local animation = self.runAnimation
 	if Length(deltaPos) > 0.1 then
-		self.animator:SetAnimation(self.runAnimation)
+		animation = self.runAnimation
+		if self.item ~= CellType.NONE then
+			animation = self.runWithItemAnimation
+		end
 	else
-		self.animator:SetAnimation(self.standAnimation) 
+		animation = self.standAnimation
+		if self.item ~= CellType.NONE then
+			animation = self.standWithItemAnimation
+		end
 	end
+	self.animator:SetAnimation(animation)
+
 	self.animator.speed = 2.0
 end
 

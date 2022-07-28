@@ -2,7 +2,9 @@ Scene:
   sphericalHarmonics: engine\nightHarmonics.asset
   prefabInstances:
     - prefab: prefabs\grid.asset
-      overrides: ~
+      overrides:
+        GameObject:
+          tag: ItemsGrid
     - prefab: prefabs\column.asset
       overrides:
         Transform:
