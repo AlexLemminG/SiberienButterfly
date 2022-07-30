@@ -42,7 +42,6 @@ function Lerp(a,b,t) return a * (1-t) + b * t end
 function PlayerController:Update()
 	local input = Input()
 
-	
 	local deltaPos = vector(0,0,0)
 	if input:GetKey("W") then
 		deltaPos = deltaPos + vector(0,0,1)
@@ -65,6 +64,9 @@ function PlayerController:Update()
 	deltaPos = deltaPos * self.speed
 
 	local character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
+	if character.item ~= CellType.NONE then
+		deltaPos = deltaPos * 0.8
+	end
 	character:Move(deltaPos)
 	
 	local grid = World.items
@@ -74,14 +76,14 @@ function PlayerController:Update()
 	local pos = grid:GetCellWorldCenter(cellPos)
 	
 	pos = pos + vector(0,0.0,0)
-	selectionTrans:SetPosition(pos)
 
-	local cell = grid:GetCell(cellPos)
+	local action = character:GetActionOnCellPos(cellPos)
+	if action == nil then
+		pos = pos - vector(0,10000,0) --TODO propper hide selection
+	end
+	selectionTrans:SetPosition(pos)
 	if Input():GetKeyDown("Space") then
-		local t = cell.type
-		cell.type = character.item
-		character.item = t
-		grid:SetCell(cell)
+		character:ExecuteAction(action)
 	end
 end
 

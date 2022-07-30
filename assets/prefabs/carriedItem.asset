@@ -1,0 +1,24 @@
+GameObject:
+  tag: carriedItem
+  components:
+    - $Transform
+    - $MeshRenderer
+    - $ParentedTransform
+Transform:
+  scale:
+    - 1
+    - 1
+    - 1
+MeshRenderer:
+  mesh: models\GridCells.blend$Ground
+  material: materials\grid.asset
+ParentedTransform:
+  localMatrix:
+    pos:
+      - 0
+      - 0
+      - 0
+    euler:
+      - 0
+      - 0
+      - 0

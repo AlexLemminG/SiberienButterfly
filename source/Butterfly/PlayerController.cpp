@@ -47,7 +47,7 @@ void PlayerController::Update() {
                         break;
                     }
                 }
-                apple->GetComponent<ParentedTransform>()->SetParent(gameObject()->GetComponent<MeshRenderer>(), idx);
+                apple->GetComponent<ParentedTransform>()->SetParentAsBone(gameObject()->GetComponent<MeshRenderer>(), idx);
             }
             hasItem = !hasItem;
             auto animator = gameObject()->GetComponent<Animator>();

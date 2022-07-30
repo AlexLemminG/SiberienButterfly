@@ -7,6 +7,7 @@
 #include "System.h"
 
 enum class GridCellType : int {
+    ZERO,
     NONE,
     GROUND
 };

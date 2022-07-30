@@ -79,13 +79,14 @@ Scene:
               someInt: 1.2174877
               followSpeed: 1
           script: Appled
+    - prefab: prefabs\game.asset
+      overrides: {}
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
     - prefabs\torch.asset
     - prefabs\torch2.asset
     - $Light
-    - prefabs\game.asset
 GameObject$Light:
   tag: DirLight
   components:

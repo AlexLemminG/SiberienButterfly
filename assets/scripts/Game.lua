@@ -17,6 +17,9 @@ end
 
 
 function Game:OnEnable()
+	World:Init()
+	print("World", World, World.items)
+
 	self.playerGO = self:gameObject():GetScene():FindGameObjectByTag("player")
 	
 	self.grid = Grid()
@@ -36,7 +39,6 @@ function Game:OnEnable()
 
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 
-	World:Init()
 end
 
 

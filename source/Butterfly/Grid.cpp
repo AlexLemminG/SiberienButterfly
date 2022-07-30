@@ -120,6 +120,16 @@ bool GridSystem::Init() {
 }
 
 void GridSystem::Term() {
+    auto luaSystem = LuaSystem::Get();
+    if (luaSystem) {
+        auto L = LuaSystem::Get()->L;
+        if (L) {
+            Luna::UnregisterShared<GridSystem>(L);
+            Luna::UnregisterShared<Grid>(L);
+            Luna::Unregister<GridCell>(L);
+        }
+    }
+
     settings = nullptr;
 }
 
