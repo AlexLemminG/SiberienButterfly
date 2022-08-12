@@ -83,6 +83,12 @@ public:
     int sizeX = 20;
     int sizeY = 20;
 
+    int GetModificationsCount()const {
+        return modificationsCount;
+    }
+private:
+    int modificationsCount = 0;
+
     REFLECT_BEGIN(Grid);
     REFLECT_METHOD(GetClosestIntPos);
     REFLECT_METHOD(GetCellWorldCenter);
@@ -123,6 +129,7 @@ class GridDrawer : public Component {
     std::shared_ptr<GameObject> gridCellPrefab;
     std::vector<GridCellMeshRenderer> pooledRenderers;
 
+    int lastModificationsCount = -1;
     REFLECT_BEGIN(GridDrawer);
     REFLECT_VAR(gridCellPrefab);
     REFLECT_END();

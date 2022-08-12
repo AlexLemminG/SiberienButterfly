@@ -39,6 +39,10 @@ void GridDrawer::Update() {
         LogError("no Grid with gridDrawer");
         return;
     }
+    if (lastModificationsCount == grid->GetModificationsCount()) {
+        return;
+    }
+    lastModificationsCount = grid->GetModificationsCount();
     auto gridSystem = GridSystem::Get();
     auto prefabRenderer = gridCellPrefab->GetComponent<MeshRenderer>();
     while (pooledRenderers.size() < grid->cells.size()) {
@@ -188,5 +192,6 @@ GridCell Grid::GetCell(Vector2Int pos) const {
 void Grid::SetCell(const GridCell& cell) {
     if (cell.pos.x >= 0 && cell.pos.x < sizeX && cell.pos.y >= 0 && cell.pos.y < sizeY) {
         cells[cell.pos.x * sizeY + cell.pos.y] = cell;
+        modificationsCount++;
     }
 }

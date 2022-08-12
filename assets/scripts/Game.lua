@@ -1,7 +1,6 @@
 local World = require("World")
 local Game = {
 	playerGO = nil,
-	grid = nil,
 	characterPrefab = nil,
 	luaPlayerGO = nil
 }
@@ -22,7 +21,7 @@ function Game:OnEnable()
 	math.randomseed(42)
 	for x = 0, 19, 1 do
 		for y = 0, 19, 1 do
-			local height = math.random(10) / 60
+			local height = math.random(10) / 40
 			local cell = World.items:GetCell({x=x,y=y})
 			if math.random(100) > 90 then
 				cell.type = CellType.SPHERE
@@ -42,9 +41,6 @@ function Game:OnEnable()
 	print("World", World, World.items)
 
 	self.playerGO = self:gameObject():GetScene():FindGameObjectByTag("player")
-	
-	self.grid = Grid()
-	-- print("trans = ", selectionTrans)
 	
 	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
 	
