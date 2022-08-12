@@ -40,9 +40,11 @@ class GridCellDesc {
    public:
     GridCellType type;
     std::string meshName;
+    std::shared_ptr<Mesh> mesh;
     REFLECT_BEGIN(GridCellDesc);
     REFLECT_VAR(type);
     REFLECT_VAR(meshName);
+    REFLECT_VAR(mesh);
     REFLECT_END();
 };
 
@@ -107,15 +109,19 @@ class GridSystem : public GameSystem<GridSystem> {
     std::shared_ptr<GridSettings> settings;
 
     std::vector<std::shared_ptr<Grid>> grids;
+    std::shared_ptr<Mesh> defaultMesh;
 
     std::shared_ptr<Grid> GetGrid(const std::string& name);
 
     void LoadCellTypes();
 
+    std::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
+
     GameEventHandle onAfterLuaReloaded;
 
     REFLECT_BEGIN(GridSystem);
     REFLECT_METHOD(GetGrid);
+    REFLECT_METHOD(GetMeshByCellType);
     REFLECT_END();
 };
 

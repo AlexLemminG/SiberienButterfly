@@ -61,13 +61,9 @@ void GridDrawer::Update() {
         }
         renderer.mesh = nullptr;
         renderer.m_transform->SetPosition(grid->GetCellWorldCenter(cell.pos));
-        for (const auto& mesh : gridSystem->settings->mesh->meshes) {
-            if (mesh->name == name) {
-                renderer.mesh = mesh;
-                // HACK to add to renderers list
-                renderer.OnEnable();
-                break;
-            }
+        renderer.mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
+        if (renderer.mesh) {
+            renderer.OnEnable();
         }
     }
 }
@@ -78,7 +74,9 @@ const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
             return desc;
         }
     }
-    static const GridCellDesc emptyDesc{};
+    GridCellDesc emptyDesc{};
+    emptyDesc.mesh = defaultMesh;
+    emptyDesc.type = type;
 
     return emptyDesc;
 }
@@ -157,6 +155,16 @@ void GridSystem::LoadCellTypes() {
     context.isLua = true;
     DeserializeFromLuaToContext(L, -1, context);
     this->settings->cellDescs.clear();
+
+
+    this->defaultMesh = nullptr;
+    for (auto mesh : this->settings->mesh->meshes) {
+        if (strcmpi(mesh->name.c_str(), "unknown") == 0) {
+            this->defaultMesh = mesh;
+            break;
+        }
+    }
+
     for (auto c : context.GetChildrenNames()) {
         int i = 0;
         context.Child(c) >> i;
@@ -166,7 +174,18 @@ void GridSystem::LoadCellTypes() {
         if (meshName.size() > 0) {
             meshName[0] = std::toupper(meshName[0]);
         }
-        this->settings->cellDescs.push_back({(GridCellType)i, meshName});
+        std::shared_ptr<Mesh> cellMesh = this->defaultMesh;
+        for (auto mesh : this->settings->mesh->meshes) {
+            if (strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
+                cellMesh = mesh;
+                break;
+            }
+        }
+        if (c == "NONE") {
+            cellMesh = nullptr;
+            meshName = "None";
+        }
+        this->settings->cellDescs.push_back({(GridCellType)i, meshName, cellMesh});
     }
 }
 
@@ -194,4 +213,8 @@ void Grid::SetCell(const GridCell& cell) {
         cells[cell.pos.x * sizeY + cell.pos.y] = cell;
         modificationsCount++;
     }
+}
+
+std::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
+    return GetDesc((GridCellType)cellType).mesh;
 }

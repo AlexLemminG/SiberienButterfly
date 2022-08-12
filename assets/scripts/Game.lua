@@ -24,7 +24,7 @@ function Game:OnEnable()
 			local height = math.random(10) / 40
 			local cell = World.items:GetCell({x=x,y=y})
 			if math.random(100) > 90 then
-				cell.type = CellType.SPHERE
+				cell.type = CellType.WHEAT
 			else
 				cell.type = CellType.NONE
 			end

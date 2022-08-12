@@ -1,7 +1,15 @@
 local CellTypeInv = {
 	"NONE",
 	"GROUND",
-	"SPHERE"
+	"SPHERE",
+	"TREE",
+	"WHEAT",
+	"WHEAT_COLLECTED_1",
+	"WHEAT_COLLECTED_2",
+	"WHEAT_COLLECTED_3",
+	"WHEAT_COLLECTED_4",
+	"WHEAT_COLLECTED_5",
+	"WHEAT_COLLECTED_6"
 }
 
 return CellTypeInv

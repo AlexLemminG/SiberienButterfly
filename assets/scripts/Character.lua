@@ -42,20 +42,15 @@ function Character:OnEnable()
 	parentedTransform:SetParentAsBone(self:gameObject():GetComponent("MeshRenderer"), attachBoneIdx)
 
 	self:SetItem(CellType.NONE)
+
+	RegisterAllCombineRules() --TODO in Game class
 end
 
 function Character:SetItem(item : number)
 	local allMeshes = AssetDatabase():Load("models/GridCells.blend")
 	local itemMeshRenderer = self.itemGO:GetComponent("MeshRenderer")
 	self.item = item
-	if item == CellType.NONE then
-		itemMeshRenderer.mesh = nil
-	else
-		local meshName = CellTypeInv[item]
-		meshName = string.lower(meshName)
-		meshName = string.upper(meshName:sub(1, 1)) .. meshName:sub(2, meshName:len())
-		itemMeshRenderer.mesh = allMeshes:FindMesh(meshName)
-	end
+	itemMeshRenderer.mesh = GridSystem():GetMeshByCellType(item)
 
 	self:UpdateAnimation()
 end
@@ -133,25 +128,85 @@ function IsPickable(itemType)
 	return itemType ~= CellType.NONE
 end
 
-function Action_PickItem(character, intPos)
+function Action_Transform(character, intPos, newItemAtCell, newItemOnCharacter)
 	local action = {}
 	action.func = 
 		function(action)
 			local cell = World.items:GetCell(intPos)
 			local t = cell.type
-			cell.type = character.item
-			character:SetItem(t)
+			cell.type = newItemAtCell
+			character:SetItem(newItemOnCharacter)
 			World.items:SetCell(cell)
 		end
 	return action
+end
+
+function Action_PickItem(character, intPos)
+	local cell = World.items:GetCell(intPos)
+	return Action_Transform(character, intPos, character.item, cell.type)
 end
 
 function Action_DropItem(character, intPos)
 	return Action_PickItem(character, intPos)
 end
 
+combineRules = {}
+
+function RegisterCombineRule(charItem, cellItem, newCharItem, newCellItem)
+	local charRules = combineRules[charItem]
+	if charRules == nil then
+		combineRules[charItem] = {}
+	end
+	--TODO override check
+	combineRules[charItem][cellItem] = {newCharItem=newCharItem, newCellItem=newCellItem}
+end
+
+function GetCombineRule(charItem, cellItem)
+	local charRules = combineRules[charItem]
+	if charRules == nil then
+		return nil
+	end
+	return charRules[cellItem]
+end
+
+function RegisterAllCombineRules()
+	combineRules = {}
+
+	RegisterCombineRule(CellType.NONE, CellType.WHEAT, CellType.NONE, CellType.WHEAT_COLLECTED_1)
+	-- WHEAT combine
+	for i = 1, 6, 1 do
+		for j = 1, 6, 1 do
+			local total = i + j
+			if total <= 6 then
+				RegisterCombineRule(CellType.WHEAT_COLLECTED_1 - 1 + i, CellType.WHEAT_COLLECTED_1 - 1 + j, CellType.NONE, CellType.WHEAT_COLLECTED_1 - 1 + total)
+			elseif total < 12 then
+				local reminder = total - 6
+				RegisterCombineRule(CellType.WHEAT_COLLECTED_1 - 1 + i, CellType.WHEAT_COLLECTED_1 - 1 + j, CellType.WHEAT_COLLECTED_1 - 1 + reminder, CellType.WHEAT_COLLECTED_6)
+			end
+		end
+	end
+
+
+end
+
+function GetCombineAction(character, intPos)
+	local charItem = character.item
+	local cellItem = World.items:GetCell(intPos).type
+
+	local rule = GetCombineRule(charItem, cellItem)
+	if rule then
+		return Action_Transform(character, intPos, rule.newCellItem, rule.newCharItem)
+	end
+	return nil
+end
+
 function Character:GetActionOnCellPos(intPos)
 	local cell = World.items:GetCell(intPos)
+
+	local combineAction = GetCombineAction(self, intPos)
+	if combineAction then
+		return combineAction
+	end
 	if self.item == CellType.NONE and IsPickable(cell.type) then
 		return Action_PickItem(self, intPos)
 	end
