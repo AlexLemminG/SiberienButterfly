@@ -3,13 +3,14 @@
 local CellTypeInv = require("CellTypeInv")
 
 function enum(tbl : any) : any
+    local res = {}
     local length = #tbl
     for i = 1, length do
         local v = tbl[i]
-        tbl[v] = i
+        res[v] = i
     end
 
-    return tbl
+    return res
 end
 
 local CellType = enum(CellTypeInv)

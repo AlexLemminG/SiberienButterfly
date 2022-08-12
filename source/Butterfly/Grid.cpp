@@ -95,7 +95,7 @@ void Grid::OnEnable() {
             auto& cell = cells.emplace_back();
             cell.pos.x = x;
             cell.pos.y = y;
-            cell.type = (int)GridCellType::GROUND;
+            cell.type = (int)GridCellType::NONE;
         }
     }
 }
@@ -113,15 +113,22 @@ bool GridSystem::Init() {
 
     settings = AssetDatabase::Get()->Load<GridSettings>("grid.asset");  // TODO make visible from inspector
 
+
+
     if (!settings) {
         return false;
     }
+
+    this->onAfterLuaReloaded = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() { LoadCellTypes(); });
+    LoadCellTypes();
+
     return true;
 }
 
 void GridSystem::Term() {
     auto luaSystem = LuaSystem::Get();
     if (luaSystem) {
+        luaSystem->onAfterScriptsReloading.Unsubscribe(this->onAfterLuaReloaded);
         auto L = LuaSystem::Get()->L;
         if (L) {
             Luna::UnregisterShared<GridSystem>(L);
@@ -132,6 +139,33 @@ void GridSystem::Term() {
 
     settings = nullptr;
 }
+
+
+void GridSystem::LoadCellTypes() {
+    LuaSystem::Get()->PushModule("CellType");
+    auto L = LuaSystem::Get()->L;
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        ASSERT("Failed to load CellType lua module");
+        return;
+    }
+    SerializationContext context{};
+    context.isLua = true;
+    DeserializeFromLuaToContext(L, -1, context);
+    this->settings->cellDescs.clear();
+    for (auto c : context.GetChildrenNames()) {
+        int i = 0;
+        context.Child(c) >> i;
+        std::string meshName = c;
+        std::transform(meshName.begin(), meshName.end(), meshName.begin(),
+            [](unsigned char c) { return std::tolower(c); });
+        if (meshName.size() > 0) {
+            meshName[0] = std::toupper(meshName[0]);
+        }
+        this->settings->cellDescs.push_back({(GridCellType)i, meshName});
+    }
+}
+
 
 Vector3 Grid::GetCellWorldCenter(const Vector2Int& pos) const {
     auto cell = GetCell(pos);

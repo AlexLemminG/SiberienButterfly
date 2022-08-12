@@ -1,6 +1,7 @@
 local CellTypeInv = {
 	"NONE",
-	"GROUND"
+	"GROUND",
+	"SPHERE"
 }
 
 return CellTypeInv

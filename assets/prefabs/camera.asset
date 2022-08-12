@@ -10,7 +10,7 @@ Camera:
     g: 0.3011583
     b: 0.2674738
     a: 1
-  fov: 71.75106
+  fov: 30
   nearPlane: 1.2769767
   farPlane: 1000
 Transform:
@@ -21,7 +21,7 @@ Transform:
   euler:
     - 0
     - -90
-    - 75
+    - 50
   scale:
     - 0.9999999
     - 0.99999994
@@ -29,8 +29,8 @@ Transform:
 TopDownCameraRig:
   targetTag: player
   offset:
-    - 2.7
-    - 8.7
+    - 15.5
+    - 17.5
     - 0
   lerpT: 3
   collisionLerpT: 3

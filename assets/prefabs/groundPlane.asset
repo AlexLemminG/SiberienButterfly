@@ -11,12 +11,12 @@ Transform:
     - 0
     - 0
   scale:
-    - 99.999
     - 1
-    - 99.999
+    - 1
+    - 1
   pos:
     - 0
-    - -0.079
+    - 0
     - 0
 MeshRenderer:
   mesh: engine\models\1x1Plane.glb$Mesh
@@ -28,9 +28,9 @@ RigidBody:
   isStatic: 1
 BoxCollider:
   size:
-    - 1
+    - 100
     - 2
-    - 1
+    - 100
   center:
     - 0
     - -1

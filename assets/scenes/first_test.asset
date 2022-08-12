@@ -5,6 +5,10 @@ Scene:
       overrides:
         GameObject:
           tag: ItemsGrid
+    - prefab: prefabs\grid.asset
+      overrides:
+        GameObject:
+          tag: GroundGrid
     - prefab: prefabs\column.asset
       overrides:
         Transform:

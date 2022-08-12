@@ -64,14 +64,30 @@ function Character:OnDisable()
 	self:gameObject():GetScene():RemoveGameObject(self.itemGO)
 end
 
-function Character:Update()
-	self.animator:SetAnimation(self.runAnimation)
-end
 --TODO global func or vector.func
 function Length(v : vector)
 	return math.sqrt (v.x*v.x + v.y*v.y + v.z*v.z)
 end
+
 function Lerp(a,b,t) return a * (1-t) + b * t end
+
+function Character:Update()
+	self.animator:SetAnimation(self.runAnimation)
+
+	-- setting Y coord to ground character
+	local trans = self.rigidBody:GetTransform()
+	local pos = Mathf.GetPos(trans)
+	local grid = World.items
+	local cellPos = grid:GetClosestIntPos(pos)
+	local dt = Time().deltaTime() -- TODO Time:deltaTime somehow ?
+	pos = vector(pos.x, Lerp(pos.y, grid:GetCellWorldCenter(cellPos).y, dt * 20.0), pos.z)
+	Mathf.SetPos(trans, pos)
+	self.rigidBody:SetTransform(trans)
+	
+	local velocity = self.rigidBody:GetLinearVelocity()
+	velocity = vector(velocity.x, 0.0, velocity.z)
+	self.rigidBody:SetLinearVelocity(velocity)
+end
 
 function Character:Move(velocity : vector)
 	local trans = self.rigidBody:GetTransform()
@@ -85,7 +101,7 @@ function Character:Move(velocity : vector)
 
 	local prevVelocity = self.rigidBody:GetLinearVelocity()
 	local newVelocity = Lerp(prevVelocity, velocity, 0.8)
-	newVelocity = vector(newVelocity.x, math.min(prevVelocity.y, 0), newVelocity.z)
+	newVelocity = vector(newVelocity.x, 0.0, newVelocity.z)
 	
 	self.rigidBody:SetLinearVelocity(newVelocity)
 

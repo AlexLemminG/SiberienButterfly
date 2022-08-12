@@ -5,6 +5,7 @@
 #include "MeshRenderer.h"
 #include "Transform.h"
 #include "System.h"
+#include "GameEvents.h"
 
 enum class GridCellType : int {
     ZERO,
@@ -49,11 +50,12 @@ class GridCell {
    public:
     int type = (int)GridCellType::NONE;
     Vector2Int pos;  // TODO only for intermediate form
-    float z;
+    float z = 0.f;
 
     REFLECT_BEGIN(GridCell);
     REFLECT_VAR(type);
     REFLECT_VAR(pos);
+    REFLECT_VAR(z);
     REFLECT_END();
 };
 class GridSettings : public Object {
@@ -101,6 +103,10 @@ class GridSystem : public GameSystem<GridSystem> {
     std::vector<std::shared_ptr<Grid>> grids;
 
     std::shared_ptr<Grid> GetGrid(const std::string& name);
+
+    void LoadCellTypes();
+
+    GameEventHandle onAfterLuaReloaded;
 
     REFLECT_BEGIN(GridSystem);
     REFLECT_METHOD(GetGrid);
