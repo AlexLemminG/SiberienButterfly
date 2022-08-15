@@ -39,6 +39,6 @@ RenderSettings:
   test: 6
   backend: 2
   vsync: 1
-  debug: 0
+  debug: 1
   msaa: 0
   frustumCulling: 1

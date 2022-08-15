@@ -2,6 +2,21 @@ local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local World = require("World")
 
+function dump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k, v in pairs(o) do
+            if type(k) ~= 'number' then
+                k = '"' .. k .. '"'
+            end
+            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
+end
+
 local Character = {
 	runAnimation = nil,
 	standAnimation = nil,
@@ -9,7 +24,7 @@ local Character = {
 	standWithItemAnimation = nil,
 	animator = nil,
 	rigidBody = nil,
-	item = CellType.NONE,
+	item = CellType.None,
 	prevSpeed = 0.0,
 	itemGO = nil
 }
@@ -41,7 +56,7 @@ function Character:OnEnable()
 	local attachBoneIdx = 24 -- TODO
 	parentedTransform:SetParentAsBone(self:gameObject():GetComponent("MeshRenderer"), attachBoneIdx)
 
-	self:SetItem(CellType.NONE)
+	self:SetItem(CellType.None)
 
 	RegisterAllCombineRules() --TODO in Game class
 end
@@ -110,12 +125,12 @@ function Character:UpdateAnimation()
 	local animation = self.runAnimation
 	if self.prevSpeed > 0.1 then
 		animation = self.runAnimation
-		if self.item ~= CellType.NONE then
+		if self.item ~= CellType.None then
 			animation = self.runWithItemAnimation
 		end
 	else
 		animation = self.standAnimation
-		if self.item ~= CellType.NONE then
+		if self.item ~= CellType.None then
 			animation = self.standWithItemAnimation
 		end
 	end
@@ -125,25 +140,43 @@ function Character:UpdateAnimation()
 end
 
 function IsPickable(itemType)
-	return itemType ~= CellType.NONE
+	return itemType ~= CellType.None and itemType ~= CellType.Any
 end
 
-function Action_Transform(character, intPos, newItemAtCell, newItemOnCharacter)
+function Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, newGroundItem, callback)
 	local action = {}
 	action.func = 
 		function(action)
-			local cell = World.items:GetCell(intPos)
-			local t = cell.type
-			cell.type = newItemAtCell
-			character:SetItem(newItemOnCharacter)
-			World.items:SetCell(cell)
+			if newItemOnCharacter ~= CellType.Any then
+				character:SetItem(newItemOnCharacter)
+			end
+
+			if newItemAtCell ~= CellType.Any then
+				local cell = World.items:GetCell(intPos)
+				cell.type = newItemAtCell
+				World.items:SetCell(cell)
+			end
+
+			if newGroundItem ~= CellType.Any then
+				local cell = World.ground:GetCell(intPos)
+				cell.type = newGroundItem
+				World.ground:SetCell(cell)
+			end
+
+			if callback then
+				callback(character, intPos)
+			end
 		end
 	return action
 end
 
+function Action_Transform(character, intPos, newItemOnCharacter, newItemAtCell)
+	return Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, CellType.Any)
+end
+
 function Action_PickItem(character, intPos)
 	local cell = World.items:GetCell(intPos)
-	return Action_Transform(character, intPos, character.item, cell.type)
+	return Action_Transform(character, intPos, cell.type, character.item)
 end
 
 function Action_DropItem(character, intPos)
@@ -152,51 +185,124 @@ end
 
 combineRules = {}
 
-function RegisterCombineRule(charItem, cellItem, newCharItem, newCellItem)
-	local charRules = combineRules[charItem]
+function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
+	local charRules = combineRules[charType]
 	if charRules == nil then
-		combineRules[charItem] = {}
+		charRules = {}
+		combineRules[charType] = charRules
 	end
-	--TODO override check
-	combineRules[charItem][cellItem] = {newCharItem=newCharItem, newCellItem=newCellItem}
+	local itemRules = charRules[itemType]
+	if itemRules == nil then
+		itemRules = {}
+		charRules[itemType] = itemRules
+	end
+	if itemRules[groundType] == nil or overrideIfExists then
+		itemRules[groundType] = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
+	end
 end
 
-function GetCombineRule(charItem, cellItem)
-	local charRules = combineRules[charItem]
+function RegisterCombineRule(charType, itemType, newCharType, newItemType)
+	RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any)
+end
+
+function RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType)
+	RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType)
+end
+
+function GetCombineRule_NoAnyChecks(charType, itemType, groundType)
+	local charRules = combineRules[charType]
 	if charRules == nil then
 		return nil
 	end
-	return charRules[cellItem]
+	local itemRules = charRules[itemType]
+	if itemRules == nil then
+		return nil
+	end
+	return itemRules[groundType]
+end
+
+function GetCombineRule(charType, itemType, groundType)
+	local rule = GetCombineRule_NoAnyChecks(charType, itemType, groundType)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(charType, itemType, CellType.Any)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(charType, CellType.Any, groundType)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(charType, CellType.Any, CellType.Any)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(CellType.Any, itemType, groundType)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(CellType.Any, CellType.Any, groundType)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(CellType.Any, itemType, CellType.Any)
+	if rule then return rule end
+	rule = GetCombineRule_NoAnyChecks(CellType.Any, CellType.Any, CellType.Any)
+	if rule then return rule end
+	return nil
 end
 
 function RegisterAllCombineRules()
 	combineRules = {}
 
-	RegisterCombineRule(CellType.NONE, CellType.WHEAT, CellType.NONE, CellType.WHEAT_COLLECTED_1)
+	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None, CellType.WheatCollected_2, CellType.Ground)
 	-- WHEAT combine
-	for i = 1, 6, 1 do
-		for j = 1, 6, 1 do
+	local maxWheatStackSize = 6
+	for i = 1, maxWheatStackSize - 1, 1 do
+		for j = 1, maxWheatStackSize, 1 do
 			local total = i + j
-			if total <= 6 then
-				RegisterCombineRule(CellType.WHEAT_COLLECTED_1 - 1 + i, CellType.WHEAT_COLLECTED_1 - 1 + j, CellType.NONE, CellType.WHEAT_COLLECTED_1 - 1 + total)
-			elseif total < 12 then
-				local reminder = total - 6
-				RegisterCombineRule(CellType.WHEAT_COLLECTED_1 - 1 + i, CellType.WHEAT_COLLECTED_1 - 1 + j, CellType.WHEAT_COLLECTED_1 - 1 + reminder, CellType.WHEAT_COLLECTED_6)
+			if total <= maxWheatStackSize then
+				RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j, CellType.WheatCollected_1 - 1 + total, CellType.None)
+			elseif total < maxWheatStackSize * 2 then
+				local reminder = total - maxWheatStackSize
+				RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j, CellType.WheatCollected_1 + maxWheatStackSize - 1, CellType.WheatCollected_1 - 1 + reminder)
 			end
 		end
 	end
 
+	for CurrentCellTypeName,CurrentCellType in pairs(CellType) do
+		if IsPickable(CurrentCellType) then
+			-- pick
+			RegisterCombineRule(CellType.None, CurrentCellType, CurrentCellType, CellType.None)
+			-- drop
+			RegisterCombineRule(CurrentCellType, CellType.None, CellType.None, CurrentCellType)
+		end
+	end
 
+	RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
+	RegisterCombineRuleForGround(CellType.None, CellType.Ground, CellType.None, CellType.GroundPrepared)
+
+	-- plant wheat
+	local setDefaultStateForPlantAction = 
+		function(character, intPos)
+			local cell = World.items:GetCell(intPos)
+			cell.float1 = 0.0
+			World.items:SetCell(cell)
+		end
+	RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared, CellType.None, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
+	for i = 2, maxWheatStackSize, 1 do
+		RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1 - 1 + i, CellType.None, CellType.GroundPrepared, CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
+	end
 end
 
 function GetCombineAction(character, intPos)
 	local charItem = character.item
 	local cellItem = World.items:GetCell(intPos).type
+	local groundItem = World.ground:GetCell(intPos).type
 
-	local rule = GetCombineRule(charItem, cellItem)
+	local rule = GetCombineRule(charItem, cellItem, groundItem)
+	-- print(CellTypeInv[charItem], CellTypeInv[cellItem], CellTypeInv[groundItem])
 	if rule then
-		return Action_Transform(character, intPos, rule.newCellItem, rule.newCharItem)
+		-- print(CellTypeInv[rule.newCharType], CellTypeInv[rule.newItemType], CellTypeInv[rule.newGroundType])
+		return Action_TransformWithGround(character, intPos, rule.newCharType, rule.newItemType, rule.newGroundType, rule.callback)
 	end
+
+	if charItem == CellType.None and IsPickable(cellItem) then
+		return Action_PickItem(character, intPos)
+	end
+	if cellItem == CellType.None and charItem ~= CellType.None then
+		return Action_DropItem(character, intPos)
+	end
+
 	return nil
 end
 
@@ -206,12 +312,6 @@ function Character:GetActionOnCellPos(intPos)
 	local combineAction = GetCombineAction(self, intPos)
 	if combineAction then
 		return combineAction
-	end
-	if self.item == CellType.NONE and IsPickable(cell.type) then
-		return Action_PickItem(self, intPos)
-	end
-	if cell.type == CellType.NONE and self.item ~= CellType.NONE then
-		return Action_DropItem(self, intPos)
 	end
 	return nil
 end

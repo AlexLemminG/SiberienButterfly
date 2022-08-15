@@ -53,11 +53,19 @@ class GridCell {
     int type = (int)GridCellType::NONE;
     Vector2Int pos;  // TODO only for intermediate form
     float z = 0.f;
+    float float1 = 0.f;
+    float float2 = 0.f;
+    float float3 = 0.f;
+    float float4 = 0.f;
 
     REFLECT_BEGIN(GridCell);
     REFLECT_VAR(type);
     REFLECT_VAR(pos);
     REFLECT_VAR(z);
+    REFLECT_VAR(float1);
+    REFLECT_VAR(float2);
+    REFLECT_VAR(float3);
+    REFLECT_VAR(float4);
     REFLECT_END();
 };
 class GridSettings : public Object {

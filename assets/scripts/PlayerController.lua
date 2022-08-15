@@ -64,7 +64,7 @@ function PlayerController:Update()
 	deltaPos = deltaPos * self.speed
 
 	local character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
-	if character.item ~= CellType.NONE then
+	if character.item ~= CellType.None then
 		deltaPos = deltaPos * 0.8
 	end
 	character:Move(deltaPos)

@@ -181,9 +181,12 @@ void GridSystem::LoadCellTypes() {
                 break;
             }
         }
-        if (c == "NONE") {
+        if (c == "None" || c == "Any") { //TODO lua method to determine if mesh is not required
             cellMesh = nullptr;
-            meshName = "None";
+            meshName = c;
+        }
+        else if (cellMesh == this->defaultMesh) {
+            LogError("No mesh found for cell type '%s'", c.c_str());
         }
         this->settings->cellDescs.push_back({(GridCellType)i, meshName, cellMesh});
     }

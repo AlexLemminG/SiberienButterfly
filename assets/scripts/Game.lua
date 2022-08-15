@@ -24,21 +24,25 @@ function Game:OnEnable()
 			local height = math.random(10) / 40
 			local cell = World.items:GetCell({x=x,y=y})
 			if math.random(100) > 90 then
-				cell.type = CellType.WHEAT
+				cell.type = CellType.Wheat
 			else
-				cell.type = CellType.NONE
+				cell.type = CellType.None
 			end
 			cell.z = height
 			World.items:SetCell(cell)
 
 			cell = World.ground:GetCell({x=x,y=y})
-			cell.type = CellType.GROUND
+			if math.random(100) > 32 then
+				cell.type = CellType.GroundWithGrass
+			elseif math.random(100) > 50 then
+				cell.type = CellType.GroundPrepared
+			else
+				cell.type = CellType.Ground
+			end
 			cell.z = height
 			World.ground:SetCell(cell)
 		end
 	end
-
-	print("World", World, World.items)
 
 	self.playerGO = self:gameObject():GetScene():FindGameObjectByTag("player")
 	
@@ -65,9 +69,36 @@ function Game:OnDisable()
 	end
 end
 
+function Game:GrowAllPlants(dt)
+	local items = World.items
+	local v = Vector2Int:new()
+	local dt = Time().deltaTime()
+	for x = 0, 19, 1 do
+		for y = 0, 19, 1 do
+			v.x = x
+			v.y = y
+			local cell = items:GetCell(v)
+			if cell.type == CellType.WheatPlanted_0 then
+				cell.float1 = cell.float1 + dt
+				if cell.float1 >= 1.0 then -- to params
+					cell.float1 = 0.0
+					cell.type = CellType.WheatPlanted_1
+				end
+			elseif cell.type == CellType.WheatPlanted_1 then
+				cell.float1 = cell.float1 + dt
+				if cell.float1 >= 1.0 then
+					cell.type = CellType.Wheat
+				end
+			else
+				continue
+			end
+			items:SetCell(cell)
+		end
+	end
+end
 
 function Game:Update()
-	
+	self:GrowAllPlants(Time().deltaTime())
 end
 
 return Game
