@@ -20,7 +20,7 @@ Transform:
     - 0
 MeshRenderer:
   mesh: engine\models\1x1Plane.glb$Mesh
-  material: materials\grid.asset
+  material: materials\gridInstanced.asset
 RigidBody:
   isStatic: 1
 BoxCollider:

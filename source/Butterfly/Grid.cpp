@@ -5,6 +5,7 @@
 #include "LuaReflect.h"
 #include "LuaSystem.h"
 #include "Resources.h"
+#include "InstancedMeshRenderer.h"
 #include "../../engine/source/libs/luau/VM/src/ltable.h"
 
 DECLARE_TEXT_ASSET(GridSystem);
@@ -29,6 +30,11 @@ void GridDrawer::OnDisable() {
     for (auto& r : pooledRenderers) {
         r.OnDisable();
     }
+    for (auto* ir : instancedMeshRenderers) {
+        ir->Term();
+        delete ir;
+    }
+    instancedMeshRenderers.clear();
     pooledRenderers.clear();
 }
 
@@ -50,6 +56,10 @@ void GridDrawer::Update() {
     }
     // TODO remove extra
 
+    for (auto* ir : instancedMeshRenderers) {
+        ir->instances.clear();
+    }
+
     for (int i = 0; i < grid->cells.size(); i++) {
         const auto& cell = grid->cells[i];
         auto& renderer = pooledRenderers[i];
@@ -63,8 +73,24 @@ void GridDrawer::Update() {
         renderer.m_transform->SetPosition(grid->GetCellWorldCenter(cell.pos));
         renderer.mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
         if (renderer.mesh) {
-            renderer.OnEnable();
+            //renderer.OnEnable();
         }
+
+        InstancedMeshRenderer* ir = nullptr;
+        for (auto* it : instancedMeshRenderers) {
+            if (it->mesh == renderer.mesh) {
+                ir = it;
+                break;
+            }
+        }
+        if (ir == nullptr) {
+            ir = new InstancedMeshRenderer();
+            ir->mesh = renderer.mesh;
+            ir->material = renderer.material;
+            ir->Init();
+            this->instancedMeshRenderers.push_back(ir);
+        }
+        ir->instances.push_back({ Matrix4::Transform(grid->GetCellWorldCenter(cell.pos), Matrix3::Identity(), Vector3_one)});
     }
 }
 
@@ -220,4 +246,9 @@ void Grid::SetCell(const GridCell& cell) {
 
 std::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
     return GetDesc((GridCellType)cellType).mesh;
+}
+
+
+void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
+    outCell = GetCell(pos);
 }

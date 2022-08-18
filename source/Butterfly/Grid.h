@@ -14,6 +14,8 @@ enum class GridCellType : int {
 };
 REFLECT_ENUM(GridCellType);
 
+class InstancedMeshRenderer;
+
 class GridCellMeshRenderer : public MeshRendererAbstract {
    public:
     GridCellMeshRenderer() : MeshRendererAbstract() {
@@ -83,6 +85,7 @@ public:
     virtual void OnDisable() override;
 
     GridCell GetCell(Vector2Int pos) const;
+    void GetCellOut(GridCell& outCell, Vector2Int pos) const;
     void SetCell(const GridCell& cell);
 
     Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
@@ -103,6 +106,7 @@ private:
     REFLECT_METHOD(GetClosestIntPos);
     REFLECT_METHOD(GetCellWorldCenter);
     REFLECT_METHOD(GetCell);
+    REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
     REFLECT_END();
 };
@@ -142,6 +146,7 @@ class GridDrawer : public Component {
    private:
     std::shared_ptr<GameObject> gridCellPrefab;
     std::vector<GridCellMeshRenderer> pooledRenderers;
+    std::vector<InstancedMeshRenderer*> instancedMeshRenderers;
 
     int lastModificationsCount = -1;
     REFLECT_BEGIN(GridDrawer);

@@ -38,7 +38,8 @@ TimeSettings: {}
 RenderSettings:
   test: 6
   backend: 2
-  vsync: 1
-  debug: 1
+  vsync: 0
+  debug: 0
   msaa: 0
   frustumCulling: 1
+  bgfxDebugStats: 0

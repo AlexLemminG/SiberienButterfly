@@ -73,11 +73,12 @@ function Game:GrowAllPlants(dt)
 	local items = World.items
 	local v = Vector2Int:new()
 	local dt = Time().deltaTime()
+	local cell = GridCell:new()
 	for x = 0, 19, 1 do
 		for y = 0, 19, 1 do
 			v.x = x
 			v.y = y
-			local cell = items:GetCell(v)
+			items:GetCellOut(cell, v)
 			if cell.type == CellType.WheatPlanted_0 then
 				cell.float1 = cell.float1 + dt
 				if cell.float1 >= 1.0 then -- to params

@@ -1,0 +1,3 @@
+Material:
+  shader: engine\shaders\unlitInstanced.asset
+  colorTex: textures\grid.png

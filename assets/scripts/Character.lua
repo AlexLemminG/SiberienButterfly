@@ -17,6 +17,10 @@ function dump(o)
     end
 end
 
+function RuleToString(rule)
+	return ("newCharItem="..CellTypeInv[rule.newCharType] .. " newCellItem=" .. CellTypeInv[rule.newItemType] .. " newGroundItem=" .. CellTypeInv[rule.newGroundType])
+end
+
 local Character = {
 	runAnimation = nil,
 	standAnimation = nil,
@@ -140,34 +144,41 @@ function Character:UpdateAnimation()
 end
 
 function IsPickable(itemType)
-	return itemType ~= CellType.None and itemType ~= CellType.Any
+	return itemType ~= CellType.None and itemType ~= CellType.Any and itemType ~= CellType.WheatPlanted_0 and itemType ~= CellType.WheatPlanted_1
 end
 
-function Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, newGroundItem, callback)
+function Action_ExecuteRule(character, intPos, rule)
 	local action = {}
+	action.rule = rule
 	action.func = 
 		function(action)
-			if newItemOnCharacter ~= CellType.Any then
-				character:SetItem(newItemOnCharacter)
+			--do return end
+			if rule.newCharType ~= CellType.Any then
+				character:SetItem(rule.newCharType)
 			end
 
-			if newItemAtCell ~= CellType.Any then
+			if rule.newItemType ~= CellType.Any then
 				local cell = World.items:GetCell(intPos)
-				cell.type = newItemAtCell
+				cell.type = rule.newItemType
 				World.items:SetCell(cell)
 			end
 
-			if newGroundItem ~= CellType.Any then
+			if rule.newGroundType ~= CellType.Any then
 				local cell = World.ground:GetCell(intPos)
-				cell.type = newGroundItem
+				cell.type = rule.newGroundType
 				World.ground:SetCell(cell)
 			end
 
-			if callback then
-				callback(character, intPos)
+			if rule.callback then
+				rule.callback(character, intPos)
 			end
 		end
 	return action
+end
+
+function Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, newGroundItem, callback)
+	local rule = {newCharType=newItemOnCharacter, newItemType=newItemAtCell, newGroundType=newGroundItem, callback=callback}
+	return Action_ExecuteRule(character, intPos, rule)
 end
 
 function Action_Transform(character, intPos, newItemOnCharacter, newItemAtCell)
@@ -201,12 +212,12 @@ function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, new
 	end
 end
 
-function RegisterCombineRule(charType, itemType, newCharType, newItemType)
-	RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any)
+function RegisterCombineRule(charType, itemType, newCharType, newItemType, callback)
+	RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any, callback)
 end
 
-function RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType)
-	RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType)
+function RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType, callback)
+	RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType, callback)
 end
 
 function GetCombineRule_NoAnyChecks(charType, itemType, groundType)
@@ -292,8 +303,8 @@ function GetCombineAction(character, intPos)
 	local rule = GetCombineRule(charItem, cellItem, groundItem)
 	-- print(CellTypeInv[charItem], CellTypeInv[cellItem], CellTypeInv[groundItem])
 	if rule then
-		-- print(CellTypeInv[rule.newCharType], CellTypeInv[rule.newItemType], CellTypeInv[rule.newGroundType])
-		return Action_TransformWithGround(character, intPos, rule.newCharType, rule.newItemType, rule.newGroundType, rule.callback)
+		--print(RuleToString(rule))
+		return Action_ExecuteRule(character, intPos, rule)
 	end
 
 	if charItem == CellType.None and IsPickable(cellItem) then
@@ -320,6 +331,7 @@ function Character:ExecuteAction(action)
 	if action == nil then
 		return false
 	end
+	--print("exec", RuleToString(action.rule))
 	return action:func(self)
 end
 

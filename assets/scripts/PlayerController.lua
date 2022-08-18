@@ -3,7 +3,7 @@ local Grid = require("Grid")
 local World = require("World")
 
 local PlayerController = {
-	speed = 3,
+	speed = 2,
 	rigidBody = nil,
 	transform = nil,
 	selectionGO = nil
