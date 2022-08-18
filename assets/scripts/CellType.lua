@@ -1,18 +1,8 @@
 --!strict
 
 local CellTypeInv = require("CellTypeInv")
+local EnumUtils = require("EnumUtils")
 
-function enum(tbl : any) : any
-    local res = {}
-    local length = #tbl
-    for i = 1, length do
-        local v = tbl[i]
-        res[v] = i
-    end
-
-    return res
-end
-
-local CellType = enum(CellTypeInv)
+local CellType = EnumUtils.Enum(CellTypeInv)
 
 return CellType

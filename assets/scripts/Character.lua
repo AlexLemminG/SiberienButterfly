@@ -1,6 +1,7 @@
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local World = require("World")
+local CellAnimType = require("CellAnimType")
 
 function dump(o)
     if type(o) == 'table' then
@@ -62,6 +63,7 @@ function Character:OnEnable()
 
 	self:SetItem(CellType.None)
 
+	RegisterPickableItems()
 	RegisterAllCombineRules() --TODO in Game class
 end
 
@@ -143,8 +145,29 @@ function Character:UpdateAnimation()
 	self.animator.speed = 2.0
 end
 
+local pickableItems = {}
+local maxWheatStackSize = 6
+local maxBreadStackSize = 6
+
+function RegisterPickableItems() 
+	pickableItems = {}
+	for i = 1, maxWheatStackSize, 1 do
+		pickableItems[CellType.WheatCollected_1 - 1 + i] = true		
+	end
+	for i = 1, maxBreadStackSize, 1 do
+		pickableItems[CellType.Bread_1 - 1 + i] = true		
+	end
+	pickableItems[CellType.Wood] = true
+	pickableItems[CellType.Stone] = true
+	pickableItems[CellType.Fence] = true
+	pickableItems[CellType.FlintStone] = true
+	pickableItems[CellType.Flour] = true
+	pickableItems[CellType.Stove] = true
+	pickableItems[CellType.StoveWithWood] = true
+end
+
 function IsPickable(itemType)
-	return itemType ~= CellType.None and itemType ~= CellType.Any and itemType ~= CellType.WheatPlanted_0 and itemType ~= CellType.WheatPlanted_1
+	return pickableItems[itemType]
 end
 
 function Action_ExecuteRule(character, intPos, rule)
@@ -153,6 +176,14 @@ function Action_ExecuteRule(character, intPos, rule)
 	action.func = 
 		function(action)
 			--do return end
+			if rule.isCustom then
+				if rule.callback then
+					rule.callback(character, intPos)
+				else
+					print("Custom rule without callback ", RuleToString(rule))
+				end
+				return
+			end
 			if rule.newCharType ~= CellType.Any then
 				character:SetItem(rule.newCharType)
 			end
@@ -196,6 +227,15 @@ end
 
 combineRules = {}
 
+function RegisterCombineRule_Custom(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
+	local rule = RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
+	if rule == nil then
+		return nil
+	end
+	rule.isCustom = true
+	return rule
+end
+
 function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
 	local charRules = combineRules[charType]
 	if charRules == nil then
@@ -208,16 +248,19 @@ function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, new
 		charRules[itemType] = itemRules
 	end
 	if itemRules[groundType] == nil or overrideIfExists then
-		itemRules[groundType] = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
+		local rule = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
+		itemRules[groundType] = rule
+		return rule
 	end
+	return nil
 end
 
 function RegisterCombineRule(charType, itemType, newCharType, newItemType, callback)
-	RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any, callback)
+	return RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any, callback)
 end
 
 function RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType, callback)
-	RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType, callback)
+	return RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType, callback)
 end
 
 function GetCombineRule_NoAnyChecks(charType, itemType, groundType)
@@ -252,12 +295,26 @@ function GetCombineRule(charType, itemType, groundType)
 	return nil
 end
 
+function SetAppearAnimation(cell)
+	cell.animType = CellAnimType.ItemAppear
+	cell.animT = 0.0
+	cell.animStopT = 0.1
+end
+
+function RuleCallback_ItemAppear(character, intPos)
+	local cell = World.items:GetCell(intPos)
+	if cell.type ~= CellType.None then
+		SetAppearAnimation(cell)
+		World.items:SetCell(cell)
+	end
+end
+
 function RegisterAllCombineRules()
 	combineRules = {}
 
-	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None, CellType.WheatCollected_2, CellType.Ground)
+	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.GroundPrepared, CellType.None, CellType.WheatCollected_2, CellType.Ground, RuleCallback_ItemAppear)
+	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None, CellType.WheatCollected_2, CellType.Any, RuleCallback_ItemAppear)
 	-- WHEAT combine
-	local maxWheatStackSize = 6
 	for i = 1, maxWheatStackSize - 1, 1 do
 		for j = 1, maxWheatStackSize, 1 do
 			local total = i + j
@@ -280,19 +337,51 @@ function RegisterAllCombineRules()
 	end
 
 	RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
-	RegisterCombineRuleForGround(CellType.None, CellType.Ground, CellType.None, CellType.GroundPrepared)
+	RegisterCombineRuleForItemAndGround(CellType.None, CellType.None, CellType.Ground, CellType.None, CellType.None, CellType.GroundPrepared)
 
 	-- plant wheat
 	local setDefaultStateForPlantAction = 
 		function(character, intPos)
 			local cell = World.items:GetCell(intPos)
-			cell.float1 = 0.0
+			cell.animType = CellAnimType.WheatGrowing
+			cell.animT = 0.0
+			cell.animStopT = 1.0 --TODO param
 			World.items:SetCell(cell)
 		end
 	RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared, CellType.None, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
 	for i = 2, maxWheatStackSize, 1 do
 		RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1 - 1 + i, CellType.None, CellType.GroundPrepared, CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
 	end
+
+	local cutTreeCallback = 
+		function(character, intPos)
+			local cell = World.items:GetCell(intPos)
+			if cell.animType ~= CellAnimType.None then
+				print(cell.animType)
+				return				
+			end
+			if cell.float4 >= 3.0 then
+				cell.type = CellType.Wood
+				SetAppearAnimation(cell)
+			else
+				cell.animType = CellAnimType.GotHit
+				cell.animT = 0.0
+				cell.animStopT = 0.2
+
+				cell.float4 += 1.0
+			end
+			World.items:SetCell(cell)
+		end
+	RegisterCombineRule_Custom(CellType.None, CellType.Tree, CellType.Any, CellType.None, CellType.Wood, CellType.Any, cutTreeCallback)
+	RegisterCombineRule(CellType.Wood, CellType.Wood, CellType.None, CellType.Fence, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Wood, CellType.Stone, CellType.None, CellType.CampfireWithWood, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.FlintStone, CellType.CampfireWithWood, CellType.FlintStone, CellType.CampfireWithWoodFired, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Stone, CellType.WheatCollected_6, CellType.Stone, CellType.Flour, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Wood, CellType.Stove, CellType.None, CellType.StoveWithWood, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.FlintStone, CellType.StoveWithWood, CellType.FlintStone, CellType.StoveWithWoodFired, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
 end
 
 function GetCombineAction(character, intPos)
@@ -303,7 +392,6 @@ function GetCombineAction(character, intPos)
 	local rule = GetCombineRule(charItem, cellItem, groundItem)
 	-- print(CellTypeInv[charItem], CellTypeInv[cellItem], CellTypeInv[groundItem])
 	if rule then
-		--print(RuleToString(rule))
 		return Action_ExecuteRule(character, intPos, rule)
 	end
 

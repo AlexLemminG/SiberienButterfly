@@ -69,8 +69,9 @@ void GridDrawer::Update() {
         if (renderer.mesh != nullptr) {
             renderer.OnDisable();
         }
+        Matrix4 transformMatrix = Matrix4::Transform(grid->GetCellWorldCenter(cell.pos), Matrix3::Identity(), Vector3_one) * grid->cellsLocalMatrices[i];
         renderer.mesh = nullptr;
-        renderer.m_transform->SetPosition(grid->GetCellWorldCenter(cell.pos));
+        renderer.m_transform->SetMatrix(transformMatrix);
         renderer.mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
         if (renderer.mesh) {
             //renderer.OnEnable();
@@ -90,7 +91,7 @@ void GridDrawer::Update() {
             ir->Init();
             this->instancedMeshRenderers.push_back(ir);
         }
-        ir->instances.push_back({ Matrix4::Transform(grid->GetCellWorldCenter(cell.pos), Matrix3::Identity(), Vector3_one)});
+        ir->instances.push_back({ transformMatrix });
     }
 }
 
@@ -124,6 +125,7 @@ void Grid::OnEnable() {
             cell.pos.x = x;
             cell.pos.y = y;
             cell.type = (int)GridCellType::NONE;
+            cellsLocalMatrices.emplace_back() = Matrix4::Identity();
         }
     }
 }
@@ -241,6 +243,13 @@ void Grid::SetCell(const GridCell& cell) {
     if (cell.pos.x >= 0 && cell.pos.x < sizeX && cell.pos.y >= 0 && cell.pos.y < sizeY) {
         cells[cell.pos.x * sizeY + cell.pos.y] = cell;
         modificationsCount++;
+    }
+}
+
+void Grid::SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix) {
+    if (pos.x >= 0 && pos.x < sizeX && pos.y >= 0 && pos.y < sizeY) {
+        cellsLocalMatrices[pos.x * sizeY + pos.y] = matrix;
+        modificationsCount++;//TODO callback to update single instance matrix
     }
 }
 

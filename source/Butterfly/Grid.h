@@ -14,6 +14,12 @@ enum class GridCellType : int {
 };
 REFLECT_ENUM(GridCellType);
 
+enum class GridCellAnimType : int {
+    ZERO,
+    NONE
+};
+REFLECT_ENUM(GridCellAnimType);
+
 class InstancedMeshRenderer;
 
 class GridCellMeshRenderer : public MeshRendererAbstract {
@@ -55,18 +61,18 @@ class GridCell {
     int type = (int)GridCellType::NONE;
     Vector2Int pos;  // TODO only for intermediate form
     float z = 0.f;
-    float float1 = 0.f;
-    float float2 = 0.f;
-    float float3 = 0.f;
+    int animType = (int)GridCellAnimType::NONE;
+    float animT = 0.f;
+    float animStopT = 0.f;
     float float4 = 0.f;
 
     REFLECT_BEGIN(GridCell);
     REFLECT_VAR(type);
     REFLECT_VAR(pos);
     REFLECT_VAR(z);
-    REFLECT_VAR(float1);
-    REFLECT_VAR(float2);
-    REFLECT_VAR(float3);
+    REFLECT_VAR(animType);
+    REFLECT_VAR(animT);
+    REFLECT_VAR(animStopT);
     REFLECT_VAR(float4);
     REFLECT_END();
 };
@@ -87,11 +93,13 @@ public:
     GridCell GetCell(Vector2Int pos) const;
     void GetCellOut(GridCell& outCell, Vector2Int pos) const;
     void SetCell(const GridCell& cell);
+    void SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix);
 
     Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
     Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
 
     std::vector<GridCell> cells;
+    std::vector<Matrix4> cellsLocalMatrices;
 
     int sizeX = 20;
     int sizeY = 20;
@@ -99,6 +107,8 @@ public:
     int GetModificationsCount()const {
         return modificationsCount;
     }
+
+    bool isInited = false;
 private:
     int modificationsCount = 0;
 
@@ -106,8 +116,10 @@ private:
     REFLECT_METHOD(GetClosestIntPos);
     REFLECT_METHOD(GetCellWorldCenter);
     REFLECT_METHOD(GetCell);
+    REFLECT_METHOD(SetCellLocalMatrix);
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
+    REFLECT_VAR(isInited);
     REFLECT_END();
 };
 

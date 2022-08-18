@@ -1,5 +1,5 @@
 Scene:
-  sphericalHarmonics: engine\nightHarmonics.asset
+  sphericalHarmonics: engine\dayHarmonics.asset
   prefabInstances:
     - prefab: prefabs\grid.asset
       overrides:
