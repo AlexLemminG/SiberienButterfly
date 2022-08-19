@@ -1,6 +1,7 @@
 local World = {
     items = nil,
-	ground = nil
+	ground = nil,
+    characters = {}
 }
 
 function World:Init()

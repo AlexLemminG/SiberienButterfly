@@ -173,11 +173,41 @@ function Game:AnimateCells(dt)
 	end
 end
 
+function Game:MainLoop()
+	local dt = Time().deltaTime()
+
+	self:AnimateCells(dt)
+
+	for index, character in ipairs(World.characters) do
+		character.hunger = math.clamp(character.hunger + Time().deltaTime() / 100.0, 0.0, 1.0)
+	end
+end
+
+function Game:DrawUI()
+	local screenSize = Graphics():GetScreenSize()
+	
+	self.ui_selection = 0
+
+	imgui.SetNextWindowSize(200,100)
+	imgui.SetNextWindowPos(0, screenSize.y, imgui.constant.Cond.Always, 0,1.0)
+	imgui.SetNextWindowBgAlpha(0.1)
+	local winFlags = imgui.constant.WindowFlags
+	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
+	imgui.Begin("Lua UI", nil, flags)
+
+	local player = World.characters[1]
+	local text = string.format("Hunger: %.3f \nHealth: %.3f", player.hunger, player.health)
+	imgui.TextUnformatted(text)
+
+	imgui.End()
+end
+
 function Game:Update()
 	for i = 1, 1, 1 do
-		self:AnimateCells(Time().deltaTime())
+		self:MainLoop()
 	end
-	-- self:GrowAllPlants(Time().deltaTime())
+
+	self:DrawUI()
 end
 
 return Game

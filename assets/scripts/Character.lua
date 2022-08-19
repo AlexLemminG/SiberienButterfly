@@ -31,7 +31,9 @@ local Character = {
 	rigidBody = nil,
 	item = CellType.None,
 	prevSpeed = 0.0,
-	itemGO = nil
+	itemGO = nil,
+	hunger = 0.5,
+	health = 1.0
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -65,6 +67,9 @@ function Character:OnEnable()
 
 	RegisterPickableItems()
 	RegisterAllCombineRules() --TODO in Game class
+
+	table.insert(World.characters, self)
+
 end
 
 function Character:SetItem(item : number)
@@ -236,7 +241,8 @@ function RegisterCombineRule_Custom(charType, itemType, groundType, newCharType,
 	return rule
 end
 
-function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
+function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback)
+	local rule = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
 	local charRules = combineRules[charType]
 	if charRules == nil then
 		charRules = {}
@@ -247,12 +253,11 @@ function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, new
 		itemRules = {}
 		charRules[itemType] = itemRules
 	end
-	if itemRules[groundType] == nil or overrideIfExists then
-		local rule = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
-		itemRules[groundType] = rule
-		return rule
+	if itemRules[groundType] == nil then
+		itemRules[groundType] = {}
 	end
-	return nil
+	table.insert(itemRules[groundType], rule)
+	return rule
 end
 
 function RegisterCombineRule(charType, itemType, newCharType, newItemType, callback)
@@ -263,7 +268,7 @@ function RegisterCombineRuleForGround(charType, groundType, newCharType, newGrou
 	return RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType, callback)
 end
 
-function GetCombineRule_NoAnyChecks(charType, itemType, groundType)
+function GetCombineRule_NoAnyChecks(character, charType, itemType, groundType)
 	local charRules = combineRules[charType]
 	if charRules == nil then
 		return nil
@@ -272,25 +277,34 @@ function GetCombineRule_NoAnyChecks(charType, itemType, groundType)
 	if itemRules == nil then
 		return nil
 	end
-	return itemRules[groundType]
+	local rules = itemRules[groundType]
+	if not rules then
+		return nil
+	end
+	for i,rule in ipairs(rules) do 
+		if not rule.preCondition or rule.preCondition(character) then
+			return rule
+		end
+	end
+	return nil
 end
 
-function GetCombineRule(charType, itemType, groundType)
-	local rule = GetCombineRule_NoAnyChecks(charType, itemType, groundType)
+function GetCombineRule(character, charType, itemType, groundType) : any
+	local rule = GetCombineRule_NoAnyChecks(character, charType, itemType, groundType)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(charType, itemType, CellType.Any)
+	rule = GetCombineRule_NoAnyChecks(character, charType, itemType, CellType.Any)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(charType, CellType.Any, groundType)
+	rule = GetCombineRule_NoAnyChecks(character, charType, CellType.Any, groundType)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(charType, CellType.Any, CellType.Any)
+	rule = GetCombineRule_NoAnyChecks(character, charType, CellType.Any, CellType.Any)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(CellType.Any, itemType, groundType)
+	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, itemType, groundType)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(CellType.Any, CellType.Any, groundType)
+	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, CellType.Any, groundType)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(CellType.Any, itemType, CellType.Any)
+	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, itemType, CellType.Any)
 	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(CellType.Any, CellType.Any, CellType.Any)
+	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, CellType.Any, CellType.Any)
 	if rule then return rule end
 	return nil
 end
@@ -305,6 +319,20 @@ function RuleCallback_ItemAppear(character, intPos)
 	local cell = World.items:GetCell(intPos)
 	if cell.type ~= CellType.None then
 		SetAppearAnimation(cell)
+		World.items:SetCell(cell)
+	end
+end
+
+function RuleCallback_EatBread(character, intPos)
+	local cell = World.items:GetCell(intPos)
+	if cell.type >= CellType.Bread_1 and cell.type <= CellType.Bread_1 - 1 + maxBreadStackSize then
+		if cell.type == CellType.Bread_1 then
+			cell.type = CellType.None
+		else
+			cell.type -= 1
+		end
+		-- TODO dec character hunger
+		character.hunger -= 0.25
 		World.items:SetCell(cell)
 	end
 end
@@ -325,6 +353,16 @@ function RegisterAllCombineRules()
 				RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j, CellType.WheatCollected_1 + maxWheatStackSize - 1, CellType.WheatCollected_1 - 1 + reminder)
 			end
 		end
+	end
+	
+	-- eat bread
+	for i = 1, maxBreadStackSize, 1 do
+		local newBreadType = CellType.Bread_1 + i - 2
+		if i == 1 then
+			newBreadType = CellType.None
+		end
+		local rule = RegisterCombineRule_Custom(CellType.None, CellType.Bread_1 - 1 + i, CellType.Any, CellType.None, newBreadType, CellType.Any, RuleCallback_EatBread)
+		rule.preCondition = function(character) return character.hunger > 0.25 end
 	end
 
 	for CurrentCellTypeName,CurrentCellType in pairs(CellType) do
@@ -376,12 +414,14 @@ function RegisterAllCombineRules()
 	RegisterCombineRule(CellType.Wood, CellType.Wood, CellType.None, CellType.Fence, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Wood, CellType.Stone, CellType.None, CellType.CampfireWithWood, RuleCallback_ItemAppear)
+	RegisterCombineRule(CellType.Wood, CellType.Campfire, CellType.None, CellType.CampfireWithWood, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.FlintStone, CellType.CampfireWithWood, CellType.FlintStone, CellType.CampfireWithWoodFired, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Stone, CellType.WheatCollected_6, CellType.Stone, CellType.Flour, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Wood, CellType.Stove, CellType.None, CellType.StoveWithWood, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.FlintStone, CellType.StoveWithWood, CellType.FlintStone, CellType.StoveWithWoodFired, RuleCallback_ItemAppear)
 	RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
+
 end
 
 function GetCombineAction(character, intPos)
@@ -389,7 +429,12 @@ function GetCombineAction(character, intPos)
 	local cellItem = World.items:GetCell(intPos).type
 	local groundItem = World.ground:GetCell(intPos).type
 
-	local rule = GetCombineRule(charItem, cellItem, groundItem)
+	local rule = GetCombineRule(character, charItem, cellItem, groundItem)
+	if rule and rule.preCondition then
+		if not rule.preCondition(character) then
+			rule = nil
+		end
+	end
 	-- print(CellTypeInv[charItem], CellTypeInv[cellItem], CellTypeInv[groundItem])
 	if rule then
 		return Action_ExecuteRule(character, intPos, rule)
