@@ -8,6 +8,28 @@ local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
 
 
+---@class CombineRule
+local CombineRule = {
+	charType = CellType.Any,
+	itemType = CellType.Any,
+	groundType = CellType.Any,
+	newCharType = CellType.Any,
+	newItemType = CellType.Any,
+	newGroundType = CellType.Any,
+}
+function CombineRule:preCondition(character : Character) : boolean
+	return true
+end
+function CombineRule:callback(character : Character, pos : Vector2Int) 
+
+end
+
+---@class CharacterCommand
+local CharacterCommand = {}
+function CharacterCommand:Execute()
+
+end
+
 function Actions.RuleToString(rule)
 	if not rule then
 		return "nil"
@@ -49,6 +71,24 @@ function Actions:IsPickable(itemType)
 	return self.pickableItems[itemType]
 end
 
+function Actions:IsSubtype(childType : integer, parentType : integer) : boolean
+	if parentType == CellType.Any then
+		return true
+	end
+	if childType == parentType then
+		return true
+	end
+	return false
+end
+
+function Actions:GetDropRule(itemType : integer) : CombineRule|nil
+	return self:GetCombineRule(nil, itemType, CellType.None, CellType.Any) --TODO not exactly (wheat will be planted on prepared ground)
+end
+
+function Actions:GetPickupRule(itemType : integer) : CombineRule|nil
+	return self:GetCombineRule(nil, CellType.None, itemType, CellType.Any) --TODO not exactly (not examples sorry =|)
+end
+
 function Actions:Term()
 	self.pickableItems = {}
 end
@@ -58,7 +98,7 @@ function Action_ExecuteRule(character, intPos, rule)
 	action.rule = rule
 	action.intPos = intPos
 	action.character = character
-	function action:func()
+	function action:Execute()
 		--do return end
 		if rule.isCustom then
 			if rule.callback then
@@ -114,9 +154,32 @@ function Actions:RegisterCombineRule_Custom(charType, itemType, groundType, newC
 	return rule
 end
 
+---@return CombineRule[]
+function Actions:GetAllCombineRules(charType : integer, itemType : integer, groundType : integer)
+	local result = {}
+	for key, value in pairs(self.combineRules) do
+		if not self:IsSubtype(key, charType) then
+			continue
+		end
+		for key2, value2 in pairs(value) do
+			if not self:IsSubtype(key2, itemType) then
+				continue
+			end
+			for key3, value3 in pairs(value2) do
+				if self:IsSubtype(key3, groundType) then
+					for index, rule in ipairs(value3) do
+						table.insert(result, rule)
+					end
+				end
+			end
+		end
+	end
+	return result
+end
+
 function Actions:RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType,
                                                      newGroundType,
-                                                     callback)
+                                                     callback) : CombineRule
 	local rule = {charType = charType, itemType = itemType, groundType = groundType, newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback }
 	local charRules = self.combineRules[charType]
 	if charRules == nil then
@@ -168,7 +231,7 @@ function Actions:GetCombineRule_NoAnyChecks(character : Character|nil, charType 
 	return nil
 end
 
-function Actions:GetCombineRule(character : Character|nil, charType : integer, itemType : integer, groundType : integer)
+function Actions:GetCombineRule(character : Character|nil, charType : integer, itemType : integer, groundType : integer) : CombineRule|nil
 	local rule = self:GetCombineRule_NoAnyChecks(character, charType, itemType, groundType)
 	if rule then return rule end
 	rule = self:GetCombineRule_NoAnyChecks(character, charType, itemType, CellType.Any)

@@ -80,7 +80,9 @@
         "Time",
         "Quaternion",
         "Vector2Int",
-        "Vector2"
+        "Vector2",
+        "LogError",
+        "continue"
     ],
     "robloxLsp.diagnostics.globals": [
         "AssetDatabase"

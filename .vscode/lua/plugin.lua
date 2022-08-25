@@ -12,7 +12,7 @@ function OnSetText(uri, text)
 
     --print("------------------")
 
-    for localPos, colonPos, typeName, finish in text:gmatch '()local%s+[%w_]+()%s*%:%s*([%w_|]+)()' do
+    for localPos, colonPos, typeName, finish in text:gmatch '()local%s+[%w_]+()%s*%:%s*([%w_|%[%]]+)()' do
         diffs[#diffs + 1] = {
             start  = localPos,
             finish = localPos - 1,
@@ -26,7 +26,7 @@ function OnSetText(uri, text)
     end
 
     function ProcessParams(functionPos, paramsPos, params)
-        for varLocalPos, varName, varColonPos, varTypeName, varFinish in params:gmatch '()%s*([%w_]+)()%s*%:%s*([%w_|]+)()' do
+        for varLocalPos, varName, varColonPos, varTypeName, varFinish in params:gmatch '()%s*([%w_]+)()%s*%:%s*([%w_|%[%]]+)()' do
             diffs[#diffs + 1] = {
                 start  = functionPos,
                 finish = functionPos - 1,
@@ -43,7 +43,7 @@ function OnSetText(uri, text)
 
     -- print("hifff")
     local matched = {}
-    for localPos, paramsPos, params, beforeType, t, returnType, finish in text:gmatch '()function%s+[%w_:%.]*()%(([^%)]*)%)()(%s*:%s*([%w_|]+))()' do
+    for localPos, paramsPos, params, beforeType, t, returnType, finish in text:gmatch '()function%s+[%w_:%.]*()%(([^%)]*)%)()(%s*:%s*([%w_|%[%]]+))()' do
         -- print("Params=", localPos, paramsPos, params, finish)
         -- print("ReturnType=", returnType)
         --print(params)

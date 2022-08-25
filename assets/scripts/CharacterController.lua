@@ -1,8 +1,10 @@
+---@class CharacterController
+---@field command CharacterCommand|nil
 local CharacterController = {
     character = nil,
     immediateTargetPos = nil,
     desiredAction = nil,
-    playerAssignedRule = nil
+    command = nil
 }
 local Component = require("Component")
 setmetatable(CharacterController, Component)
@@ -38,10 +40,11 @@ function CharacterController:Think()
     --     self.desiredAction = self.character:GetActionOnCellPos(closestWheat)
     -- end
 
-    if self.playerAssignedRule then
+    if self.command then
         -- print("A", self.playerAssignedRule)
         -- print(WorldQuery:FindNearestItem(self.playerAssignedRule.itemType, self.character:GetIntPos()))
-        self.desiredAction = WorldQuery:FindNearestActionFromRule(self.character, self.playerAssignedRule)
+        self.desiredAction = self.command:CalcNextAction(self.character)
+        -- print(self.desiredAction)
     end
 
     if self.desiredAction then

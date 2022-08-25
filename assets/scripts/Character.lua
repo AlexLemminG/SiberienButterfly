@@ -9,6 +9,7 @@ local Actions = require("Actions")
 local Component = require("Component")
 
 ---@class Character : Component
+---@field characterController CharacterController|nil
 local Character = {
 	transform = nil,
 	runAnimation = nil,
@@ -165,7 +166,7 @@ function Character:GetActionOnCharacter(character : Character)
 	action.isCharacter = true
 	action.selfCharacter = self
 	action.otherCharacter = character
-	function action:func()
+	function action:Execute()
 			if Game.currentDialog then
 				Game:EndDialog()
 			else
@@ -207,7 +208,7 @@ function Character:ExecuteAction(action)
 	end
 	--print("exec", RuleToString(action.rule))
 	-- print(Utils.TableToString(self))
-	return action:func()
+	return action:Execute()
 end
 
 function Character:GetHumanName()

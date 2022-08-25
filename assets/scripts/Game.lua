@@ -10,6 +10,7 @@ local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
 local Actions = require("Actions")
+local CharacterCommandFactory = require("CharacterCommandFactory")
 
 -- require("lldebugger").start()
 
@@ -223,15 +224,56 @@ function Game:DrawUI()
 	imgui.End()
 end
 
-function Game:BeginDialog(characterA, characterB)
+function Game:BeginDialog(characterA : Character, characterB : Character)
 	self.currentDialog = {
 		characterA = characterA,
 		characterB = characterB,
-		selectedOptionIndex = 1
+		selectedOptionIndex = 1,
+
+		firstOptionItem = nil,
+		secondOptionItem = nil
 	}
 
 	function self.currentDialog:Draw()
-		local options = { "Go eat bread", "Close" }
+		local options = { }
+		local optionItems = {}
+		if not self.firstOptionItem then
+			local added = {}
+			for index, rule in ipairs(Actions:GetAllCombineRules(CellType.Any, CellType.Any, CellType.Any)) do
+				if not added[rule.charType] then
+					added[rule.charType] = true
+					table.insert(options, CellTypeInv[rule.charType])
+					optionItems[CellTypeInv[rule.charType]] = rule.charType
+				end
+			end
+
+			optionItems["Back"] = nil
+			table.insert(options, "Back")
+		elseif not self.secondOptionItem then
+			local added = {}
+			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, CellType.Any, CellType.Any)) do
+				if not added[rule.itemType] then
+					added[rule.itemType] = true
+					table.insert(options, CellTypeInv[rule.itemType])
+					optionItems[CellTypeInv[rule.itemType]] = rule.itemType
+				end
+			end
+
+			optionItems["Back"] = nil
+			table.insert(options, "Back")
+		else
+			local added = {}
+			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, CellType.Any)) do
+				if not added[rule.groundType] then
+					added[rule.groundType] = true
+					table.insert(options, CellTypeInv[rule.groundType])
+					optionItems[CellTypeInv[rule.groundType]] = rule.groundType
+				end
+			end
+
+			optionItems["Back"] = nil
+			table.insert(options, "Back")
+		end
 
 		self.selectedOptionIndex = math.clamp(self.selectedOptionIndex, 1, #options)
 
@@ -242,7 +284,7 @@ function Game:BeginDialog(characterA, characterB)
 		imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0 + 400, imgui.constant.Cond.Always, 0.5,0.5)
 		imgui.SetNextWindowBgAlpha(1.0)
 		local winFlags = imgui.constant.WindowFlags
-		local flags = bit32.bor(winFlags.NoInputs)
+		local flags = 0--bit32.bor(winFlags.NoDrag)
 
 		imgui.Begin("Dialog", nil, flags)
 		imgui.TextUnformatted("DIALOG:")
@@ -271,8 +313,33 @@ function Game:BeginDialog(characterA, characterB)
 			end
 			if input:GetKeyDown("Space") then
 				print("Selected ", selectedOption)
-				self.characterB.characterController.playerAssignedRule = Actions:GetCombineRule(nil, CellType.None, CellType.Bread_1, CellType.None)
-				Game:EndDialog()
+				local selectedItem = optionItems[selectedOption]
+				if not self.firstOptionItem then
+					if selectedItem then
+						self.firstOptionItem = selectedItem
+					else
+						Game:EndDialog()
+					end
+				elseif not self.secondOptionItem then
+					if selectedItem then
+						self.secondOptionItem = selectedItem
+					else
+						self.firstOptionItem = nil
+					end
+				else
+					if selectedItem then
+						local rule = Actions:GetCombineRule(nil, self.firstOptionItem, self.secondOptionItem, selectedItem)
+						if not rule then
+							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], selectedItem))
+						else
+							self.characterB.characterController.command = CharacterCommandFactory.CreateFromRule(rule)
+						end
+						Game:EndDialog()
+					else
+						self.secondOptionItem = nil
+					end
+				end
+
 			end
 		end
 		self.updateInput = true
