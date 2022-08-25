@@ -1,6 +1,7 @@
 local WorldQuery = require("WorldQuery")
 local CellType   = require("CellType")
 local Actions = require("Actions")
+local Utils   = require("Utils")
 
 local CharacterCommandFactory = {}
 
@@ -55,16 +56,19 @@ function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : Charact
             end
         else
             for index, combineRule in ipairs(self.combineRules) do
-                local actionPos = WorldQuery:FindNearestActionPosFromRule(combineRule, characterIntPos)
-                if actionPos then
-                    local distance = math.pow(characterIntPos.x - actionPos.x, 2.0) + math.pow(characterIntPos.y - actionPos.y, 2.0)
-                    if distance < minDistance then
-                        minDistance = distance
-                        bestCombineRule = combineRule
+                if character.item == combineRule.charType or combineRule.charType == CellType.Any then
+                    local actionPos = WorldQuery:FindNearestActionPosFromRule(combineRule, characterIntPos)
+                    if actionPos then
+                        local distance = math.pow(characterIntPos.x - actionPos.x, 2.0) + math.pow(characterIntPos.y - actionPos.y, 2.0)
+                        if distance < minDistance then
+                            minDistance = distance
+                            bestCombineRule = combineRule
+                        end
                     end
                 end
             end
         end
+        -- print("best=", Utils.TableToString(bestCombineRule))
         return WorldQuery:FindNearestActionFromRule(character, bestCombineRule)
     end
     return command

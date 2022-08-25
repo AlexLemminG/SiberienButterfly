@@ -20,6 +20,7 @@ local Character = {
 	rigidBody = nil,
 	item = CellType.None,
 	prevSpeed = 0.0,
+	maxSpeed = 5.0,
 	itemGO = nil,
 	hunger = 0.5,
 	health = 1.0,
@@ -109,6 +110,10 @@ function Character:UpdateMovement()
 	local desiredVelocity = self.desiredVelocity
 	if self:IsInDialog() then
 		desiredVelocity = vector(0,0,0)
+	end
+	local desiredVelocityLength = Length(desiredVelocity)
+	if desiredVelocityLength > self.maxSpeed then
+		desiredVelocity = desiredVelocity * (self.maxSpeed / desiredVelocityLength)
 	end
 
 	local desiredVelocityXZ = vector(desiredVelocity.x, 0.0, desiredVelocity.z)

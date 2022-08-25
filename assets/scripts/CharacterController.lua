@@ -1,5 +1,6 @@
 ---@class CharacterController
 ---@field command CharacterCommand|nil
+---@field character Character|nil
 local CharacterController = {
     character = nil,
     immediateTargetPos = nil,
@@ -63,6 +64,7 @@ function CharacterController:Act()
     if self.immediateTargetPos then
         local dir = vector(self.immediateTargetPos.x, 0, self.immediateTargetPos.y) -
             self.character.transform:GetPosition()
+        dir = dir * 3.0
         self.character:SetVelocity(dir)
     else
         self.character:SetVelocity(vector(0, 0, 0))

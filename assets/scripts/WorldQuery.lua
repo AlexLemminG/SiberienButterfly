@@ -39,7 +39,7 @@ function WorldQuery:FindNearestItemWithGround(cellTypeItem : integer, cellTypeGr
     local radius = 10
     local pos = Vector2Int:new()
     local closestPos = nil
-    local closestDistance = radius * 2.0
+    local closestDistance = math.huge
     local gridItems = World.items
     local gridGround = World.ground
     for dx = -radius, radius, 1 do
@@ -48,7 +48,7 @@ function WorldQuery:FindNearestItemWithGround(cellTypeItem : integer, cellTypeGr
             pos.y = dy + originPos.y
             
             if gridItems:GetCell(pos).type == cellTypeItem and gridGround:GetCell(pos).type == cellTypeGround then
-                local distance = math.abs(dx) + math.abs(dy)
+                local distance = dx*dx + dy*dy
                 if not closestPos then
                     closestPos = Vector2Int:new()
                     closestPos.x = pos.x
@@ -68,7 +68,7 @@ function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int) 
     local radius = 10
     local pos = Vector2Int:new()
     local closestPos = nil
-    local closestDistance = radius * 2.0
+    local closestDistance = math.huge
     local grid = World.items
     for dx = -radius, radius, 1 do
         for dy = -radius, radius, 1 do
@@ -76,7 +76,7 @@ function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int) 
             pos.y = dy + originPos.y
             
             if grid:GetCell(pos).type == cellType then
-                local distance = math.abs(dx) + math.abs(dy)
+                local distance = dx*dx + dy*dy
                 if not closestPos then
                     closestPos = Vector2Int:new()
                     closestPos.x = pos.x

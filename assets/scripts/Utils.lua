@@ -5,6 +5,9 @@ function Utils.TableToString(o)
 end
 
 function Utils._TableToString(o, traversedTables) : string
+    if o == nil then
+        return 'nil'
+    end
     if traversedTables[o] then
         return '-'
     end

@@ -103,7 +103,7 @@ function Game:OnEnable()
 
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 
-	local numNPC = 1
+	local numNPC = 3
 	for i = 1, numNPC, 1 do
 		local character = Instantiate(self.characterPrefab)
 		local characterControllerScript = character:AddComponent("LuaComponent")
