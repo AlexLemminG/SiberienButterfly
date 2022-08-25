@@ -6,6 +6,7 @@ local CellType = require("CellType")
 local World = require("World")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
+local GameConsts = require("GameConsts")
 
 
 ---@class CombineRule
@@ -17,7 +18,7 @@ local CombineRule = {
 	newItemType = CellType.Any,
 	newGroundType = CellType.Any,
 }
-function CombineRule:preCondition(character : Character) : boolean
+function CombineRule.preCondition(character : Character) : boolean
 	return true
 end
 function CombineRule:callback(character : Character, pos : Vector2Int) 
@@ -38,10 +39,6 @@ function Actions.RuleToString(rule)
 															CellTypeInv[rule.newCharType], CellTypeInv[rule.newItemType], CellTypeInv[rule.newGroundType])
 end
 
---TODO to world consts
-local maxWheatStackSize = 6
-local maxBreadStackSize = 6
-
 function Actions:Init()
 	self:Term()
 
@@ -52,10 +49,10 @@ end
 function Actions:RegisterPickableItems()
 	local pickableItems = self.pickableItems
 
-	for i = 1, maxWheatStackSize, 1 do
+	for i = 1, GameConsts.maxWheatStackSize, 1 do
 		pickableItems[CellType.WheatCollected_1 - 1 + i] = true
 	end
-	for i = 1, maxBreadStackSize, 1 do
+	for i = 1, GameConsts.maxBreadStackSize, 1 do
 		pickableItems[CellType.Bread_1 - 1 + i] = true
 	end
 	pickableItems[CellType.Wood] = true
@@ -77,6 +74,16 @@ function Actions:IsSubtype(childType : integer, parentType : integer) : boolean
 	end
 	if childType == parentType then
 		return true
+	end
+	if CellType.WheatCollected_Any == parentType then
+		if childType >= CellType.WheatCollected_1 and childType <= CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 1 then
+			return true
+		end
+	end
+	if CellType.Bread_Any == parentType then
+		if childType >= CellType.Bread_1 and childType <= CellType.Bread_1 + GameConsts.maxBreadStackSize - 1 then
+			return true
+		end
 	end
 	return false
 end
@@ -267,7 +274,7 @@ end
 
 function RuleCallback_EatBread(character, intPos)
 	local cell = World.items:GetCell(intPos)
-	if cell.type >= CellType.Bread_1 and cell.type <= CellType.Bread_1 - 1 + maxBreadStackSize then
+	if cell.type >= CellType.Bread_1 and cell.type <= CellType.Bread_1 - 1 + GameConsts.maxBreadStackSize then
 		if cell.type == CellType.Bread_1 then
 			cell.type = CellType.None
 		else
@@ -287,28 +294,29 @@ function Actions:RegisterAllCombineRules()
 	self:RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None,
 		CellType.WheatCollected_2, CellType.Any, RuleCallback_ItemAppear)
 	-- WHEAT combine
-	for i = 1, maxWheatStackSize - 1, 1 do
-		for j = 1, maxWheatStackSize, 1 do
+	for i = 1, GameConsts.maxWheatStackSize - 1, 1 do
+		for j = 1, GameConsts.maxWheatStackSize, 1 do
 			local total = i + j
-			if total <= maxWheatStackSize then
+			if total <= GameConsts.maxWheatStackSize then
 				self:RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j,
 					CellType.WheatCollected_1 - 1 + total, CellType.None)
-			elseif total < maxWheatStackSize * 2 then
-				local reminder = total - maxWheatStackSize
+			elseif total < GameConsts.maxWheatStackSize * 2 then
+				local reminder = total - GameConsts.maxWheatStackSize
 				self:RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j,
-					CellType.WheatCollected_1 + maxWheatStackSize - 1, CellType.WheatCollected_1 - 1 + reminder)
+					CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 1, CellType.WheatCollected_1 - 1 + reminder)
 			end
 		end
 	end
 
 	-- eat bread
-	for i = 1, maxBreadStackSize, 1 do
+	for i = 1, GameConsts.maxBreadStackSize, 1 do
 		local newBreadType = CellType.Bread_1 + i - 2
 		if i == 1 then
 			newBreadType = CellType.None
 		end
 		local rule = self:RegisterCombineRule_Custom(CellType.None, CellType.Bread_1 - 1 + i, CellType.Any, CellType.None,
 			newBreadType, CellType.Any, RuleCallback_EatBread)
+		rule.isEat = true --TODO not like that (use tags or something)
 		rule.preCondition = function(character) return character.hunger > 0.25 end
 	end
 
@@ -337,7 +345,7 @@ function Actions:RegisterAllCombineRules()
 	self:RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared,
 		CellType.None,
 		CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
-	for i = 2, maxWheatStackSize, 1 do
+	for i = 2, GameConsts.maxWheatStackSize, 1 do
 		self:RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1 - 1 + i, CellType.None, CellType.GroundPrepared,
 			CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
 	end

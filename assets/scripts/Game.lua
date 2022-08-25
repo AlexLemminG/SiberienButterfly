@@ -1,4 +1,5 @@
 local World = require("World")
+local GameConsts = require("GameConsts")
 local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
@@ -234,16 +235,27 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		secondOptionItem = nil
 	}
 
+	local hiddenItems = {}
+	for i = CellType.Bread_1, CellType.Bread_1 + GameConsts.maxBreadStackSize - 1, 1 do
+		hiddenItems[i] = true
+	end
+	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 1, 1 do
+		hiddenItems[i] = true
+	end
+	
+
 	function self.currentDialog:Draw()
 		local options = { }
 		local optionItems = {}
 		if not self.firstOptionItem then
-			local added = {}
-			for index, rule in ipairs(Actions:GetAllCombineRules(CellType.Any, CellType.Any, CellType.Any)) do
-				if not added[rule.charType] then
-					added[rule.charType] = true
-					table.insert(options, CellTypeInv[rule.charType])
-					optionItems[CellTypeInv[rule.charType]] = rule.charType
+			for cellTypeName, cellType in pairs(CellType) do
+				if hiddenItems[cellType] then
+					continue
+				end
+				for index, rule in ipairs(Actions:GetAllCombineRules(cellType, CellType.Any, CellType.Any)) do
+					table.insert(options, CellTypeInv[cellType])
+					optionItems[CellTypeInv[cellType]] = cellType
+					break
 				end
 			end
 
@@ -252,7 +264,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		elseif not self.secondOptionItem then
 			local added = {}
 			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, CellType.Any, CellType.Any)) do
-				if not added[rule.itemType] then
+				if not added[rule.itemType] and not hiddenItems[rule.itemType] then
 					added[rule.itemType] = true
 					table.insert(options, CellTypeInv[rule.itemType])
 					optionItems[CellTypeInv[rule.itemType]] = rule.itemType
@@ -264,7 +276,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		else
 			local added = {}
 			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, CellType.Any)) do
-				if not added[rule.groundType] then
+				if not added[rule.groundType] and not hiddenItems[rule.groundType] then
 					added[rule.groundType] = true
 					table.insert(options, CellTypeInv[rule.groundType])
 					optionItems[CellTypeInv[rule.groundType]] = rule.groundType
@@ -328,11 +340,11 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 					end
 				else
 					if selectedItem then
-						local rule = Actions:GetCombineRule(nil, self.firstOptionItem, self.secondOptionItem, selectedItem)
-						if not rule then
-							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], selectedItem))
+						local rules = Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, selectedItem)
+						if not rules or #rules == 0 then
+							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], CellTypeInv[selectedItem] ))
 						else
-							self.characterB.characterController.command = CharacterCommandFactory.CreateFromRule(rule)
+							self.characterB.characterController.command = CharacterCommandFactory.CreateFromMultipleRules(rules)
 						end
 						Game:EndDialog()
 					else

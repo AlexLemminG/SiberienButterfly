@@ -34,6 +34,8 @@ local CellType = {
     Bread_4 = 31,
     Bread_5 = 32,
     Bread_6 = 33,
+    Bread_Any = 34,
+    WheatCollected_Any = 35
 }
 
 return CellType
