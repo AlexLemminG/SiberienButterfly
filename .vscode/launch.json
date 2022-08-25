@@ -19,6 +19,17 @@
                 }
             ],
             "console": "externalTerminal"
+        },
+        {
+            "type": "lua-local",
+            "request": "launch",
+            "name": "Debug Custom Executable",
+            "program": {
+                "command": "C:/Projects/SiberienButterfly/.build/bin/RelWithDebInfo/SiberienEngine.exe"
+            },
+            "args": [
+                "${workspaceFolder}"
+            ]
         }
     ]
 }

@@ -180,7 +180,6 @@ void GridSystem::LoadCellTypes() {
         return;
     }
     SerializationContext context{};
-    context.isLua = true;
     DeserializeFromLuaToContext(L, -1, context);
     this->settings->cellDescs.clear();
 

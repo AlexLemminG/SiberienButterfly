@@ -70,5 +70,27 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "Lua.diagnostics.globals": [
+        "AssetDatabase",
+        "Instantiate",
+        "Mathf",
+        "vector",
+        "GridSystem",
+        "Time",
+        "Quaternion",
+        "Vector2Int",
+        "Vector2"
+    ],
+    "robloxLsp.diagnostics.globals": [
+        "AssetDatabase"
+    ],
+    "robloxLsp.develop.enable": true,
+    "Lua.misc.parameters": [
+        "--develop=true"
+    ],
+    "Lua.runtime.plugin": ".vscode/lua/plugin.lua",
+    "Lua.workspace.library": [
+        "engine\\assets\\scripts"
+    ]
 }

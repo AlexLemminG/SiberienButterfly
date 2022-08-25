@@ -2,12 +2,17 @@ local World = require("World")
 local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
-	luaPlayerGO = nil
+	luaPlayerGO = nil,
+	currentDialog = nil
 }
 local Component = require("Component")
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
+local Actions = require("Actions")
+
+-- require("lldebugger").start()
+
 setmetatable(Game, Component)
 Game.__index = Game
 
@@ -78,6 +83,7 @@ function Game:OnEnable()
 		self:GenerateWorldGrid()
 		World.items.isInited = true
 	end
+	Actions:Init()
 	self.playerGO = self:gameObject():GetScene():FindGameObjectByTag("player")
 	
 	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
@@ -89,18 +95,29 @@ function Game:OnEnable()
 	local playerScript = self.luaPlayerGO:AddComponent("LuaComponent")
 	
 	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
+
 	-- playerScript.scriptName = "Character"	--- TODO support from engine
 	-- playerScript.scale = 0.8
 
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 
+	local numNPC = 1
+	for i = 1, numNPC, 1 do
+		local character = Instantiate(self.characterPrefab)
+		local characterControllerScript = character:AddComponent("LuaComponent")
+		characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
+		character:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+		self:gameObject():GetScene():AddGameObject(character)
+	end
+
 end
 
 
 function Game:OnDisable()
-	if self.luaPlayerGO ~= nil then
-		self:gameObject():GetScene():RemoveGameObject(self.luaPlayerGO)
+	for index, character in ipairs(World.characters) do
+		self:gameObject():GetScene():RemoveGameObject(character:gameObject())
 	end
+	-- self:gameObject():GetScene():RemoveGameObject(self.luaPlayerGO)
 end
 
 function Game:ApplyAnimation(grid, cell)
@@ -199,7 +216,71 @@ function Game:DrawUI()
 	local text = string.format("Hunger: %.3f \nHealth: %.3f", player.hunger, player.health)
 	imgui.TextUnformatted(text)
 
+	if self.currentDialog then
+		self.currentDialog:Draw()
+	end
+
 	imgui.End()
+end
+
+function Game:BeginDialog(characterA, characterB)
+	self.currentDialog = {
+		characterA = characterA,
+		characterB = characterB,
+		selectedOptionIndex = 1
+	}
+
+	function self.currentDialog:Draw()
+		local options = { "Go eat bread", "Close" }
+
+		self.selectedOptionIndex = math.clamp(self.selectedOptionIndex, 1, #options)
+
+		local selectedOption = options[self.selectedOptionIndex] --TODO nil check
+
+		local screenSize = Graphics():GetScreenSize()
+		imgui.SetNextWindowSize(400,250)
+		imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0 + 400, imgui.constant.Cond.Always, 0.5,0.5)
+		imgui.SetNextWindowBgAlpha(1.0)
+		local winFlags = imgui.constant.WindowFlags
+		local flags = bit32.bor(winFlags.NoInputs)
+
+		imgui.Begin("Dialog", nil, flags)
+		imgui.TextUnformatted("DIALOG:")
+		--print(self.characterA.GetHumanName, self.characterB.GetHumanName)
+		imgui.TextUnformatted(self.characterA:GetHumanName() .. " talks to " .. self.characterB:GetHumanName())		
+		
+		for index, option in ipairs(options) do
+			local optionText = option
+			if index == self.selectedOptionIndex then
+				optionText = "[*] "..option
+			else
+				optionText = "[ ] "..option
+			end
+			imgui.TextUnformatted(optionText)
+		end
+		imgui.End()
+
+		
+		if self.updateInput then
+			local input = Input()
+			if input:GetKeyDown("S") then
+				self.selectedOptionIndex = self.selectedOptionIndex + 1
+			end
+			if input:GetKeyDown("W") then
+				self.selectedOptionIndex = self.selectedOptionIndex - 1
+			end
+			if input:GetKeyDown("Space") then
+				print("Selected ", selectedOption)
+				self.characterB.characterController.playerAssignedRule = Actions:GetCombineRule(nil, CellType.None, CellType.Bread_1, CellType.None)
+				Game:EndDialog()
+			end
+		end
+		self.updateInput = true
+	end
+end
+
+function Game:EndDialog() --TODO pass DialogHandle and end one particular dialog
+	self.currentDialog = nil
 end
 
 function Game:Update()

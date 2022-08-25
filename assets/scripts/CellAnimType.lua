@@ -3,6 +3,6 @@
 local AnimTypeInv = require("CellAnimTypeInv")
 local EnumUtils = require("EnumUtils")
 
-local AnimType = EnumUtils.Enum(AnimTypeInv)
+local AnimType = EnumUtils.ArrayToEnum(AnimTypeInv)
 
 return AnimType

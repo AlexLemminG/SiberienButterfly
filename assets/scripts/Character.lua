@@ -1,28 +1,16 @@
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local World = require("World")
+local Game = require("Game")
 local CellAnimType = require("CellAnimType")
+local Utils = require("Utils")
 
-function dump(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k, v in pairs(o) do
-            if type(k) ~= 'number' then
-                k = '"' .. k .. '"'
-            end
-            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
-end
+local Actions = require("Actions")
+local Component = require("Component")
 
-function RuleToString(rule)
-	return ("newCharItem="..CellTypeInv[rule.newCharType] .. " newCellItem=" .. CellTypeInv[rule.newItemType] .. " newGroundItem=" .. CellTypeInv[rule.newGroundType])
-end
-
+---@class Character : Component
 local Character = {
+	transform = nil,
 	runAnimation = nil,
 	standAnimation = nil,
 	runWithItemAnimation = nil,
@@ -33,7 +21,9 @@ local Character = {
 	prevSpeed = 0.0,
 	itemGO = nil,
 	hunger = 0.5,
-	health = 1.0
+	health = 1.0,
+	desiredVelocity = vector(0,0,0),
+	characterController = nil
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -45,6 +35,7 @@ function Character:new(o)
     return o
 end
 
+
 function Character:OnEnable()
 	self.runAnimation = AssetDatabase():Load("models/Vintik.blend$Run")
 	self.standAnimation = AssetDatabase():Load("models/Vintik.blend$Stand")
@@ -52,6 +43,7 @@ function Character:OnEnable()
 	self.standWithItemAnimation = AssetDatabase():Load("models/Vintik.blend$StandWithItem")
 	self.animator = self:gameObject():GetComponent("Animator")
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
+	self.transform = self:gameObject():GetComponent("Transform")
 	
 	local itemPrefab = AssetDatabase():Load("prefabs/carriedItem.asset")
 	self.itemGO = Instantiate(itemPrefab)
@@ -65,13 +57,14 @@ function Character:OnEnable()
 
 	self:SetItem(CellType.None)
 
-	RegisterPickableItems()
-	RegisterAllCombineRules() --TODO in Game class
+	self.rigidBody:SetAngularFactor(vector(0,0,0))
 
 	table.insert(World.characters, self)
 
 end
 
+
+---comment
 function Character:SetItem(item : number)
 	local allMeshes = AssetDatabase():Load("models/GridCells.blend")
 	local itemMeshRenderer = self.itemGO:GetComponent("MeshRenderer")
@@ -93,7 +86,8 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function Character:Update()
-	self.animator:SetAnimation(self.runAnimation)
+	self:UpdateMovement()
+	self:UpdateAnimation()
 
 	-- setting Y coord to ground character
 	local trans = self.rigidBody:GetTransform()
@@ -110,10 +104,18 @@ function Character:Update()
 	self.rigidBody:SetLinearVelocity(velocity)
 end
 
-function Character:Move(velocity : vector)
+function Character:UpdateMovement()
+	local desiredVelocity = self.desiredVelocity
+	if self:IsInDialog() then
+		desiredVelocity = vector(0,0,0)
+	end
+
+	local desiredVelocityXZ = vector(desiredVelocity.x, 0.0, desiredVelocity.z)
 	local trans = self.rigidBody:GetTransform()
-	if Length(velocity) > 0.1 then
-		Mathf.SetRot(trans, Quaternion.LookAt(velocity, vector(0,1,0)))
+	local realVelocity = self.rigidBody:GetLinearVelocity()
+	local realVelocityXZ = vector(realVelocity.x, 0.0, realVelocity.z)
+	if Length(realVelocityXZ) > 0.1 then
+		Mathf.SetRot(trans, Quaternion.LookAt(realVelocityXZ, vector(0,1,0)))
 	end
 	self.rigidBody:SetTransform(trans)
 	--print("q=", Quaternion.LookAt(vector(0,0,1), vector(0,1,0)):scalar())
@@ -121,7 +123,7 @@ function Character:Move(velocity : vector)
 	self.rigidBody:Activate()
 
 	local prevVelocity = self.rigidBody:GetLinearVelocity()
-	local newVelocity = Lerp(prevVelocity, velocity, 0.8)
+	local newVelocity = Lerp(prevVelocity, desiredVelocityXZ, 0.8)
 	newVelocity = vector(newVelocity.x, 0.0, newVelocity.z)
 	
 	self.rigidBody:SetLinearVelocity(newVelocity)
@@ -129,7 +131,10 @@ function Character:Move(velocity : vector)
 	self.rigidBody:SetAngularVelocity(vector(0,0,0))
 
 	self.prevSpeed = Length(newVelocity)
-	self:UpdateAnimation()
+end
+
+function Character:SetVelocity(velocity : vector)
+	self.desiredVelocity = velocity
 end
 
 function Character:UpdateAnimation()
@@ -150,314 +155,50 @@ function Character:UpdateAnimation()
 	self.animator.speed = 2.0
 end
 
-local pickableItems = {}
-local maxWheatStackSize = 6
-local maxBreadStackSize = 6
 
-function RegisterPickableItems() 
-	pickableItems = {}
-	for i = 1, maxWheatStackSize, 1 do
-		pickableItems[CellType.WheatCollected_1 - 1 + i] = true		
+function Character:GetActionOnCharacter(character : Character)
+	if not character then
+		return nil
 	end
-	for i = 1, maxBreadStackSize, 1 do
-		pickableItems[CellType.Bread_1 - 1 + i] = true		
-	end
-	pickableItems[CellType.Wood] = true
-	pickableItems[CellType.Stone] = true
-	pickableItems[CellType.Fence] = true
-	pickableItems[CellType.FlintStone] = true
-	pickableItems[CellType.Flour] = true
-	pickableItems[CellType.Stove] = true
-	pickableItems[CellType.StoveWithWood] = true
-end
-
-function IsPickable(itemType)
-	return pickableItems[itemType]
-end
-
-function Action_ExecuteRule(character, intPos, rule)
+	--TODO only for player
 	local action = {}
-	action.rule = rule
-	action.func = 
-		function(action)
-			--do return end
-			if rule.isCustom then
-				if rule.callback then
-					rule.callback(character, intPos)
-				else
-					print("Custom rule without callback ", RuleToString(rule))
-				end
-				return
-			end
-			if rule.newCharType ~= CellType.Any then
-				character:SetItem(rule.newCharType)
-			end
-
-			if rule.newItemType ~= CellType.Any then
-				local cell = World.items:GetCell(intPos)
-				cell.type = rule.newItemType
-				World.items:SetCell(cell)
-			end
-
-			if rule.newGroundType ~= CellType.Any then
-				local cell = World.ground:GetCell(intPos)
-				cell.type = rule.newGroundType
-				World.ground:SetCell(cell)
-			end
-
-			if rule.callback then
-				rule.callback(character, intPos)
+	action.isCharacter = true
+	action.selfCharacter = self
+	action.otherCharacter = character
+	function action:func()
+			if Game.currentDialog then
+				Game:EndDialog()
+			else
+				Game:BeginDialog(self.selfCharacter, character)
 			end
 		end
 	return action
 end
 
-function Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, newGroundItem, callback)
-	local rule = {newCharType=newItemOnCharacter, newItemType=newItemAtCell, newGroundType=newGroundItem, callback=callback}
-	return Action_ExecuteRule(character, intPos, rule)
-end
-
-function Action_Transform(character, intPos, newItemOnCharacter, newItemAtCell)
-	return Action_TransformWithGround(character, intPos, newItemOnCharacter, newItemAtCell, CellType.Any)
-end
-
-function Action_PickItem(character, intPos)
-	local cell = World.items:GetCell(intPos)
-	return Action_Transform(character, intPos, cell.type, character.item)
-end
-
-function Action_DropItem(character, intPos)
-	return Action_PickItem(character, intPos)
-end
-
-combineRules = {}
-
-function RegisterCombineRule_Custom(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
-	local rule = RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback, overrideIfExists)
-	if rule == nil then
-		return nil
-	end
-	rule.isCustom = true
-	return rule
-end
-
-function RegisterCombineRuleForItemAndGround(charType, itemType, groundType, newCharType, newItemType, newGroundType, callback)
-	local rule = {newCharType = newCharType, newGroundType = newGroundType, newItemType = newItemType, callback = callback}
-	local charRules = combineRules[charType]
-	if charRules == nil then
-		charRules = {}
-		combineRules[charType] = charRules
-	end
-	local itemRules = charRules[itemType]
-	if itemRules == nil then
-		itemRules = {}
-		charRules[itemType] = itemRules
-	end
-	if itemRules[groundType] == nil then
-		itemRules[groundType] = {}
-	end
-	table.insert(itemRules[groundType], rule)
-	return rule
-end
-
-function RegisterCombineRule(charType, itemType, newCharType, newItemType, callback)
-	return RegisterCombineRuleForItemAndGround(charType, itemType, CellType.Any, newCharType, newItemType, CellType.Any, callback)
-end
-
-function RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType, callback)
-	return RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any, newGroundType, callback)
-end
-
-function GetCombineRule_NoAnyChecks(character, charType, itemType, groundType)
-	local charRules = combineRules[charType]
-	if charRules == nil then
-		return nil
-	end
-	local itemRules = charRules[itemType]
-	if itemRules == nil then
-		return nil
-	end
-	local rules = itemRules[groundType]
-	if not rules then
-		return nil
-	end
-	for i,rule in ipairs(rules) do 
-		if not rule.preCondition or rule.preCondition(character) then
-			return rule
-		end
-	end
-	return nil
-end
-
-function GetCombineRule(character, charType, itemType, groundType) : any
-	local rule = GetCombineRule_NoAnyChecks(character, charType, itemType, groundType)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, charType, itemType, CellType.Any)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, charType, CellType.Any, groundType)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, charType, CellType.Any, CellType.Any)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, itemType, groundType)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, CellType.Any, groundType)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, itemType, CellType.Any)
-	if rule then return rule end
-	rule = GetCombineRule_NoAnyChecks(character, CellType.Any, CellType.Any, CellType.Any)
-	if rule then return rule end
-	return nil
-end
-
-function SetAppearAnimation(cell)
-	cell.animType = CellAnimType.ItemAppear
-	cell.animT = 0.0
-	cell.animStopT = 0.1
-end
-
-function RuleCallback_ItemAppear(character, intPos)
-	local cell = World.items:GetCell(intPos)
-	if cell.type ~= CellType.None then
-		SetAppearAnimation(cell)
-		World.items:SetCell(cell)
-	end
-end
-
-function RuleCallback_EatBread(character, intPos)
-	local cell = World.items:GetCell(intPos)
-	if cell.type >= CellType.Bread_1 and cell.type <= CellType.Bread_1 - 1 + maxBreadStackSize then
-		if cell.type == CellType.Bread_1 then
-			cell.type = CellType.None
-		else
-			cell.type -= 1
-		end
-		-- TODO dec character hunger
-		character.hunger -= 0.25
-		World.items:SetCell(cell)
-	end
-end
-
-function RegisterAllCombineRules()
-	combineRules = {}
-
-	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.GroundPrepared, CellType.None, CellType.WheatCollected_2, CellType.Ground, RuleCallback_ItemAppear)
-	RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None, CellType.WheatCollected_2, CellType.Any, RuleCallback_ItemAppear)
-	-- WHEAT combine
-	for i = 1, maxWheatStackSize - 1, 1 do
-		for j = 1, maxWheatStackSize, 1 do
-			local total = i + j
-			if total <= maxWheatStackSize then
-				RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j, CellType.WheatCollected_1 - 1 + total, CellType.None)
-			elseif total < maxWheatStackSize * 2 then
-				local reminder = total - maxWheatStackSize
-				RegisterCombineRule(CellType.WheatCollected_1 - 1 + i, CellType.WheatCollected_1 - 1 + j, CellType.WheatCollected_1 + maxWheatStackSize - 1, CellType.WheatCollected_1 - 1 + reminder)
-			end
-		end
-	end
-	
-	-- eat bread
-	for i = 1, maxBreadStackSize, 1 do
-		local newBreadType = CellType.Bread_1 + i - 2
-		if i == 1 then
-			newBreadType = CellType.None
-		end
-		local rule = RegisterCombineRule_Custom(CellType.None, CellType.Bread_1 - 1 + i, CellType.Any, CellType.None, newBreadType, CellType.Any, RuleCallback_EatBread)
-		rule.preCondition = function(character) return character.hunger > 0.25 end
-	end
-
-	for CurrentCellTypeName,CurrentCellType in pairs(CellType) do
-		if IsPickable(CurrentCellType) then
-			-- pick
-			RegisterCombineRule(CellType.None, CurrentCellType, CurrentCellType, CellType.None)
-			-- drop
-			RegisterCombineRule(CurrentCellType, CellType.None, CellType.None, CurrentCellType)
-		end
-	end
-
-	RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
-	RegisterCombineRuleForItemAndGround(CellType.None, CellType.None, CellType.Ground, CellType.None, CellType.None, CellType.GroundPrepared)
-
-	-- plant wheat
-	local setDefaultStateForPlantAction = 
-		function(character, intPos)
-			local cell = World.items:GetCell(intPos)
-			cell.animType = CellAnimType.WheatGrowing
-			cell.animT = 0.0
-			cell.animStopT = 1.0 --TODO param
-			World.items:SetCell(cell)
-		end
-	RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared, CellType.None, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
-	for i = 2, maxWheatStackSize, 1 do
-		RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1 - 1 + i, CellType.None, CellType.GroundPrepared, CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
-	end
-
-	local cutTreeCallback = 
-		function(character, intPos)
-			local cell = World.items:GetCell(intPos)
-			if cell.animType ~= CellAnimType.None then
-				print(cell.animType)
-				return				
-			end
-			if cell.float4 >= 3.0 then
-				cell.type = CellType.Wood
-				SetAppearAnimation(cell)
-			else
-				cell.animType = CellAnimType.GotHit
-				cell.animT = 0.0
-				cell.animStopT = 0.2
-
-				cell.float4 += 1.0
-			end
-			World.items:SetCell(cell)
-		end
-	RegisterCombineRule_Custom(CellType.None, CellType.Tree, CellType.Any, CellType.None, CellType.Wood, CellType.Any, cutTreeCallback)
-	RegisterCombineRule(CellType.Wood, CellType.Wood, CellType.None, CellType.Fence, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Wood, CellType.Stone, CellType.None, CellType.CampfireWithWood, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Wood, CellType.Campfire, CellType.None, CellType.CampfireWithWood, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.FlintStone, CellType.CampfireWithWood, CellType.FlintStone, CellType.CampfireWithWoodFired, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Stone, CellType.WheatCollected_6, CellType.Stone, CellType.Flour, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Wood, CellType.Stove, CellType.None, CellType.StoveWithWood, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.FlintStone, CellType.StoveWithWood, CellType.FlintStone, CellType.StoveWithWoodFired, RuleCallback_ItemAppear)
-	RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
-
-end
-
-function GetCombineAction(character, intPos)
-	local charItem = character.item
-	local cellItem = World.items:GetCell(intPos).type
-	local groundItem = World.ground:GetCell(intPos).type
-
-	local rule = GetCombineRule(character, charItem, cellItem, groundItem)
-	if rule and rule.preCondition then
-		if not rule.preCondition(character) then
-			rule = nil
-		end
-	end
-	-- print(CellTypeInv[charItem], CellTypeInv[cellItem], CellTypeInv[groundItem])
-	if rule then
-		return Action_ExecuteRule(character, intPos, rule)
-	end
-
-	if charItem == CellType.None and IsPickable(cellItem) then
-		return Action_PickItem(character, intPos)
-	end
-	if cellItem == CellType.None and charItem ~= CellType.None then
-		return Action_DropItem(character, intPos)
-	end
-
-	return nil
-end
-
 function Character:GetActionOnCellPos(intPos)
 	local cell = World.items:GetCell(intPos)
 
-	local combineAction = GetCombineAction(self, intPos)
+	local combineAction = Actions:GetCombineAction(self, intPos)
 	if combineAction then
 		return combineAction
 	end
 	return nil
+end
+
+function Character:GetIntPos() : Vector2Int
+	return World.items:GetClosestIntPos(self:GetPosition())
+end
+
+function Character:GetPosition() : Vector3
+	return self.transform:GetPosition()
+end
+
+function Character:GetPosition2D() : Vector2
+	local result = Vector2:new()
+	local pos3d = self:GetPosition() 
+	result.x = pos3d.x
+	result.y = pos3d.z
+	return result
 end
 
 function Character:ExecuteAction(action)
@@ -465,7 +206,16 @@ function Character:ExecuteAction(action)
 		return false
 	end
 	--print("exec", RuleToString(action.rule))
-	return action:func(self)
+	-- print(Utils.TableToString(self))
+	return action:func()
+end
+
+function Character:GetHumanName()
+	return "Mike"
+end
+
+function Character:IsInDialog() : boolean
+	return Game.currentDialog and (Game.currentDialog.characterA == self or Game.currentDialog.characterB == self)
 end
 
 return Character

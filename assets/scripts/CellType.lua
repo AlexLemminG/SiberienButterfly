@@ -1,8 +1,39 @@
 --!strict
 
-local CellTypeInv = require("CellTypeInv")
-local EnumUtils = require("EnumUtils")
-
-local CellType = EnumUtils.Enum(CellTypeInv)
+local CellType = {
+    None = 1,
+    Any = 2,
+    Ground = 3,
+    GroundWithGrass = 4,
+    GroundPrepared = 5,
+    Sphere = 6,
+    Tree = 7,
+    Wheat = 8,
+    WheatCollected_1 = 9,
+    WheatCollected_2 = 10,
+    WheatCollected_3 = 11,
+    WheatCollected_4 = 12,
+    WheatCollected_5 = 13,
+    WheatCollected_6 = 14,
+    WheatPlanted_0 = 15,
+    WheatPlanted_1 = 16,
+    Wood = 17,
+    Fence = 18,
+    Stone = 19,
+    Campfire = 20,
+    CampfireWithWood = 21,
+    CampfireWithWoodFired = 22,
+    FlintStone = 23,
+    Flour = 24,
+    Stove = 25,
+    StoveWithWood = 26,
+    StoveWithWoodFired = 27,
+    Bread_1 = 28,
+    Bread_2 = 29,
+    Bread_3 = 30,
+    Bread_4 = 31,
+    Bread_5 = 32,
+    Bread_6 = 33,
+}
 
 return CellType
