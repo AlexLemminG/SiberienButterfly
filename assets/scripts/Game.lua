@@ -1,5 +1,6 @@
 local World = require("World")
 local GameConsts = require("GameConsts")
+local Utils      = require("Utils")
 local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
@@ -78,6 +79,33 @@ function Game:GenerateWorldGrid()
 	end
 end
 
+function CreatePlayerGO()
+	local characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+
+	local luaPlayerGO = Instantiate(characterPrefab)
+	luaPlayerGO:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+	luaPlayerGO.tag = "player"
+	-- local pointLight = luaPlayerGO:AddComponent("PointLight")
+	local playerScript = luaPlayerGO:AddComponent("LuaComponent")
+	
+	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
+
+	-- playerScript.scriptName = "Character"	--- TODO support from engine
+	-- playerScript.scale = 0.8
+	return luaPlayerGO
+end
+
+function CreateNpcGO()
+	local characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+
+	local character = Instantiate(characterPrefab)
+	local characterControllerScript = character:AddComponent("LuaComponent")
+	characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
+	character:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+
+	return character
+end
+
 function Game:OnEnable()
 	World:Init()
 	math.randomseed(42)
@@ -86,32 +114,59 @@ function Game:OnEnable()
 		World.items.isInited = true
 	end
 	Actions:Init()
-	self.playerGO = self:gameObject():GetScene():FindGameObjectByTag("player")
 	
 	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
-	
-	self.luaPlayerGO = Instantiate(self.characterPrefab)
-	self.luaPlayerGO:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
-	self.luaPlayerGO.tag = "player"
-	-- local pointLight = self.luaPlayerGO:AddComponent("PointLight")
-	local playerScript = self.luaPlayerGO:AddComponent("LuaComponent")
-	
-	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
 
-	-- playerScript.scriptName = "Character"	--- TODO support from engine
-	-- playerScript.scale = 0.8
-
+	self.luaPlayerGO = CreatePlayerGO()
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 
 	local numNPC = 3
 	for i = 1, numNPC, 1 do
-		local character = Instantiate(self.characterPrefab)
-		local characterControllerScript = character:AddComponent("LuaComponent")
-		characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
-		character:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+		local character = CreateNpcGO()
 		self:gameObject():GetScene():AddGameObject(character)
 	end
+end
 
+function Game.CreateSave()
+	print("Creating Lua Save")
+	local save = { 
+		characters = { }
+	}
+
+	for index, character in ipairs(World.characters) do
+		local savedChar = { }
+		local position = character:GetPosition()
+		savedChar.position = { x=position.x, y=position.y, z=position.z }		
+
+		table.insert(save.characters, savedChar)
+	end
+
+	print(Utils.TableToString(save))
+	return save
+end
+
+function Game.LoadSave(save)
+	print("Loading Lua Save")
+
+	if not save then
+		return false
+	end
+	print(Utils.TableToString(save))
+
+	for i = #World.characters, 1, -1 do
+		SceneManager.GetCurrentScene():RemoveGameObject(World.characters[i]:gameObject())
+	end
+	for index, savedCharacter in pairs(save.characters) do
+		local position = vector(savedCharacter.position.x, savedCharacter.position.y, savedCharacter.position.z)
+		local character = nil
+		if index == 1 or index == "1" then
+			character = CreatePlayerGO()
+		else
+			character = CreateNpcGO()
+		end
+		character:GetComponent("Transform"):SetPosition(position)
+		SceneManager.GetCurrentScene():AddGameObject(character)
+	end
 end
 
 
@@ -368,6 +423,13 @@ function Game:Update()
 	end
 
 	self:DrawUI()
+
+	local input = Input()
+	if input:GetKeyDown("0") then
+		local loaded = ButterflyGame():LoadFromDisk()
+	elseif input:GetKeyDown("9") then
+		ButterflyGame():SaveToDisk()
+	end
 end
 
 return Game

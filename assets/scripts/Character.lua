@@ -62,7 +62,6 @@ function Character:OnEnable()
 	self.rigidBody:SetAngularFactor(vector(0,0,0))
 
 	table.insert(World.characters, self)
-
 end
 
 
@@ -77,6 +76,12 @@ function Character:SetItem(item : number)
 end
 
 function Character:OnDisable()
+	for index, value in ipairs(World.characters) do
+		if value == self then
+			table.remove(World.characters, index)
+			break
+		end
+	end
 	self:gameObject():GetScene():RemoveGameObject(self.itemGO)
 end
 

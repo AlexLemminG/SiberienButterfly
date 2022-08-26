@@ -1,6 +1,8 @@
+---@class World
 local World = {
     items = nil,
-	ground = nil,
+    ground = nil,
+    ---@type Character[]
     characters = {}
 }
 

@@ -82,7 +82,8 @@
         "Vector2Int",
         "Vector2",
         "LogError",
-        "continue"
+        "continue",
+        "SceneManager"
     ],
     "robloxLsp.diagnostics.globals": [
         "AssetDatabase"
