@@ -98,6 +98,8 @@ public:
     Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
     Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
 
+    void LoadFrom(const Grid& otherGrid);
+
     std::vector<GridCell> cells;
     std::vector<Matrix4> cellsLocalMatrices;
 
@@ -107,6 +109,9 @@ public:
     int GetModificationsCount()const {
         return modificationsCount;
     }
+
+    static void SerializeGrid(SerializationContext& context, const Grid& grid);
+    static void DeserializeGrid(const SerializationContext& context, Grid& grid);
 
     bool isInited = false;
 private:
@@ -119,8 +124,7 @@ private:
     REFLECT_METHOD(SetCellLocalMatrix);
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
-    REFLECT_VAR(isInited);
-    REFLECT_END();
+    REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
 };
 
 class GridSystem : public GameSystem<GridSystem> {

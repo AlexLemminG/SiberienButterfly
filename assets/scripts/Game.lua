@@ -5,7 +5,8 @@ local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
 	luaPlayerGO = nil,
-	currentDialog = nil
+	currentDialog = nil,
+	isInited = false
 }
 local Component = require("Component")
 local CellType = require("CellType")
@@ -105,13 +106,13 @@ function CreateNpcGO()
 
 	return character
 end
-
+--TODO Game as not component but just as a module ?
 function Game:OnEnable()
 	World:Init()
 	math.randomseed(42)
-	if not World.items.isInited then
+	if not Game.isInited then
 		self:GenerateWorldGrid()
-		World.items.isInited = true
+		Game.isInited = true
 	end
 	Actions:Init()
 	
@@ -134,14 +135,9 @@ function Game.CreateSave()
 	}
 
 	for index, character in ipairs(World.characters) do
-		local savedChar = { }
-		local position = character:GetPosition()
-		savedChar.position = { x=position.x, y=position.y, z=position.z }		
-
-		table.insert(save.characters, savedChar)
+		table.insert(save.characters, character:SaveState())
 	end
 
-	print(Utils.TableToString(save))
 	return save
 end
 
@@ -151,30 +147,28 @@ function Game.LoadSave(save)
 	if not save then
 		return false
 	end
-	print(Utils.TableToString(save))
+
+	Game.isInited = true
 
 	for i = #World.characters, 1, -1 do
 		SceneManager.GetCurrentScene():RemoveGameObject(World.characters[i]:gameObject())
 	end
 	for index, savedCharacter in pairs(save.characters) do
-		local position = vector(savedCharacter.position.x, savedCharacter.position.y, savedCharacter.position.z)
-		local character = nil
+		local characterGO = nil
 		if index == 1 or index == "1" then
-			character = CreatePlayerGO()
+			characterGO = CreatePlayerGO()
 		else
-			character = CreateNpcGO()
+			characterGO = CreateNpcGO()
 		end
-		character:GetComponent("Transform"):SetPosition(position)
-		SceneManager.GetCurrentScene():AddGameObject(character)
+		local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
+		SceneManager.GetCurrentScene():AddGameObject(characterGO)
+		characterScript:LoadState(savedCharacter)
 	end
 end
 
 
 function Game:OnDisable()
-	for index, character in ipairs(World.characters) do
-		self:gameObject():GetScene():RemoveGameObject(character:gameObject())
-	end
-	-- self:gameObject():GetScene():RemoveGameObject(self.luaPlayerGO)
+
 end
 
 function Game:ApplyAnimation(grid, cell)

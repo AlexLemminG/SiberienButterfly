@@ -38,6 +38,35 @@ function Character:new(o)
 end
 
 
+function Character:SaveState() : any
+	local state = {}
+	local position = self:GetPosition()
+	local rotation = self.transform:GetRotation()
+	state.position = { x=position.x, y=position.y, z=position.z }
+	local lookVector = rotation:vector()
+	local lookScalar = rotation:scalar()
+	state.rotation = { x=lookVector.x, y=lookVector.y, z=lookVector.z, w= lookScalar }
+	state.itemName = CellTypeInv[self.item]
+	return state
+end
+--Called right after adding to world!
+function Character:LoadState(savedState)
+	local position = vector(savedState.position.x, savedState.position.y, savedState.position.z)
+	local rotation = Quaternion:new()
+	rotation:set_scalar(savedState.rotation.w)
+	rotation:set_vector(vector(savedState.rotation.x,savedState.rotation.y,savedState.rotation.z))
+	local transform = self.rigidBody:GetTransform()
+	Mathf.SetPos(transform, position)
+	Mathf.SetRot(transform, rotation)
+	self.rigidBody:SetTransform(transform)
+	if savedState.itemName then
+		local item = CellType[savedState.itemName]
+		if item then
+			self:SetItem(item)
+		end
+	end
+end
+
 function Character:OnEnable()
 	self.runAnimation = AssetDatabase():Load("models/Vintik.blend$Run")
 	self.standAnimation = AssetDatabase():Load("models/Vintik.blend$Stand")
@@ -51,13 +80,16 @@ function Character:OnEnable()
 	self.itemGO = Instantiate(itemPrefab)
 	self:gameObject():GetScene():AddGameObject(self.itemGO)
 	local parentedTransform = self.itemGO:GetComponent("ParentedTransform")
-	local itemMatrix = parentedTransform.localMatrix
+	local itemMatrix = parentedTransform.localMatrixas
 	Mathf.SetScale(itemMatrix, vector(1.5,1.5,1.5)) -- TODO based on character scale inv
 	parentedTransform.localMatrix = itemMatrix
 	local attachBoneIdx = 24 -- TODO
 	parentedTransform:SetParentAsBone(self:gameObject():GetComponent("MeshRenderer"), attachBoneIdx)
 
-	self:SetItem(CellType.None)
+	if not self.item then
+		self.item = CellType.None
+	end
+	self:SetItem(self.item)
 
 	self.rigidBody:SetAngularFactor(vector(0,0,0))
 

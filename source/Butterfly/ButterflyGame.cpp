@@ -8,24 +8,33 @@
 REGISTER_GAME_SYSTEM(ButterflyGame);
 DECLARE_TEXT_ASSET(SaveData);
 
+static GameEventHandle onBeforeReloadingHandle;
+static GameEventHandle onAfterReloadingHandle;
 bool ButterflyGame::Init() {
 	//TODO auto register
 	Luna::RegisterShared<SaveData>(LuaSystem::Get()->L);
+
+	onBeforeReloadingHandle = LuaSystem::Get()->onBeforeScriptsReloading.Subscribe([this]() {SaveToDisk(); });
+	onAfterReloadingHandle = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() {LoadFromDisk(); });
 	return true;
 }
 
 void ButterflyGame::Term() {
+	LuaSystem::Get()->onBeforeScriptsReloading.Unsubscribe(onBeforeReloadingHandle);
+	LuaSystem::Get()->onAfterScriptsReloading.Unsubscribe(onAfterReloadingHandle);
 }
 static const char* SavePath = "SAVES/Save.sav";
 
 void ButterflyGame::CreateSave(std::shared_ptr<SaveData> save) const
 {
-
 	if (!save) {
 		LogError("Got null save to CreateSave func");
 		return;
 	}
 	*save = SaveData();
+	//TODO no hardcode
+	save->itemsGrid = *GridSystem::Get()->GetGrid("ItemsGrid");
+	save->groundGrid = *GridSystem::Get()->GetGrid("GroundGrid");
 	lua_State* L = LuaSystem::Get()->L;
 
 	LuaSystem::Get()->PushModule("Game");
@@ -85,6 +94,10 @@ void ButterflyGame::LoadSave(const std::shared_ptr<SaveData> save)
 		lua_pop(L, 2);
 		return;
 	}
+
+	//TODO not hardcode
+	GridSystem::Get()->GetGrid("ItemsGrid")->LoadFrom(save->itemsGrid);
+	GridSystem::Get()->GetGrid("GroundGrid")->LoadFrom(save->groundGrid);
 
 	Log("Loaded");
 }

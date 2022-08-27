@@ -21,6 +21,14 @@ function CharacterController:new(o)
     return o
 end
 
+function CharacterController:SaveState() : any
+    print("CharacterController:SaveState")
+end
+
+function CharacterController:LoadState(savedState)
+    print("CharacterController:LoadState")
+end
+
 function CharacterController:OnEnable()
     self.character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
     self.character.characterController = self

@@ -119,15 +119,24 @@ void Grid::OnEnable() {
     ASSERT(thisShared);
     GridSystem::Get()->grids.push_back(thisShared);
 
-    for (int x = 0; x < sizeX; x++) {
-        for (int y = 0; y < sizeY; y++) {
-            auto& cell = cells.emplace_back();
-            cell.pos.x = x;
-            cell.pos.y = y;
-            cell.type = (int)GridCellType::NONE;
-            cellsLocalMatrices.emplace_back() = Matrix4::Identity();
+    cellsLocalMatrices.clear();
+    cellsLocalMatrices.resize(sizeX*sizeY, Matrix4::Identity());
+
+    if (!isInited) {
+        cells.reserve(sizeX * sizeY);
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                auto& cell = cells.emplace_back();
+                cell.pos.x = x;
+                cell.pos.y = y;
+                cell.type = (int)GridCellType::NONE;
+            }
         }
     }
+    else {
+        ASSERT(cells.size() == sizeX * sizeY);
+    }
+    isInited = true;
 }
 void Grid::OnDisable() {
     auto& grids = GridSystem::Get()->grids;
@@ -186,7 +195,7 @@ void GridSystem::LoadCellTypes() {
 
     this->defaultMesh = nullptr;
     for (auto mesh : this->settings->mesh->meshes) {
-        if (strcmpi(mesh->name.c_str(), "unknown") == 0) {
+        if (_strcmpi(mesh->name.c_str(), "unknown") == 0) {
             this->defaultMesh = mesh;
             break;
         }
@@ -203,7 +212,7 @@ void GridSystem::LoadCellTypes() {
         }
         std::shared_ptr<Mesh> cellMesh = this->defaultMesh;
         for (auto mesh : this->settings->mesh->meshes) {
-            if (strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
+            if (_strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
                 cellMesh = mesh;
                 break;
             }
@@ -259,4 +268,55 @@ std::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
 
 void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
     outCell = GetCell(pos);
+}
+
+void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)
+{
+    ::Serialize(context.Child("sizeX"), grid.sizeX);
+    ::Serialize(context.Child("sizeY"), grid.sizeY);
+    ::Serialize(context.Child("isInited"), grid.isInited);
+    
+    c4::cblob blob;
+    blob.buf = (c4::cbyte*)grid.cells.data();
+    blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
+    std::string buffer = std::string(((4 * blob.len / 3) + 3) & ~3, '\0');
+    c4::substr bufferSubstr(buffer.data(), buffer.size());
+    size_t size = ryml::base64_encode(bufferSubstr, blob);
+    ASSERT(size == buffer.size());
+
+    context.Child("cells") << buffer;
+}
+
+void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
+{
+    ::Deserialize(context.Child("sizeX"), grid.sizeX);
+    ::Deserialize(context.Child("sizeY"), grid.sizeY);
+    ::Deserialize(context.Child("isInited"), grid.isInited);
+
+    if (grid.isInited) {
+        std::string cellsBase64;
+        ::Deserialize(context.Child("cells"), cellsBase64);
+
+
+        c4::csubstr cellsBase64Substr(cellsBase64.c_str(), cellsBase64.size());
+
+        grid.cells.resize(grid.sizeX * grid.sizeY);
+
+        c4::blob blob(grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+
+        size_t size = c4::base64_decode(cellsBase64Substr, blob);
+        ASSERT(size == grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+    }
+
+}
+void Grid::LoadFrom(const Grid& otherGrid) {
+    OnDisable();
+    
+    this->cells = otherGrid.cells;
+    this->sizeX = otherGrid.sizeX;
+    this->sizeY = otherGrid.sizeY;
+    this->isInited = otherGrid.isInited;
+    this->modificationsCount++;
+
+    OnEnable();
 }
