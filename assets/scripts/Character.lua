@@ -25,7 +25,8 @@ local Character = {
 	hunger = 0.5,
 	health = 1.0,
 	desiredVelocity = vector(0,0,0),
-	characterController = nil
+	characterController = nil,
+	name = "Name"
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -40,6 +41,9 @@ end
 
 function Character:SaveState() : any
 	local state = {}
+	state.hunger = self.hunger
+	state.health = self.health
+	state.name = self.name
 	local position = self:GetPosition()
 	local rotation = self.transform:GetRotation()
 	state.position = { x=position.x, y=position.y, z=position.z }
@@ -47,10 +51,16 @@ function Character:SaveState() : any
 	local lookScalar = rotation:scalar()
 	state.rotation = { x=lookVector.x, y=lookVector.y, z=lookVector.z, w= lookScalar }
 	state.itemName = CellTypeInv[self.item]
+	if self.characterController then
+		state.characterController = self.characterController:SaveState()
+	end
 	return state
 end
 --Called right after adding to world!
 function Character:LoadState(savedState)
+	self.health = savedState.health
+	self.hunger = savedState.hunger
+	self.name = savedState.name
 	local position = vector(savedState.position.x, savedState.position.y, savedState.position.z)
 	local rotation = Quaternion:new()
 	rotation:set_scalar(savedState.rotation.w)
@@ -65,23 +75,31 @@ function Character:LoadState(savedState)
 			self:SetItem(item)
 		end
 	end
+	if savedState.characterController then
+		if self.characterController then
+			self.characterController:LoadState(savedState.characterController)
+		else
+			LogError("Have savedState.characterController but not self.characterController")
+		end
+	end
 end
 
 function Character:OnEnable()
-	self.runAnimation = AssetDatabase():Load("models/Vintik.blend$Run")
-	self.standAnimation = AssetDatabase():Load("models/Vintik.blend$Stand")
-	self.runWithItemAnimation = AssetDatabase():Load("models/Vintik.blend$RunWithItem")
-	self.standWithItemAnimation = AssetDatabase():Load("models/Vintik.blend$StandWithItem")
+	self.runAnimation = AssetDatabase:Load("models/Vintik.blend$Run")
+	self.standAnimation = AssetDatabase:Load("models/Vintik.blend$Stand")
+	self.runWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$RunWithItem")
+	self.standWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$StandWithItem")
 	self.animator = self:gameObject():GetComponent("Animator")
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
 	
-	local itemPrefab = AssetDatabase():Load("prefabs/carriedItem.asset")
+	local itemPrefab = AssetDatabase:Load("prefabs/carriedItem.asset")
 	self.itemGO = Instantiate(itemPrefab)
 	self:gameObject():GetScene():AddGameObject(self.itemGO)
 	local parentedTransform = self.itemGO:GetComponent("ParentedTransform")
-	local itemMatrix = parentedTransform.localMatrixas
-	Mathf.SetScale(itemMatrix, vector(1.5,1.5,1.5)) -- TODO based on character scale inv
+	local itemMatrix = parentedTransform.localMatrix
+	local characterScaleInv = 1.0 / self.transform:GetScale().x
+	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
 	parentedTransform.localMatrix = itemMatrix
 	local attachBoneIdx = 24 -- TODO
 	parentedTransform:SetParentAsBone(self:gameObject():GetComponent("MeshRenderer"), attachBoneIdx)
@@ -99,10 +117,10 @@ end
 
 ---comment
 function Character:SetItem(item : number)
-	local allMeshes = AssetDatabase():Load("models/GridCells.blend")
+	local allMeshes = AssetDatabase:Load("models/GridCells.blend")
 	local itemMeshRenderer = self.itemGO:GetComponent("MeshRenderer")
 	self.item = item
-	itemMeshRenderer.mesh = GridSystem():GetMeshByCellType(item)
+	itemMeshRenderer.mesh = GridSystem:GetMeshByCellType(item)
 
 	self:UpdateAnimation()
 end
@@ -133,7 +151,7 @@ function Character:Update()
 	local pos = Mathf.GetPos(trans)
 	local grid = World.items
 	local cellPos = grid:GetClosestIntPos(pos)
-	local dt = Time().deltaTime() -- TODO Time:deltaTime somehow ?
+	local dt = Time.deltaTime() -- TODO Time:deltaTime somehow ?
 	pos = vector(pos.x, Lerp(pos.y, grid:GetCellWorldCenter(cellPos).y, dt * 20.0), pos.z)
 	Mathf.SetPos(trans, pos)
 	self.rigidBody:SetTransform(trans)
@@ -244,6 +262,14 @@ function Character:GetPosition2D() : Vector2
 	return result
 end
 
+--Distance check is ignored
+function Character:CanExecuteAction(action : CharacterAction)
+	if action == nil then
+		return false
+	end
+	return action:CanExecute()
+end
+
 function Character:ExecuteAction(action)
 	if action == nil then
 		return false
@@ -254,7 +280,7 @@ function Character:ExecuteAction(action)
 end
 
 function Character:GetHumanName()
-	return "Mike"
+	return self.name
 end
 
 function Character:IsInDialog() : boolean

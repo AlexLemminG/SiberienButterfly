@@ -2,6 +2,7 @@ local CellType = require("CellType")
 local Grid = require("Grid")
 local World = require("World")
 local WorldQuery = require("WorldQuery")
+local Game       = require("Game")
 
 local PlayerController = {
 	speed = 2,
@@ -24,7 +25,7 @@ function PlayerController:OnEnable()
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
 
-	self.selectionGO = AssetDatabase():Load("prefabs/selection.asset")
+	self.selectionGO = AssetDatabase:Load("prefabs/selection.asset")
 	assert(self.selectionGO ~= nil, "selectionGO not found")
 	self.selectionGO = Instantiate(self.selectionGO)
 	self.selectionGO.tag = "notselection"
@@ -44,7 +45,7 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function PlayerController:Update()
-	local input = Input()
+	local input = Input
 
 	local velocity = vector(0,0,0)
 	if input:GetKey("W") then
@@ -93,6 +94,7 @@ function PlayerController:Update()
 	if nearestCharacter then
 		action = self.character:GetActionOnCharacter(nearestCharacter)
         Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
+		Game:DrawStats(nearestCharacter)
 	end
 	
 	if not action then
@@ -110,7 +112,7 @@ function PlayerController:Update()
 		action = nil
 	end
 	self.wasInDialogPrevFrame = self.character:IsInDialog()
-	if Input():GetKeyDown("Space") then
+	if Input:GetKeyDown("Space") then
 		self.character:ExecuteAction(action)
 	end
 end

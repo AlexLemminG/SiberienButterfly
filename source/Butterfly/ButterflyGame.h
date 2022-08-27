@@ -29,8 +29,8 @@ class ButterflyGame : public GameSystem<ButterflyGame> {
 	void CreateSave(std::shared_ptr<SaveData> save) const;
 	void LoadSave(const std::shared_ptr<SaveData> save);
 
-	bool SaveToDisk();
-	bool LoadFromDisk();
+	bool SaveToDisk(const std::string& fileName);
+	bool LoadFromDisk(const std::string& fileName);
 
 	REFLECT_BEGIN(ButterflyGame);
 	REFLECT_METHOD(SaveToDisk);

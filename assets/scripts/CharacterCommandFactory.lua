@@ -6,15 +6,70 @@ local Utils   = require("Utils")
 local CharacterCommandFactory = {}
 
 ---@class CharacterCommand
-local CharacterCommand = {}
+local CharacterCommand = {
+    savedState = {}
+}
 
 function CharacterCommand:CalcNextAction(character : Character) : CharacterAction|nil
     return nil
 end
 
+function CharacterCommandFactory:SaveToState(command : CharacterCommand) : any
+    if not command then
+        return nil
+    end
+    if not command.savedState then
+        LogError("command without saveState")
+    end
+    return command.savedState
+end
+
+function CharacterCommandFactory:LoadFromState(savedState : any) : CharacterCommand|nil
+    if not savedState or not savedState.factoryFunctionName then
+        return nil
+    end
+    local command = CharacterCommandFactory[savedState.factoryFunctionName](table.unpack(savedState.args))
+    if not command then
+        LogError("failed to create command from savedState "..Utils.TableToString(savedState))
+    end
+    return command
+    --TODO check for validity
+end
+
+function CharacterCommandFactory.CollectWheatToStacks() : CharacterCommand
+    local collectRules = Actions:GetAllCombineRules(CellType.WheatCollected_Any, CellType.WheatCollected_Any, CellType.Any)
+    local command = CharacterCommandFactory.CreateFromMultipleRules(collectRules)
+    command.savedState = {
+        factoryFunctionName = "CollectWheatToStacks"
+    }
+    return command
+end
+
+function CharacterCommandFactory.EatSomething() : CharacterCommand
+    local eatRules = {}
+    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.Bread_Any, CellType.Any)) do
+        if value.newCharType == CellType.None then
+            table.insert(eatRules, value)
+        end
+    end
+    local command = CharacterCommandFactory.CreateFromMultipleRules(eatRules)
+    command.savedState = {
+        factoryFunctionName = "EatSomething"
+    }
+    return command
+end
+
 ---@param combineRules CombineRule[]
 function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : CharacterCommand
     local command = {}
+    command.savedState = {
+        factoryFunctionName = "CreateFromMultipleRules",
+        args = { combineRules }
+    }
+    --To make sure after loading they are valid objects
+    for index, value in ipairs(combineRules) do
+        combineRules[index] = Actions:GetCombineRule_NoAnyChecks(nil, value.charType, value.itemType, value.groundType)
+    end
     command.combineRules = combineRules
     if not combineRules then
         error("combineRules is nil")
@@ -43,11 +98,18 @@ function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : Charact
                     rule = Actions:GetPickupRule(combineRule.charType)
                 end
                 if not rule then
-                    return nil
+                    continue
                 end
                 local actionPos = WorldQuery:FindNearestActionPosFromRule(rule, characterIntPos)
                 if actionPos then
-                    local distance = math.pow(characterIntPos.x - actionPos.x, 2.0) + math.pow(characterIntPos.y - actionPos.y, 2.0)
+                    local actionPosNext = WorldQuery:FindNearestActionPosFromRule(combineRule, actionPos)
+                    if not actionPosNext then
+                        continue
+                    end
+
+                    local distance1 = math.sqrt(math.pow(characterIntPos.x - actionPos.x, 2.0) + math.pow(characterIntPos.y - actionPos.y, 2.0))
+                    local distance2 = math.sqrt(math.pow(actionPosNext.x - actionPos.x, 2.0) + math.pow(actionPosNext.y - actionPos.y, 2.0))
+                    local distance = distance1 + distance2
                     if distance < minDistance then
                         minDistance = distance
                         bestCombineRule = rule
@@ -75,30 +137,7 @@ function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : Charact
 end
 
 function CharacterCommandFactory.CreateFromSingleRule(combineRule : CombineRule) : CharacterCommand
-    local command = {}
-    command.combineRule = combineRule
-    if not combineRule then
-        error("combineRule is nil")
-    end
-    function command:CalcNextAction(character : Character)
-        if not self.combineRule then
-            return nil
-        end
-        if character.item ~= self.combineRule.charType and self.combineRule.charType ~= CellType.Any then
-            local rule : CombineRule|nil = nil
-            if character.item ~= CellType.None then
-                rule = Actions:GetDropRule(character.item)
-            else
-                rule = Actions:GetPickupRule(combineRule.charType)
-            end
-            if not rule then
-                return nil
-            end
-            return WorldQuery:FindNearestActionFromRule(character, rule)
-        end
-        return WorldQuery:FindNearestActionFromRule(character, self.combineRule)
-    end
-    return command
+    return CharacterCommandFactory.CreateFromMultipleRules({combineRule})
 end
 
 return CharacterCommandFactory

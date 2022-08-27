@@ -14,8 +14,8 @@ bool ButterflyGame::Init() {
 	//TODO auto register
 	Luna::RegisterShared<SaveData>(LuaSystem::Get()->L);
 
-	onBeforeReloadingHandle = LuaSystem::Get()->onBeforeScriptsReloading.Subscribe([this]() {SaveToDisk(); });
-	onAfterReloadingHandle = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() {LoadFromDisk(); });
+	onBeforeReloadingHandle = LuaSystem::Get()->onBeforeScriptsReloading.Subscribe([this]() {SaveToDisk("LuaReloadingSave"); });
+	onAfterReloadingHandle = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() {LoadFromDisk("LuaReloadingSave"); });
 	return true;
 }
 
@@ -23,7 +23,7 @@ void ButterflyGame::Term() {
 	LuaSystem::Get()->onBeforeScriptsReloading.Unsubscribe(onBeforeReloadingHandle);
 	LuaSystem::Get()->onAfterScriptsReloading.Unsubscribe(onAfterReloadingHandle);
 }
-static const char* SavePath = "SAVES/Save.sav";
+static const char* SavePathBase = "SAVES/";
 
 void ButterflyGame::CreateSave(std::shared_ptr<SaveData> save) const
 {
@@ -102,7 +102,7 @@ void ButterflyGame::LoadSave(const std::shared_ptr<SaveData> save)
 	Log("Loaded");
 }
 
-bool ButterflyGame::SaveToDisk()
+bool ButterflyGame::SaveToDisk(const std::string& fileName)
 {
 	//TODO generic save system
 	auto save = std::make_shared<SaveData>();
@@ -112,9 +112,10 @@ bool ButterflyGame::SaveToDisk()
 	}
 
 	{
-		std::ofstream output(SavePath);
+		std::string savePath = SavePathBase + fileName + ".sav";
+		std::ofstream output(savePath);
 		if (!output.is_open()) {
-			LogError("Failed to open '%s' for saving", SavePath);
+			LogError("Failed to open '%s' for saving", savePath.c_str());
 			return false;
 		}
 
@@ -123,15 +124,17 @@ bool ButterflyGame::SaveToDisk()
 	return true;
 }
 
-bool ButterflyGame::LoadFromDisk()
+bool ButterflyGame::LoadFromDisk(const std::string& fileName)
 {
 	//TODO generic save system
 	auto save = std::make_shared<SaveData>();
 
 	{
-		std::ifstream input(SavePath, std::ifstream::binary);
+		std::string savePath = SavePathBase + fileName + ".sav";
+
+		std::ifstream input(savePath, std::ifstream::binary);
 		if (!input.is_open()) {
-			LogError("Failed to open '%s' for loading", SavePath);
+			LogError("Failed to open '%s' for loading", savePath.c_str());
 			return false;
 		}
 

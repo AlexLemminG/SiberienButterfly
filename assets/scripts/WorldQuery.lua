@@ -2,6 +2,7 @@ local WorldQuery = {}
 local World = require("World")
 local Actions = require("Actions")
 local CellType = require("CellType")
+local CellTypeInv = require("CellTypeInv")
 
 
 function WorldQuery:FindNearestActionFromRule(character : Character, combineRule : CombineRule)
@@ -36,60 +37,23 @@ function WorldQuery:FindNearestItemWithGround(cellTypeItem : integer, cellTypeGr
     if cellTypeGround == CellType.Any then
         return self:FindNearestItem(cellTypeItem, originPos)
     end
+    
     local radius = 10
-    local pos = Vector2Int:new()
-    local closestPos = nil
-    local closestDistance = math.huge
-    local gridItems = World.items
-    local gridGround = World.ground
-    for dx = -radius, radius, 1 do
-        for dy = -radius, radius, 1 do
-            pos.x = dx + originPos.x;
-            pos.y = dy + originPos.y
-            
-            if gridItems:GetCell(pos).type == cellTypeItem and gridGround:GetCell(pos).type == cellTypeGround then
-                local distance = dx*dx + dy*dy
-                if not closestPos then
-                    closestPos = Vector2Int:new()
-                    closestPos.x = pos.x
-                    closestPos.y = pos.y
-                elseif closestDistance > distance then
-                    closestDistance = distance
-                    closestPos.x = pos.x
-                    closestPos.y = pos.y
-                end
-            end
-        end    
-    end    
-    return closestPos
+    local closestPos = Vector2Int:new()
+    if GridSystem:FindNearestPosWithTypes(closestPos, originPos, radius, cellTypeItem, cellTypeGround) then
+        return closestPos
+    end
+    return nil
 end
 
-function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int) : Vector2Int
+function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int) : Vector2Int|nil
     local radius = 10
-    local pos = Vector2Int:new()
-    local closestPos = nil
-    local closestDistance = math.huge
+    local closestPos = Vector2Int:new()
     local grid = World.items
-    for dx = -radius, radius, 1 do
-        for dy = -radius, radius, 1 do
-            pos.x = dx + originPos.x;
-            pos.y = dy + originPos.y
-            
-            if grid:GetCell(pos).type == cellType then
-                local distance = dx*dx + dy*dy
-                if not closestPos then
-                    closestPos = Vector2Int:new()
-                    closestPos.x = pos.x
-                    closestPos.y = pos.y
-                elseif closestDistance > distance then
-                    closestDistance = distance
-                    closestPos.x = pos.x
-                    closestPos.y = pos.y
-                end
-            end
-        end    
-    end    
-    return closestPos
+    if grid:FindNearestPosWithType(closestPos, originPos, radius, cellType) then
+        return closestPos
+    end
+    return nil
 end
 
 return WorldQuery

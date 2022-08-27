@@ -109,6 +109,7 @@ public:
     int GetModificationsCount()const {
         return modificationsCount;
     }
+    bool FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType) const;
 
     static void SerializeGrid(SerializationContext& context, const Grid& grid);
     static void DeserializeGrid(const SerializationContext& context, Grid& grid);
@@ -124,6 +125,7 @@ private:
     REFLECT_METHOD(SetCellLocalMatrix);
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
+    REFLECT_METHOD(FindNearestPosWithType);
     REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
 };
 
@@ -139,7 +141,7 @@ class GridSystem : public GameSystem<GridSystem> {
     std::vector<std::shared_ptr<Grid>> grids;
     std::shared_ptr<Mesh> defaultMesh;
 
-    std::shared_ptr<Grid> GetGrid(const std::string& name);
+    std::shared_ptr<Grid> GetGrid(const std::string& name) const;
 
     void LoadCellTypes();
 
@@ -147,9 +149,12 @@ class GridSystem : public GameSystem<GridSystem> {
 
     GameEventHandle onAfterLuaReloaded;
 
+    bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const;
+
     REFLECT_BEGIN(GridSystem);
     REFLECT_METHOD(GetGrid);
     REFLECT_METHOD(GetMeshByCellType);
+    REFLECT_METHOD(FindNearestPosWithTypes);
     REFLECT_END();
 };
 

@@ -1,4 +1,3 @@
-
 local Apple = {
     followSpeed = 1.0,
     someField = "hello Apple Field",
@@ -45,9 +44,8 @@ function lerp(a, b, t)
 end
 
 function GetGrid()
-	return Grid()
+    return Grid()
 end
-
 
 function Apple:Update()
     -- local trans = self:gameObject():GetComponent("Transform")
@@ -57,17 +55,17 @@ function Apple:Update()
 
     -- local player = self:gameObject():GetScene():FindGameObjectByTag("player")
     -- local newPos = lerp(trans:GetPosition(), player:GetComponent("Transform"):GetPosition(),
-        -- Time():deltaTime() * self.followSpeed)
+    -- Time():deltaTime() * self.followSpeed)
     -- trans:SetPosition(newPos)
     -- -- trans:SetPosition(pos)
     -- -- print(dump(self.editor))
-	
-	-- -- print(Input():GetKey("Z"))
-	-- -- print(Time():time())
+
+    -- -- print(Input:GetKey("Z"))
+    -- -- print(Time():time())
 
     -- local t = Transform()
-	
-	-- print(self.grid == Grid():Get())
+
+    -- print(self.grid == Grid():Get())
 end
 
 function Apple:OnEnable()
@@ -77,7 +75,7 @@ function Apple:OnEnable()
     -- local cell2 = GridCell()
     -- cell2.type = 3
     -- Grid():SetCell(cell2)
-	-- self.f = 3
+    -- self.f = 3
     -- print("Hello from Apple 1 ", self.someInt)
     -- local test = Foo() --TODO some error here
 
@@ -93,7 +91,7 @@ function Apple:OnEnable()
     -- print("Hello from Apple 2")
 
     -- -- test:gc()
-	-- print(self)
+    -- print(self)
     -- print(self.gameObject)
     -- local go = self:gameObject()
     -- local trans = go:GetComponent("Transform")
@@ -103,8 +101,8 @@ function Apple:OnEnable()
     -- pos = -pos
     -- trans:SetPosition(pos)
     -- print(pos)
-	
-	-- self.grid = GetGrid()
+
+    -- self.grid = GetGrid()
 end
 
 return Apple

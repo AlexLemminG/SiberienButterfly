@@ -81,7 +81,7 @@ function Game:GenerateWorldGrid()
 end
 
 function CreatePlayerGO()
-	local characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	local luaPlayerGO = Instantiate(characterPrefab)
 	luaPlayerGO:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
@@ -97,7 +97,7 @@ function CreatePlayerGO()
 end
 
 function CreateNpcGO()
-	local characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	local character = Instantiate(characterPrefab)
 	local characterControllerScript = character:AddComponent("LuaComponent")
@@ -115,13 +115,14 @@ function Game:OnEnable()
 		Game.isInited = true
 	end
 	Actions:Init()
-	
-	self.characterPrefab = AssetDatabase():Load("prefabs/character.asset")
+	-- print(AssetDatabase)
+	-- print(AssetDatabase:Load("prefabs/character.asset"))
+	self.characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	self.luaPlayerGO = CreatePlayerGO()
 	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
 
-	local numNPC = 3
+	local numNPC = 9
 	for i = 1, numNPC, 1 do
 		local character = CreateNpcGO()
 		self:gameObject():GetScene():AddGameObject(character)
@@ -216,7 +217,7 @@ end
 function Game:AnimateCells(dt)
 	local items = World.items
 	local v = Vector2Int:new()
-	local dt = Time().deltaTime()
+	local dt = Time.deltaTime()
 	local cell = GridCell:new()
 	for x = 0, gridSizeX-1, 1 do
 		for y = 0, gridSizeY-1, 1 do
@@ -242,36 +243,42 @@ function Game:AnimateCells(dt)
 end
 
 function Game:MainLoop()
-	local dt = Time().deltaTime()
+	local dt = Time.deltaTime()
 
 	self:AnimateCells(dt)
 
 	for index, character in ipairs(World.characters) do
-		character.hunger = math.clamp(character.hunger + Time().deltaTime() / 100.0, 0.0, 1.0)
+		character.hunger = math.clamp(character.hunger + Time.deltaTime() / 10.0, 0.0, 1.0)
 	end
 end
 
-function Game:DrawUI()
-	local screenSize = Graphics():GetScreenSize()
+function Game:DrawStats(character : Character)
+	local isPlayer = character == World.characters[1]
 	
-	self.ui_selection = 0
-
+	local screenSize = Graphics:GetScreenSize()
+	
 	imgui.SetNextWindowSize(200,100)
-	imgui.SetNextWindowPos(0, screenSize.y, imgui.constant.Cond.Always, 0,1.0)
+	if isPlayer then
+		imgui.SetNextWindowPos(0, screenSize.y, imgui.constant.Cond.Always, 0,1.0)
+	else
+		imgui.SetNextWindowPos(screenSize.x, screenSize.y, imgui.constant.Cond.Always, 1.0,1.0)
+	end
 	imgui.SetNextWindowBgAlpha(0.1)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
-	imgui.Begin("Lua UI", nil, flags)
+	imgui.Begin("Character stats "..tostring(isPlayer), nil, flags)
 
-	local player = World.characters[1]
-	local text = string.format("Hunger: %.3f \nHealth: %.3f", player.hunger, player.health)
+	local text = string.format("Name: %s\nHunger: %.3f \nHealth: %.3f", character.name, character.hunger, character.health)
 	imgui.TextUnformatted(text)
+	imgui.End()
+end
 
+function Game:DrawUI()
+	self:DrawStats(World.characters[1])
 	if self.currentDialog then
 		self.currentDialog:Draw()
 	end
 
-	imgui.End()
 end
 
 function Game:BeginDialog(characterA : Character, characterB : Character)
@@ -279,6 +286,8 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		characterA = characterA,
 		characterB = characterB,
 		selectedOptionIndex = 1,
+
+		selectedOptionIndices = {},
 
 		firstOptionItem = nil,
 		secondOptionItem = nil
@@ -288,7 +297,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	for i = CellType.Bread_1, CellType.Bread_1 + GameConsts.maxBreadStackSize - 1, 1 do
 		hiddenItems[i] = true
 	end
-	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 1, 1 do
+	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
 		hiddenItems[i] = true
 	end
 	
@@ -340,7 +349,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 
 		local selectedOption = options[self.selectedOptionIndex] --TODO nil check
 
-		local screenSize = Graphics():GetScreenSize()
+		local screenSize = Graphics:GetScreenSize()
 		imgui.SetNextWindowSize(400,250)
 		imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0 + 400, imgui.constant.Cond.Always, 0.5,0.5)
 		imgui.SetNextWindowBgAlpha(1.0)
@@ -350,7 +359,14 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		imgui.Begin("Dialog", nil, flags)
 		imgui.TextUnformatted("DIALOG:")
 		--print(self.characterA.GetHumanName, self.characterB.GetHumanName)
-		imgui.TextUnformatted(self.characterA:GetHumanName() .. " talks to " .. self.characterB:GetHumanName())		
+		local text = ""
+		imgui.TextUnformatted(self.characterA:GetHumanName() .. " talks to " .. self.characterB:GetHumanName())
+		for index, value in ipairs({self.firstOptionItem, self.secondOptionItem}) do
+			if value then
+				text = text.." "..CellTypeInv[value]
+			end
+		end
+		imgui.TextUnformatted(text)
 		
 		for index, option in ipairs(options) do
 			local optionText = option
@@ -363,32 +379,44 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		end
 		imgui.End()
 
-		
 		if self.updateInput then
-			local input = Input()
+			local input = Input
 			if input:GetKeyDown("S") then
 				self.selectedOptionIndex = self.selectedOptionIndex + 1
 			end
 			if input:GetKeyDown("W") then
 				self.selectedOptionIndex = self.selectedOptionIndex - 1
 			end
-			if input:GetKeyDown("Space") then
+			local acceptPressed = input:GetKeyDown("Space")
+			if input:GetKeyDown("Escape") then
+				acceptPressed = true
+				selectedOption = "Back"
+			end
+			if acceptPressed then
 				print("Selected ", selectedOption)
 				local selectedItem = optionItems[selectedOption]
 				if not self.firstOptionItem then
 					if selectedItem then
+						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
+						self.selectedOptionIndex = 1
 						self.firstOptionItem = selectedItem
 					else
 						Game:EndDialog()
 					end
 				elseif not self.secondOptionItem then
 					if selectedItem then
+						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
+						self.selectedOptionIndex = 1
 						self.secondOptionItem = selectedItem
 					else
 						self.firstOptionItem = nil
+						self.selectedOptionIndex = self.selectedOptionIndices[#self.selectedOptionIndices]
+						table.remove(self.selectedOptionIndices, #self.selectedOptionIndices)
 					end
 				else
 					if selectedItem then
+						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
+						self.selectedOptionIndex = 1
 						local rules = Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, selectedItem)
 						if not rules or #rules == 0 then
 							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], CellTypeInv[selectedItem] ))
@@ -398,6 +426,8 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 						Game:EndDialog()
 					else
 						self.secondOptionItem = nil
+						self.selectedOptionIndex = self.selectedOptionIndices[#self.selectedOptionIndices]
+						table.remove(self.selectedOptionIndices, #self.selectedOptionIndices)
 					end
 				end
 
@@ -418,11 +448,11 @@ function Game:Update()
 
 	self:DrawUI()
 
-	local input = Input()
+	local input = Input
 	if input:GetKeyDown("0") then
-		local loaded = ButterflyGame():LoadFromDisk()
+		local loaded = ButterflyGame:LoadFromDisk("Save")
 	elseif input:GetKeyDown("9") then
-		ButterflyGame():SaveToDisk()
+		ButterflyGame:SaveToDisk("Save")
 	end
 end
 

@@ -83,7 +83,9 @@
         "Vector2",
         "LogError",
         "continue",
-        "SceneManager"
+        "SceneManager",
+        "ButterflyGame",
+        "Vector3"
     ],
     "robloxLsp.diagnostics.globals": [
         "AssetDatabase"

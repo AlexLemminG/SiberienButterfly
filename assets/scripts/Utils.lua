@@ -26,6 +26,15 @@ function Utils._TableToString(o, traversedTables) : string
     end
 end
 
+function Utils.ArrayIndexOf(array, value) : integer
+    for i, v in ipairs(array) do
+        if v == value then
+            return i
+        end
+    end
+    return -1
+end
+
 getmetatable(Vector2Int:new()).__eq = function(a, b) return a.x == b.x and a.y == b.y end
 
 ---@class vector

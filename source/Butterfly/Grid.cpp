@@ -14,7 +14,7 @@ REGISTER_GAME_SYSTEM(GridSystem);
 DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
-std::shared_ptr<Grid> GridSystem::GetGrid(const std::string& name) {
+std::shared_ptr<Grid> GridSystem::GetGrid(const std::string& name) const {
     for (auto grid : grids) {
         if (grid->gameObject()->tag == name) {
             return grid;
@@ -171,8 +171,8 @@ void GridSystem::Term() {
         auto L = LuaSystem::Get()->L;
         if (L) {
             Luna::UnregisterShared<GridSystem>(L);
-            Luna::UnregisterShared<Grid>(L);
-            Luna::Unregister<GridCell>(L);
+Luna::UnregisterShared<Grid>(L);
+Luna::Unregister<GridCell>(L);
         }
     }
 
@@ -224,18 +224,18 @@ void GridSystem::LoadCellTypes() {
         else if (cellMesh == this->defaultMesh) {
             LogError("No mesh found for cell type '%s'", c.c_str());
         }
-        this->settings->cellDescs.push_back({(GridCellType)i, meshName, cellMesh});
+        this->settings->cellDescs.push_back({ (GridCellType)i, meshName, cellMesh });
     }
 }
 
 
 Vector3 Grid::GetCellWorldCenter(const Vector2Int& pos) const {
     auto cell = GetCell(pos);
-    return Vector3{float(cell.pos.x), cell.z, float(cell.pos.y)};
+    return Vector3{ float(cell.pos.x), cell.z, float(cell.pos.y) };
 }
 
 Vector2Int Grid::GetClosestIntPos(const Vector3& worldPos) const {
-    return Vector2Int{Mathf::RoundToInt(worldPos.x), Mathf::RoundToInt(worldPos.z)};
+    return Vector2Int{ Mathf::RoundToInt(worldPos.x), Mathf::RoundToInt(worldPos.z) };
 }
 
 GridCell Grid::GetCell(Vector2Int pos) const {
@@ -268,6 +268,73 @@ std::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
 
 void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
     outCell = GetCell(pos);
+}
+
+template<class CheckFunc>
+static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, CheckFunc checkFunc)
+{
+
+    if (checkFunc(originPos)) {
+        outPos = originPos;
+        return true;
+    }
+
+    //PERF try quadtree in emergency situation
+    int max_count = (maxRadius * 2 + 1) * (maxRadius * 2 + 1);
+
+    Vector2Int current_pos = originPos;
+    int current_radius = 1;
+    int t = 1;
+    while (current_radius <= maxRadius) {
+        for (int i = 0; i < t; i++) {
+            current_pos.y -= 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        for (int i = 0; i < t; i++) {
+            current_pos.x += 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        t++;
+        for (int i = 0; i < t; i++) {
+            current_pos.y += 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        for (int i = 0; i < t; i++) {
+            current_pos.x -= 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        t++;
+        current_radius++;
+    }
+    return false;
+}
+
+bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const
+{
+    auto* itemsGrid = this->GetGrid("ItemsGrid").get();
+    auto* groundGrid = this->GetGrid("GroundGrid").get();
+
+    ASSERT(itemsGrid && groundGrid);
+
+    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [itemsGrid, groundGrid, itemType, groundType](const Vector2Int& pos) {
+        return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType;
+        });
+}
+
+bool Grid::FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType) const {
+    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [this, itemType](const Vector2Int& pos) {return GetCell(pos).type == itemType; });
 }
 
 void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)

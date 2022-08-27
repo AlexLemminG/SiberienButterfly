@@ -31,6 +31,29 @@ function CharacterCommand:Execute()
 
 end
 
+---@class CharacterAction
+---@field character Character
+local CharacterAction = {
+	character = {},
+}
+function CharacterAction:Execute() : boolean
+	return self:ExecuteImpl(false)
+end
+function CharacterAction:CanExecute(): boolean
+	return self:ExecuteImpl(true)
+end
+CharacterAction.__index = CharacterAction
+
+function CharacterAction:new() : CharacterAction
+	local action = {}
+	setmetatable(action, self)
+	return action
+end
+--returns true if really executed or can be executed
+function CharacterAction:ExecuteImpl(checkOnly : boolean) : boolean
+	return false
+end
+
 function Actions.RuleToString(rule)
 	if not rule then
 		return "nil"
@@ -80,6 +103,11 @@ function Actions:IsSubtype(childType : integer, parentType : integer) : boolean
 			return true
 		end
 	end
+	if CellType.WheatCollected_AnyNotFull == parentType then
+		if childType >= CellType.WheatCollected_1 and childType < CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 1 then
+			return true
+		end
+	end
 	if CellType.Bread_Any == parentType then
 		if childType >= CellType.Bread_1 and childType <= CellType.Bread_1 + GameConsts.maxBreadStackSize - 1 then
 			return true
@@ -100,21 +128,38 @@ function Actions:Term()
 	self.pickableItems = {}
 end
 
-function Action_ExecuteRule(character, intPos, rule)
-	local action = {}
+
+function Action_ExecuteRule(character, intPos, rule) : CharacterAction
+	local action = CharacterAction:new()
 	action.rule = rule
 	action.intPos = intPos
 	action.character = character
-	function action:Execute()
+	function action:ExecuteImpl(checkOnly : boolean) : boolean
 		--do return end
+		local currentCharType = self.character.item
+		local currentItemType = World.items:GetCell(self.intPos).type
+		local currentGroundType = World.ground:GetCell(self.intPos).type
+
+		local canExecute = 
+		Actions:IsSubtype(currentCharType, self.rule.charType) 
+		and 
+		Actions:IsSubtype(currentItemType, self.rule.itemType) 
+		and 
+		Actions:IsSubtype(currentGroundType, self.rule.groundType)
+
+		if checkOnly or not canExecute then
+			return canExecute
+		end
+
 		if rule.isCustom then
 			if rule.callback then
 				rule.callback(character, intPos)
 			else
 				print("Custom rule without callback ", Actions.RuleToString(rule))
 			end
-			return
+			return true
 		end
+
 		if rule.newCharType ~= CellType.Any then
 			character:SetItem(rule.newCharType)
 		end
@@ -134,6 +179,7 @@ function Action_ExecuteRule(character, intPos, rule)
 		if rule.callback then
 			rule.callback(character, intPos)
 		end
+		return true
 	end
 
 	return action
@@ -293,7 +339,10 @@ function Actions:RegisterAllCombineRules()
 		CellType.WheatCollected_2, CellType.Ground, RuleCallback_ItemAppear)
 	self:RegisterCombineRuleForItemAndGround(CellType.None, CellType.Wheat, CellType.Any, CellType.None,
 		CellType.WheatCollected_2, CellType.Any, RuleCallback_ItemAppear)
+
 	-- WHEAT combine
+	self:RegisterCombineRule(CellType.WheatCollected_AnyNotFull, CellType.WheatCollected_AnyNotFull, CellType.None)
+
 	for i = 1, GameConsts.maxWheatStackSize - 1, 1 do
 		for j = 1, GameConsts.maxWheatStackSize, 1 do
 			local total = i + j
@@ -354,7 +403,6 @@ function Actions:RegisterAllCombineRules()
 	function(character, intPos)
 		local cell = World.items:GetCell(intPos)
 		if cell.animType ~= CellAnimType.None then
-			print(cell.animType)
 			return
 		end
 		if cell.float4 >= 3.0 then
