@@ -1,9 +1,9 @@
 #include "ButterflyGame.h"
-#include "LuaSystem.h"
+#include "SEngine/LuaSystem.h"
 #include "lua.h"
-#include "Common.h"
-#include "LuaReflect.h"
-#include "Resources.h"
+#include "SEngine/Common.h"
+#include "SEngine/LuaReflect.h"
+#include "SEngine/Resources.h"
 
 REGISTER_GAME_SYSTEM(ButterflyGame);
 DECLARE_TEXT_ASSET(SaveData);
@@ -25,7 +25,7 @@ void ButterflyGame::Term() {
 }
 static const char* SavePathBase = "SAVES/";
 
-void ButterflyGame::CreateSave(std::shared_ptr<SaveData> save) const
+void ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 {
 	if (!save) {
 		LogError("Got null save to CreateSave func");
@@ -43,7 +43,7 @@ void ButterflyGame::CreateSave(std::shared_ptr<SaveData> save) const
 		//lua_pushvalue(L, -2);
 		auto callResult = lua_pcall(L, 0, 1, 0);
 		if (callResult != 0) {
-			std::string error = lua_tostring(L, -1);
+			eastl::string error = lua_tostring(L, -1);
 			LogError(error.c_str());
 			lua_pop(L, 1);
 			return;
@@ -63,7 +63,7 @@ void ButterflyGame::CreateSave(std::shared_ptr<SaveData> save) const
 	Log("Saved");
 }
 
-void ButterflyGame::LoadSave(const std::shared_ptr<SaveData> save)
+void ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 {
 
 	if (!save) {
@@ -80,7 +80,7 @@ void ButterflyGame::LoadSave(const std::shared_ptr<SaveData> save)
 		MergeToLua(L, save->luaData, -1, "");
 		auto callResult = lua_pcall(L, 1, 0, 0);
 		if (callResult != 0) {
-			std::string error = lua_tostring(L, -1);
+			eastl::string error = lua_tostring(L, -1);
 			LogError(error.c_str());
 			lua_pop(L, 1);
 			return;
@@ -102,18 +102,18 @@ void ButterflyGame::LoadSave(const std::shared_ptr<SaveData> save)
 	Log("Loaded");
 }
 
-bool ButterflyGame::SaveToDisk(const std::string& fileName)
+bool ButterflyGame::SaveToDisk(const eastl::string& fileName)
 {
 	//TODO generic save system
-	auto save = std::make_shared<SaveData>();
+	auto save = eastl::make_shared<SaveData>();
 	CreateSave(save);
 	if (!save->isValid) {
 		return false;
 	}
 
 	{
-		std::string savePath = SavePathBase + fileName + ".sav";
-		std::ofstream output(savePath);
+		eastl::string savePath = SavePathBase + fileName + ".sav";
+		std::ofstream output(savePath.c_str());
 		if (!output.is_open()) {
 			LogError("Failed to open '%s' for saving", savePath.c_str());
 			return false;
@@ -124,28 +124,28 @@ bool ButterflyGame::SaveToDisk(const std::string& fileName)
 	return true;
 }
 
-bool ButterflyGame::LoadFromDisk(const std::string& fileName)
+bool ButterflyGame::LoadFromDisk(const eastl::string& fileName)
 {
 	//TODO generic save system
-	auto save = std::make_shared<SaveData>();
+	auto save = eastl::make_shared<SaveData>();
 
 	{
-		std::string savePath = SavePathBase + fileName + ".sav";
+		eastl::string savePath = SavePathBase + fileName + ".sav";
 
-		std::ifstream input(savePath, std::ifstream::binary);
+		std::ifstream input(savePath.c_str(), std::ifstream::binary);
 		if (!input.is_open()) {
 			LogError("Failed to open '%s' for loading", savePath.c_str());
 			return false;
 		}
 
-		std::vector<char> buffer;
+		eastl::vector<char> buffer;
 		input.seekg(0, input.end);
 		std::streamsize size = input.tellg();
 		input.seekg(0, std::ios::beg);
 
 		ResizeVectorNoInit(buffer, size);
 		input.read((char*)buffer.data(), size);
-		auto tree =  std::make_unique<ryml::Tree>(ryml::parse(c4::csubstr(&buffer[0], buffer.size())));
+		auto tree = eastl::make_unique<ryml::Tree>(ryml::parse(c4::csubstr(&buffer[0], buffer.size())));
 		//TODO pull some AssetDatabase methods
 		auto context = SerializationContext(tree->rootref());
 		::Deserialize(context.Child(0), *save);

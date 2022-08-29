@@ -6,6 +6,10 @@ file(GLOB BUTTERFLY_SRC "*.*")
 source_group("Butterfly" FILES ${BUTTERFLY_SRC})
 add_library(Butterfly SHARED ${BUTTERFLY_SRC})
 
+#TODO sorry future me, i'm too tired to figure out how to do it properly now
+add_definitions(-DRYML_SHARED)
+add_definitions(-DC4CORE_SHARED)
+
 target_link_libraries(Butterfly PRIVATE SiberienEngine)
 
 set_property(TARGET Butterfly PROPERTY VS_DEBUGGER_COMMAND "$(TargetDir)/SiberienEngine.exe")

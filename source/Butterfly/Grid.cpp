@@ -1,11 +1,12 @@
 #include "Grid.h"
-#include "GameObject.h"
-#include "Scene.h"
-#include "Asserts.h"
-#include "LuaReflect.h"
-#include "LuaSystem.h"
-#include "Resources.h"
-#include "InstancedMeshRenderer.h"
+#include "SEngine/GameObject.h"
+#include "SEngine/Scene.h"
+#include "SEngine/Asserts.h"
+#include "SEngine/LuaReflect.h"
+#include "SEngine/LuaSystem.h"
+#include "SEngine/Resources.h"
+#include "SEngine/InstancedMeshRenderer.h"
+#include "SEngine/RigidBody.h"
 #include "../../engine/source/libs/luau/VM/src/ltable.h"
 
 DECLARE_TEXT_ASSET(GridSystem);
@@ -14,7 +15,7 @@ REGISTER_GAME_SYSTEM(GridSystem);
 DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
-std::shared_ptr<Grid> GridSystem::GetGrid(const std::string& name) const {
+eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
     for (auto grid : grids) {
         if (grid->gameObject()->tag == name) {
             return grid;
@@ -109,10 +110,10 @@ const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
 }
 
 void Grid::OnEnable() {
-    std::shared_ptr<Grid> thisShared;
+    eastl::shared_ptr<Grid> thisShared;
     for (auto c : gameObject()->components) {
         if (c.get() == this) {
-            thisShared = std::dynamic_pointer_cast<Grid>(c);
+            thisShared = eastl::dynamic_pointer_cast<Grid>(c);
             break;
         }
     }
@@ -140,7 +141,7 @@ void Grid::OnEnable() {
 }
 void Grid::OnDisable() {
     auto& grids = GridSystem::Get()->grids;
-    grids.erase(std::find_if(grids.begin(), grids.end(), [this](auto x) { return x.get() == this; }));
+    grids.erase(eastl::find_if(grids.begin(), grids.end(), [this](auto x) { return x.get() == this; }));
 }
 
 bool GridSystem::Init() {
@@ -204,13 +205,13 @@ void GridSystem::LoadCellTypes() {
     for (auto c : context.GetChildrenNames()) {
         int i = 0;
         context.Child(c) >> i;
-        std::string meshName = c;
-        std::transform(meshName.begin(), meshName.end(), meshName.begin(),
+        eastl::string meshName = c;
+        eastl::transform(meshName.begin(), meshName.end(), meshName.begin(),
             [](unsigned char c) { return std::tolower(c); });
         if (meshName.size() > 0) {
             meshName[0] = std::toupper(meshName[0]);
         }
-        std::shared_ptr<Mesh> cellMesh = this->defaultMesh;
+        eastl::shared_ptr<Mesh> cellMesh = this->defaultMesh;
         for (auto mesh : this->settings->mesh->meshes) {
             if (_strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
                 cellMesh = mesh;
@@ -261,7 +262,7 @@ void Grid::SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix) {
     }
 }
 
-std::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
+eastl::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
     return GetDesc((GridCellType)cellType).mesh;
 }
 
@@ -346,7 +347,7 @@ void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)
     c4::cblob blob;
     blob.buf = (c4::cbyte*)grid.cells.data();
     blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
-    std::string buffer = std::string(((4 * blob.len / 3) + 3) & ~3, '\0');
+    eastl::string buffer = eastl::string(((4 * blob.len / 3) + 3) & ~3, '\0');
     c4::substr bufferSubstr(buffer.data(), buffer.size());
     size_t size = ryml::base64_encode(bufferSubstr, blob);
     ASSERT(size == buffer.size());
@@ -361,7 +362,7 @@ void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
     ::Deserialize(context.Child("isInited"), grid.isInited);
 
     if (grid.isInited) {
-        std::string cellsBase64;
+        eastl::string cellsBase64;
         ::Deserialize(context.Child("cells"), cellsBase64);
 
 

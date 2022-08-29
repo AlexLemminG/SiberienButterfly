@@ -1,10 +1,10 @@
 
 #include "Main.h"
 #include <iostream>
-#include "Engine.h"
-#include "Serialization.h"
-#include "Component.h"
-#include "System.h"
+#include "SEngine/Engine.h"
+#include "SEngine/Serialization.h"
+#include "SEngine/Component.h"
+#include "SEngine/System.h"
 
 
 REGISTER_GAME_SYSTEM(Sys);

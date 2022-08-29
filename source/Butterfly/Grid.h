@@ -1,11 +1,12 @@
 #pragma once
 
-#include "Component.h"
-#include "Mesh.h"
-#include "MeshRenderer.h"
-#include "Transform.h"
-#include "System.h"
-#include "GameEvents.h"
+#include "SEngine/Component.h"
+#include "SEngine/Mesh.h"
+#include "SEngine/MeshRenderer.h"
+#include "SEngine/Transform.h"
+#include "SEngine/System.h"
+#include "SEngine/GameEvents.h"
+#include "SEngine/Vector.h"
 
 enum class GridCellType : int {
     ZERO,
@@ -31,7 +32,7 @@ class GridCellMeshRenderer : public MeshRendererAbstract {
     ~GridCellMeshRenderer() {
         SetEnabled(false);
     }
-    GridCellMeshRenderer(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) : GridCellMeshRenderer() {
+    GridCellMeshRenderer(eastl::shared_ptr<Mesh> mesh, eastl::shared_ptr<Material> material) : GridCellMeshRenderer() {
         this->mesh = mesh;
         this->material = material;
     }
@@ -47,8 +48,8 @@ class GridCellMeshRenderer : public MeshRendererAbstract {
 class GridCellDesc {
    public:
     GridCellType type;
-    std::string meshName;
-    std::shared_ptr<Mesh> mesh;
+    eastl::string meshName;
+    eastl::shared_ptr<Mesh> mesh;
     REFLECT_BEGIN(GridCellDesc);
     REFLECT_VAR(type);
     REFLECT_VAR(meshName);
@@ -78,8 +79,8 @@ class GridCell {
 };
 class GridSettings : public Object {
    public:
-    std::shared_ptr<FullMeshAsset> mesh;
-    std::vector<GridCellDesc> cellDescs;
+    eastl::shared_ptr<FullMeshAsset> mesh;
+    eastl::vector<GridCellDesc> cellDescs;
     REFLECT_BEGIN(GridSettings);
     REFLECT_VAR(mesh);
     REFLECT_VAR(cellDescs);
@@ -100,8 +101,8 @@ public:
 
     void LoadFrom(const Grid& otherGrid);
 
-    std::vector<GridCell> cells;
-    std::vector<Matrix4> cellsLocalMatrices;
+    eastl::vector<GridCell> cells;
+    eastl::vector<Matrix4> cellsLocalMatrices;
 
     int sizeX = 20;
     int sizeY = 20;
@@ -136,16 +137,16 @@ class GridSystem : public GameSystem<GridSystem> {
     bool Init() override;
     void Term() override;
 
-    std::shared_ptr<GridSettings> settings;
+    eastl::shared_ptr<GridSettings> settings;
 
-    std::vector<std::shared_ptr<Grid>> grids;
-    std::shared_ptr<Mesh> defaultMesh;
+    eastl::vector<eastl::shared_ptr<Grid>> grids;
+    eastl::shared_ptr<Mesh> defaultMesh;
 
-    std::shared_ptr<Grid> GetGrid(const std::string& name) const;
+    eastl::shared_ptr<Grid> GetGrid(const eastl::string& name) const;
 
     void LoadCellTypes();
 
-    std::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
+    eastl::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
 
     GameEventHandle onAfterLuaReloaded;
 
@@ -165,9 +166,9 @@ class GridDrawer : public Component {
     void Update() override;
 
    private:
-    std::shared_ptr<GameObject> gridCellPrefab;
-    std::vector<GridCellMeshRenderer> pooledRenderers;
-    std::vector<InstancedMeshRenderer*> instancedMeshRenderers;
+    eastl::shared_ptr<GameObject> gridCellPrefab;
+    eastl::vector<GridCellMeshRenderer> pooledRenderers;
+    eastl::vector<InstancedMeshRenderer*> instancedMeshRenderers;
 
     int lastModificationsCount = -1;
     REFLECT_BEGIN(GridDrawer);

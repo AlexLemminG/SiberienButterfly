@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Component.h"
-#include "MeshRenderer.h"
-#include "Sound.h"
+#include "SEngine/Component.h"
+#include "SEngine/MeshRenderer.h"
+#include "SEngine/Sound.h"
 
 class RigidBody;
 class PostProcessingEffect;
@@ -41,10 +41,10 @@ private:
 	REFLECT_VAR(standAnimationWithItem);
 	REFLECT_END();
 
-	std::shared_ptr<RigidBody> rigidBody = nullptr;
-	std::shared_ptr<MeshAnimation> runAnimation;
-	std::shared_ptr<MeshAnimation> standAnimation;
-	std::shared_ptr<MeshAnimation> runAnimationWithItem;
-	std::shared_ptr<MeshAnimation> standAnimationWithItem;
+	eastl::shared_ptr<RigidBody> rigidBody = nullptr;
+	eastl::shared_ptr<MeshAnimation> runAnimation;
+	eastl::shared_ptr<MeshAnimation> standAnimation;
+	eastl::shared_ptr<MeshAnimation> runAnimationWithItem;
+	eastl::shared_ptr<MeshAnimation> standAnimationWithItem;
 	float defaultSpeed = 1.f;
 };

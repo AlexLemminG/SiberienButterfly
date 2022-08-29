@@ -1,12 +1,11 @@
-#include "Component.h"
-#include "SMath.h"
-
-#include "Transform.h"
-#include "GameObject.h"
-#include "STime.h"
+#include "SEngine/Component.h"
+#include "SEngine/SMath.h"
+#include "SEngine/Transform.h"
+#include "SEngine/GameObject.h"
+#include "SEngine/STime.h"
+#include "SEngine/Physics.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
-#include "Physics.h"
 
 
 class TopDownCameraRig : public Component {
@@ -14,7 +13,7 @@ public:
 	float lerpT = 1.f;
 	float collisionLerpT = 10.f;
 	Vector3 offset = Vector3_zero;
-	std::string targetTag;
+	eastl::string targetTag;
 
 
 	void OnEnable() override;

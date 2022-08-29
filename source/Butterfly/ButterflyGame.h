@@ -1,6 +1,6 @@
 #pragma once
 
-#include "System.h"
+#include "SEngine/System.h"
 #include "ryml.hpp"
 #include "Grid.h"
 
@@ -26,11 +26,11 @@ class ButterflyGame : public GameSystem<ButterflyGame> {
 	virtual bool Init() override;
 	virtual void Term() override;
 
-	void CreateSave(std::shared_ptr<SaveData> save) const;
-	void LoadSave(const std::shared_ptr<SaveData> save);
+	void CreateSave(eastl::shared_ptr<SaveData> save) const;
+	void LoadSave(const eastl::shared_ptr<SaveData> save);
 
-	bool SaveToDisk(const std::string& fileName);
-	bool LoadFromDisk(const std::string& fileName);
+	bool SaveToDisk(const eastl::string& fileName);
+	bool LoadFromDisk(const eastl::string& fileName);
 
 	REFLECT_BEGIN(ButterflyGame);
 	REFLECT_METHOD(SaveToDisk);
