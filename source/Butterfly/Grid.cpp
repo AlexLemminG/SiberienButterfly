@@ -8,10 +8,13 @@
 #include "SEngine/InstancedMeshRenderer.h"
 #include "SEngine/RigidBody.h"
 #include "../../engine/source/libs/luau/VM/src/ltable.h"
+#include "SEngine/Collider.h"
+#include "SEngine/BoxCollider.h"
 
 DECLARE_TEXT_ASSET(GridSystem);
 DECLARE_TEXT_ASSET(GridSettings);
 REGISTER_GAME_SYSTEM(GridSystem);
+DECLARE_TEXT_ASSET(GridCollider);
 DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
@@ -23,7 +26,43 @@ eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
     }
     return nullptr;
 }
+void GridCollider::OnEnable() {
 
+}
+void GridCollider::OnDisable() {
+
+}
+void GridCollider::Update() {
+    auto grid = gameObject()->GetComponent<Grid>();
+    if (grid == nullptr) {
+        LogError("no Grid with gridDrawer");
+        return;
+    }
+    if (lastModificationsCount == grid->GetModificationsCount()) {
+        return;
+    }
+    lastModificationsCount = grid->GetModificationsCount();
+    auto gridSystem = GridSystem::Get();
+
+
+    while(auto collider = gameObject()->GetComponent<Collider>()) {
+        gameObject()->RemoveComponent(collider);
+    }
+
+    for (int i = 0; i < grid->cells.size(); i++) {
+        const auto& cell = grid->cells[i];
+        const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
+        if (desc.luaDesc.collision.type == (int)GridCellCollisionType::SPHERE_COLLIDER) {
+            auto collider = eastl::make_shared<SphereCollider>();
+            collider->radius = desc.luaDesc.collision.radius;
+            collider->center = grid->GetCellWorldCenter(cell.pos);
+            gameObject()->AddComponent(collider);
+        }
+    }
+    auto rb = gameObject()->GetComponent<RigidBody>();
+    rb->SetEnabled(false);
+    rb->SetEnabled(true);
+}
 void GridDrawer::OnEnable() {
 }
 
@@ -102,11 +141,10 @@ const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
             return desc;
         }
     }
-    GridCellDesc emptyDesc{};
-    emptyDesc.mesh = defaultMesh;
-    emptyDesc.type = type;
-
-    return emptyDesc;
+    //TODO adding desc in a const getter + returning everything by ref is a really really bad idea
+    //but I am a comment and not a cop so go on
+    settings->cellDescs.push_back(GridCellDesc{ type, "UnknownType", defaultMesh });
+    return settings->cellDescs.back();
 }
 
 void Grid::OnEnable() {
@@ -182,6 +220,7 @@ Luna::Unregister<GridCell>(L);
 
 
 void GridSystem::LoadCellTypes() {
+    LuaSystem::Get()->PushModule("CellTypeDesc");
     LuaSystem::Get()->PushModule("CellType");
     auto L = LuaSystem::Get()->L;
     if (lua_isnil(L, -1)) {
@@ -189,9 +228,18 @@ void GridSystem::LoadCellTypes() {
         ASSERT("Failed to load CellType lua module");
         return;
     }
-    SerializationContext context{};
-    DeserializeFromLuaToContext(L, -1, context);
+    if (lua_isnil(L, -2)) {
+        lua_pop(L, 2);
+        ASSERT("Failed to load CellTypeDesc lua module");
+        return;
+    }
+    SerializationContext contextCellType{};
+    DeserializeFromLuaToContext(L, -1, contextCellType);
+    SerializationContext _contextCellTypeDesc{};
+    DeserializeFromLuaToContext(L, -2, _contextCellTypeDesc);
+    std::cout << (_contextCellTypeDesc.GetYamlNode());
     this->settings->cellDescs.clear();
+    const SerializationContext& contextCellTypeDesc = _contextCellTypeDesc;
 
 
     this->defaultMesh = nullptr;
@@ -202,9 +250,9 @@ void GridSystem::LoadCellTypes() {
         }
     }
 
-    for (auto c : context.GetChildrenNames()) {
+    for (auto c : contextCellType.GetChildrenNames()) {
         int i = 0;
-        context.Child(c) >> i;
+        contextCellType.Child(c) >> i;
         eastl::string meshName = c;
         eastl::transform(meshName.begin(), meshName.end(), meshName.begin(),
             [](unsigned char c) { return std::tolower(c); });
@@ -225,8 +273,15 @@ void GridSystem::LoadCellTypes() {
         else if (cellMesh == this->defaultMesh) {
             LogError("No mesh found for cell type '%s'", c.c_str());
         }
-        this->settings->cellDescs.push_back({ (GridCellType)i, meshName, cellMesh });
+        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh };
+        auto descContext = contextCellTypeDesc.Child(c);
+        if (descContext.IsDefined()) {
+            ::Deserialize(descContext, desc.luaDesc);
+        }
+
+        this->settings->cellDescs.push_back(desc);
     }
+    lua_pop(L, 2);
 }
 
 

@@ -4,6 +4,8 @@ GameObject:
     - $Transform
     - $GridDrawer
     - $Grid
+    - $GridCollider
+    - $RigidBody
 Transform:
   pos:
     - 0
@@ -20,3 +22,7 @@ Transform:
 GridDrawer:
   gridCellPrefab: prefabs/gridCell.asset
 Grid$Grid: ~
+GridCollider: ~
+RigidBody:
+  isStatic: 1
+  isKinematic: 1

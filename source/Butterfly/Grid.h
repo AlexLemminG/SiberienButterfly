@@ -15,6 +15,14 @@ enum class GridCellType : int {
 };
 REFLECT_ENUM(GridCellType);
 
+enum class GridCellCollisionType : int {
+    ZERO,
+    NONE,
+    SPHERE_COLLIDER,
+    BOX_COLLIDER
+};
+REFLECT_ENUM(GridCellCollisionType);
+
 enum class GridCellAnimType : int {
     ZERO,
     NONE
@@ -45,15 +53,32 @@ class GridCellMeshRenderer : public MeshRendererAbstract {
     Transform transform;
 };
 
+struct GridCellDescLua {
+    struct Collision {
+        int type = (int)GridCellCollisionType::NONE;
+        float radius = 0.f;
+        REFLECT_BEGIN(GridCellDescLua::Collision);
+        REFLECT_VAR(type);
+        REFLECT_VAR(radius);
+        REFLECT_END();
+    };
+    Collision collision;
+    REFLECT_BEGIN(GridCellDescLua);
+    REFLECT_VAR(collision);
+    REFLECT_END();
+};
+
 class GridCellDesc {
    public:
     GridCellType type;
     eastl::string meshName;
     eastl::shared_ptr<Mesh> mesh;
+    GridCellDescLua luaDesc;
     REFLECT_BEGIN(GridCellDesc);
     REFLECT_VAR(type);
     REFLECT_VAR(meshName);
     REFLECT_VAR(mesh);
+    REFLECT_VAR(luaDesc);
     REFLECT_END();
 };
 
@@ -173,5 +198,17 @@ class GridDrawer : public Component {
     int lastModificationsCount = -1;
     REFLECT_BEGIN(GridDrawer);
     REFLECT_VAR(gridCellPrefab);
+    REFLECT_END();
+};
+
+class GridCollider : public Component {
+public:
+    void OnEnable() override;
+    void OnDisable() override;
+    void Update() override;
+
+private:
+    int lastModificationsCount = -1;
+    REFLECT_BEGIN(GridCollider);
     REFLECT_END();
 };
