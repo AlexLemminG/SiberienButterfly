@@ -4,12 +4,14 @@ local World = require("World")
 local WorldQuery = require("WorldQuery")
 local Game       = require("Game")
 
+---@class PlayerController
+---@field character Character|nil
 local PlayerController = {
-	speed = 2,
 	rigidBody = nil,
 	transform = nil,
 	selectionGO = nil,
-	wasInDialogPrevFrame = false
+	wasInDialogPrevFrame = false,
+	character = nil
 }
 local Component = require("Component")
 setmetatable(PlayerController, Component)
@@ -66,11 +68,12 @@ function PlayerController:Update()
 	end
 	-- TODO use camera
 	velocity = vector(-velocity.z, velocity.y, velocity.x)
-	velocity = velocity * self.speed
+	velocity = velocity * self.character.maxSpeed
 
 	if self.character.item ~= CellType.None then
 		velocity = velocity * 0.8
 	end
+	--TODO should be handled by Character class
 	self.character:SetVelocity(velocity)
 	
 	local grid = World.items
