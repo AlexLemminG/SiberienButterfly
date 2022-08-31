@@ -63,6 +63,23 @@ function Game:GenerateWorldGrid()
 		end
 	end
 
+	for x = 3, 4, 1 do
+		for y = 0, gridSizeY-1, 1 do
+
+			local cell = World.items:GetCell({x=x,y=y})
+			cell.type = CellType.None
+			cell.z = 0.0
+			World.items:SetCell(cell)
+
+			cell = World.ground:GetCell({x=x,y=y})
+			cell.type = CellType.Water
+			cell.z = 0.0
+
+			World.ground:SetCell(cell)
+		end
+	end
+
+
 	local itemIdx = 1
 	local y = 5
 	local x = 10
@@ -142,10 +159,10 @@ function Game.CreateSave()
 	return save
 end
 
-function Game.LoadSave(save)
+function Game.LoadSave(save) : boolean
 	print("Loading Lua Save")
-
 	if not save then
+		print("Lua loading failed: no save")
 		return false
 	end
 
@@ -165,6 +182,7 @@ function Game.LoadSave(save)
 		SceneManager.GetCurrentScene():AddGameObject(characterGO)
 		characterScript:LoadState(savedCharacter)
 	end
+	return true
 end
 
 

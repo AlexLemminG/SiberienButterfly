@@ -37,6 +37,13 @@ local CellType = {
     Bread_Any = 34,
     WheatCollected_Any = 35,
     WheatCollected_AnyNotFull = 36,
+    Stove_Any = 37,
+    Campfire_Any = 38,
+    Fence_Any = 39,
+    FenceX = 40,
+    FenceZ = 41,
+    FenceXZ = 42,
+    Water = 43,
 }
 
 return CellType

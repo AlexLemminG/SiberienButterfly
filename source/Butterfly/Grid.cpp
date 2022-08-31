@@ -52,11 +52,26 @@ void GridCollider::Update() {
     for (int i = 0; i < grid->cells.size(); i++) {
         const auto& cell = grid->cells[i];
         const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
-        if (desc.luaDesc.collision.type == (int)GridCellCollisionType::SPHERE_COLLIDER) {
-            auto collider = eastl::make_shared<SphereCollider>();
-            collider->radius = desc.luaDesc.collision.radius;
-            collider->center = grid->GetCellWorldCenter(cell.pos);
-            gameObject()->AddComponent(collider);
+        for (const auto& collision : desc.luaDesc.allCollisions) {
+            if (collision.type == (int)GridCellCollisionType::SPHERE_COLLIDER) {
+                auto collider = eastl::make_shared<SphereCollider>();
+                collider->radius = collision.radius;
+                collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
+                gameObject()->AddComponent(collider);
+            }
+            else if (collision.type == (int)GridCellCollisionType::CAPSULE_COLLIDER) {
+                auto collider = eastl::make_shared<CapsuleCollider>();
+                collider->radius = collision.radius;
+                collider->height = collision.height;
+                collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
+                gameObject()->AddComponent(collider);
+            }
+            else if (collision.type == (int)GridCellCollisionType::BOX_COLLIDER) {
+                auto collider = eastl::make_shared<BoxCollider>();
+                collider->size = collision.size;
+                collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
+                gameObject()->AddComponent(collider);
+            }
         }
     }
     auto rb = gameObject()->GetComponent<RigidBody>();
@@ -210,8 +225,8 @@ void GridSystem::Term() {
         auto L = LuaSystem::Get()->L;
         if (L) {
             Luna::UnregisterShared<GridSystem>(L);
-Luna::UnregisterShared<Grid>(L);
-Luna::Unregister<GridCell>(L);
+            Luna::UnregisterShared<Grid>(L);
+            Luna::Unregister<GridCell>(L);
         }
     }
 
@@ -237,7 +252,6 @@ void GridSystem::LoadCellTypes() {
     DeserializeFromLuaToContext(L, -1, contextCellType);
     SerializationContext _contextCellTypeDesc{};
     DeserializeFromLuaToContext(L, -2, _contextCellTypeDesc);
-    std::cout << (_contextCellTypeDesc.GetYamlNode());
     this->settings->cellDescs.clear();
     const SerializationContext& contextCellTypeDesc = _contextCellTypeDesc;
 
@@ -251,33 +265,42 @@ void GridSystem::LoadCellTypes() {
     }
 
     for (auto c : contextCellType.GetChildrenNames()) {
-        int i = 0;
-        contextCellType.Child(c) >> i;
-        eastl::string meshName = c;
-        eastl::transform(meshName.begin(), meshName.end(), meshName.begin(),
-            [](unsigned char c) { return std::tolower(c); });
-        if (meshName.size() > 0) {
-            meshName[0] = std::toupper(meshName[0]);
-        }
-        eastl::shared_ptr<Mesh> cellMesh = this->defaultMesh;
-        for (auto mesh : this->settings->mesh->meshes) {
-            if (_strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
-                cellMesh = mesh;
-                break;
-            }
-        }
-        if (c == "None" || c == "Any") { //TODO lua method to determine if mesh is not required
-            cellMesh = nullptr;
-            meshName = c;
-        }
-        else if (cellMesh == this->defaultMesh) {
-            LogError("No mesh found for cell type '%s'", c.c_str());
-        }
-        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh };
+        GridCellDescLua luaDesc;
         auto descContext = contextCellTypeDesc.Child(c);
         if (descContext.IsDefined()) {
-            ::Deserialize(descContext, desc.luaDesc);
+            ::Deserialize(descContext, luaDesc);
+            luaDesc.allCollisions = luaDesc.extraCollisions;
+            luaDesc.allCollisions.push_back(luaDesc.collision);
         }
+
+        int i = 0;
+        contextCellType.Child(c) >> i;
+
+        //no mesh for util
+        eastl::string meshName = c;
+        eastl::shared_ptr<Mesh> cellMesh = this->defaultMesh;
+        if (luaDesc.isUtil) {
+            meshName = "None";
+            cellMesh = nullptr;
+        }
+        else {
+            eastl::transform(meshName.begin(), meshName.end(), meshName.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+            if (meshName.size() > 0) {
+                meshName[0] = std::toupper(meshName[0]);
+            }
+            for (auto mesh : this->settings->mesh->meshes) {
+                if (_strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
+                    cellMesh = mesh;
+                    break;
+                }
+            }
+            if (cellMesh == this->defaultMesh) {
+                LogError("No mesh found for cell type '%s'", c.c_str());
+            }
+        }
+
+        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc };
 
         this->settings->cellDescs.push_back(desc);
     }

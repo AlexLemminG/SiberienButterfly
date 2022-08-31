@@ -25,11 +25,12 @@ void ButterflyGame::Term() {
 }
 static const char* SavePathBase = "SAVES/";
 
-void ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
+bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 {
+	OPTICK_EVENT();
 	if (!save) {
 		LogError("Got null save to CreateSave func");
-		return;
+		return false;
 	}
 	*save = SaveData();
 	//TODO no hardcode
@@ -41,65 +42,83 @@ void ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 	lua_getfield(L, -1, "CreateSave");
 	if (!lua_isnil(L, -1)) {
 		//lua_pushvalue(L, -2);
-		auto callResult = lua_pcall(L, 0, 1, 0);
+		int callResult;
+		{
+			OPTICK_EVENT("Lua Game:CreateSave");
+			callResult = lua_pcall(L, 0, 1, 0);
+		}
 		if (callResult != 0) {
 			eastl::string error = lua_tostring(L, -1);
 			LogError(error.c_str());
-			lua_pop(L, 1);
-			return;
+			lua_pop(L, 2);//module + message
+			return true;
 		}
 		else {
 			DeserializeFromLuaToContext(L, -1, save->luaData);
-			lua_pop(L, 2);
+			lua_pop(L, 2);//module+return result
 		}
 	}
 	else {
-		lua_pop(L, 2);
-		return;
+		lua_pop(L, 2);//module+function
+		return false;
 	}
 
 	save->i = 333;
 	save->isValid = true;
 	Log("Saved");
+	return true;
 }
 
-void ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
+bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 {
-
+	OPTICK_EVENT();
 	if (!save) {
 		LogError("Got null save to CreateSave func");
-		return;
-	}
-	lua_State* L = LuaSystem::Get()->L;
-
-	LuaSystem::Get()->PushModule("Game");
-	lua_getfield(L, -1, "LoadSave");
-	if (!lua_isnil(L, -1)) {
-		//lua_pushvalue(L, -2);
-		lua_newtable(L);
-		MergeToLua(L, save->luaData, -1, "");
-		auto callResult = lua_pcall(L, 1, 0, 0);
-		if (callResult != 0) {
-			eastl::string error = lua_tostring(L, -1);
-			LogError(error.c_str());
-			lua_pop(L, 1);
-			return;
-		}
-		else {
-			//DeserializeFromLuaToContext(L, -1, save->luaData);
-			lua_pop(L, 2);
-		}
-	}
-	else {
-		lua_pop(L, 2);
-		return;
+		return false;
 	}
 
 	//TODO not hardcode
 	GridSystem::Get()->GetGrid("ItemsGrid")->LoadFrom(save->itemsGrid);
 	GridSystem::Get()->GetGrid("GroundGrid")->LoadFrom(save->groundGrid);
 
-	Log("Loaded");
+	lua_State* L = LuaSystem::Get()->L;
+
+	LuaSystem::Get()->PushModule("Game");
+	if (lua_isnil(L, -1)) {
+		LogError("LoadSave: module 'Game' is nil");
+		lua_pop(L, 1);//module
+		return false;
+	}
+	lua_getfield(L, -1, "LoadSave");
+
+	if (lua_isnil(L, -1) || !lua_isfunction(L, -1)) {
+		LogError("LoadSave: module 'Game' is nil");
+		lua_pop(L, 2);//module+function
+		return false;
+	}
+
+	lua_newtable(L);
+	MergeToLua(L, save->luaData, -1, "");
+	int callResult;
+	{
+		OPTICK_EVENT("Lua Game:LoadSave");
+		callResult = lua_pcall(L, 1, 1, 0);
+	}
+	if (callResult != 0) {
+		eastl::string error = lua_tostring(L, -1);
+		lua_pop(L, 2); //module + error
+		LogError(error.c_str());
+		return false;
+	}
+	bool loadResult = lua_toboolean(L, -1);
+	lua_pop(L, 2);//module+bool
+	if (!loadResult) {
+		LogError("LoadingError in lua");
+		return false;
+	}
+
+	Log("Loaded Successfully");
+	return true;
 }
 
 bool ButterflyGame::SaveToDisk(const eastl::string& fileName)
@@ -150,6 +169,6 @@ bool ButterflyGame::LoadFromDisk(const eastl::string& fileName)
 		auto context = SerializationContext(tree->rootref());
 		::Deserialize(context.Child(0), *save);
 	}
-	LoadSave(save);
-	return true;
+	
+	return LoadSave(save);
 }

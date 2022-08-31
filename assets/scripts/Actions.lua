@@ -69,6 +69,16 @@ function Actions:Init()
 	self:RegisterAllCombineRules()
 end
 
+function Actions:GetAllIsSubtype(cellTypeParent : integer)
+	local result = {}
+	for cellTypeName, cellType in pairs(CellType) do
+		if self:IsSubtype(cellType, cellTypeParent) then
+			table.insert(result, cellType)
+		end
+	end
+	return result
+end
+
 function Actions:RegisterPickableItems()
 	local pickableItems = self.pickableItems
 
@@ -110,6 +120,21 @@ function Actions:IsSubtype(childType : integer, parentType : integer) : boolean
 	end
 	if CellType.Bread_Any == parentType then
 		if childType >= CellType.Bread_1 and childType <= CellType.Bread_1 + GameConsts.maxBreadStackSize - 1 then
+			return true
+		end
+	end
+	if CellType.Stove_Any == parentType then
+		if childType == CellType.Stove or childType == CellType.StoveWithWood or childType == CellType.StoveWithWoodFired then
+			return true
+		end
+	end
+	if CellType.Campfire_Any == parentType then
+		if childType == CellType.Campfire or childType == CellType.CampfireWithWood or childType == CellType.CampfireWithWoodFired then
+			return true
+		end
+	end
+	if CellType.Fence_Any == parentType then
+		if childType == CellType.Fence or childType == CellType.FenceX or childType == CellType.FenceZ or childType == CellType.FenceXZ then
 			return true
 		end
 	end
@@ -370,12 +395,67 @@ function Actions:RegisterAllCombineRules()
 	end
 
 	for CurrentCellTypeName, CurrentCellType in pairs(CellType) do
-		if self:IsPickable(CurrentCellType) then
+		--TODO less hacky with fence
+		if self:IsPickable(CurrentCellType) and CurrentCellType ~= CellType.Fence then
 			-- pick
 			self:RegisterCombineRule(CellType.None, CurrentCellType, CurrentCellType, CellType.None)
 			-- drop
 			self:RegisterCombineRule(CurrentCellType, CellType.None, CellType.None, CurrentCellType)
 		end
+	end
+
+	--Fence
+	function UpdateSingleFence(intPos)
+		local thisCell = World.items:GetCell(intPos)
+		if not Actions:IsSubtype(thisCell.type, CellType.Fence_Any) then
+			return
+		end
+		local typeBefore = thisCell.type
+		
+		intPos.x = intPos.x + 1
+		local posXCell = World.items:GetCell(intPos)
+		local xFence = Actions:IsSubtype(posXCell.type, CellType.Fence_Any)
+		intPos.x = intPos.x - 1
+		intPos.y = intPos.y + 1
+		local posYCell = World.items:GetCell(intPos)
+		local yFence = Actions:IsSubtype(posYCell.type, CellType.Fence_Any)
+		intPos.y = intPos.y - 1 --intPos is object so return it back to initial state
+
+
+		if xFence and yFence then
+			thisCell.type = CellType.FenceXZ
+		elseif xFence then
+			thisCell.type = CellType.FenceX
+		elseif yFence then
+			thisCell.type = CellType.FenceZ
+		else
+			thisCell.type = CellType.Fence
+		end
+
+		if thisCell.type ~= typeBefore then
+			World.items:SetCell(thisCell)
+		end
+		RuleCallback_ItemAppear(nil, intPos)
+	end
+	function UpdateFencesCallback(character, intPos)
+		UpdateSingleFence(intPos)
+		intPos.x = intPos.x + 1
+		UpdateSingleFence(intPos)
+		intPos.x = intPos.x - 2
+		UpdateSingleFence(intPos)
+		intPos.x = intPos.x + 1
+		intPos.y = intPos.y + 1
+		UpdateSingleFence(intPos)
+		intPos.y = intPos.y - 2
+		UpdateSingleFence(intPos)
+
+		intPos.y = intPos.y + 1 --intPos is object so return it back to initial state
+	end
+	for name, groundedFenceType in pairs(self:GetAllIsSubtype(CellType.Fence_Any)) do
+		-- pick
+		self:RegisterCombineRule(CellType.None, groundedFenceType, CellType.Fence, CellType.None, UpdateFencesCallback)
+		-- drop
+		self:RegisterCombineRule(CellType.Fence, CellType.None, CellType.None, groundedFenceType, UpdateFencesCallback)
 	end
 
 	self:RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
@@ -419,7 +499,7 @@ function Actions:RegisterAllCombineRules()
 	end
 	self:RegisterCombineRule_Custom(CellType.None, CellType.Tree, CellType.Any, CellType.None, CellType.Wood, CellType.Any,
 		cutTreeCallback)
-	self:RegisterCombineRule(CellType.Wood, CellType.Wood, CellType.None, CellType.Fence, RuleCallback_ItemAppear)
+	self:RegisterCombineRule(CellType.Wood, CellType.Wood, CellType.None, CellType.Fence, UpdateFencesCallback)
 	self:RegisterCombineRule(CellType.Stone, CellType.Stone, CellType.None, CellType.Stove, RuleCallback_ItemAppear)
 	self:RegisterCombineRule(CellType.Wood, CellType.Stone, CellType.None, CellType.CampfireWithWood,
 		RuleCallback_ItemAppear)

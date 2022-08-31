@@ -26,8 +26,8 @@ class ButterflyGame : public GameSystem<ButterflyGame> {
 	virtual bool Init() override;
 	virtual void Term() override;
 
-	void CreateSave(eastl::shared_ptr<SaveData> save) const;
-	void LoadSave(const eastl::shared_ptr<SaveData> save);
+	bool CreateSave(eastl::shared_ptr<SaveData> save) const;
+	bool LoadSave(const eastl::shared_ptr<SaveData> save);
 
 	bool SaveToDisk(const eastl::string& fileName);
 	bool LoadFromDisk(const eastl::string& fileName);
