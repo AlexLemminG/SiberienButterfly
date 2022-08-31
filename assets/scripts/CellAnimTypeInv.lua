@@ -1,9 +1,13 @@
 local AnimTypeInv = {
 	"None",
 	"Any",
-    "WheatGrowing",
+	"WheatGrowing",
 	"GotHit",
-	"ItemAppear"
+	"ItemAppear",
+	"ItemAppearWithoutXZScale",
+	"TreeSproutGrowing",
+	"ItemAppearFromGround",
+	"ItemAppearFromGroundWithoutXZScale"
 }
 
 return AnimTypeInv

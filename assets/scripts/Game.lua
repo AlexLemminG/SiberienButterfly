@@ -1,12 +1,16 @@
 local World = require("World")
 local GameConsts = require("GameConsts")
 local Utils      = require("Utils")
+local CellAnimations = require("CellAnimations")
 local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
 	luaPlayerGO = nil,
 	currentDialog = nil,
-	isInited = false
+	isInited = false,
+	gridSizeX = 20,--TODO sync with c++ grid
+	gridSizeY = 20,
+	newGrowTreePercent = 0.0
 }
 local Component = require("Component")
 local CellType = require("CellType")
@@ -26,12 +30,10 @@ function Game:new(o)
     return o
 end
 
-local gridSizeX = 20
-local gridSizeY = 20
 
 function Game:GenerateWorldGrid()
-	for x = 0, gridSizeX-1, 1 do
-		for y = 0, gridSizeY-1, 1 do
+	for x = 0, self.gridSizeX-1, 1 do
+		for y = 0, self.gridSizeY-1, 1 do
 			local height = math.random(10) / 40
 			local cell = World.items:GetCell({x=x,y=y})
 			local rand1 = math.random(100) / 100.0
@@ -64,7 +66,7 @@ function Game:GenerateWorldGrid()
 	end
 
 	for x = 3, 4, 1 do
-		for y = 0, gridSizeY-1, 1 do
+		for y = 0, self.gridSizeY-1, 1 do
 
 			local cell = World.items:GetCell({x=x,y=y})
 			cell.type = CellType.None
@@ -84,11 +86,11 @@ function Game:GenerateWorldGrid()
 	local y = 5
 	local x = 10
 	while CellTypeInv[itemIdx] do
-		itemIdx += 1
-		y += 1
+		itemIdx = itemIdx + 1
+		y = y + 1
 		if y >= 15 then
 			y = 5
-			x += 1
+			x = x + 1
 		end
 		
 		local cell = World.items:GetCell({x=x,y=y})
@@ -193,7 +195,7 @@ end
 function Game:ApplyAnimation(grid, cell)
 	local animType = cell.animType
 
-	if animType == CellAnimType.WheatGrowing then
+	if animType == CellAnimType.WheatGrowing or animType == CellAnimType.TreeSproutGrowing then
 		return
 	end
 
@@ -205,11 +207,24 @@ function Game:ApplyAnimation(grid, cell)
 		local scaleY = 1.0 - math.sin(animPercent * math.pi * 1.0) * 0.1
 		local scaleXZ = math.sqrt(1.0 / scaleY)
 		Mathf.SetScale(localMatrix, vector(scaleXZ, scaleY, scaleXZ))
-	elseif animType == CellAnimType.ItemAppear then
+	elseif animType == CellAnimType.ItemAppear or animType == CellAnimType.ItemAppearWithoutXZScale then
 		local scaleY = 1.0 + math.cos(animPercent * math.pi * 0.5) * 0.4
 		local scaleXZ = math.sqrt(1.0 / scaleY)
+		if animType == CellAnimType.ItemAppearWithoutXZScale then
+			scaleXZ = 1.0
+		end
 
 		local posY = (1.0 - animPercent) * 0.1
+		Mathf.SetScale(localMatrix, vector(scaleXZ, scaleY, scaleXZ))
+		Mathf.SetPos(localMatrix, vector(0, posY, 0))
+	elseif animType == CellAnimType.ItemAppearFromGround or animType == CellAnimType.ItemAppearFromGroundWithoutXZScale then
+		local scaleY = 1.0 - math.cos(animPercent * math.pi * 0.5) * 0.4
+		local scaleXZ = math.sqrt(1.0 / scaleY) * (0.8 + animPercent) / 1.8
+		if animType == CellAnimType.ItemAppearFromGroundWithoutXZScale then
+			scaleXZ = 1.0
+		end
+
+		local posY = (-1.0 + animPercent) * 0.1
 		Mathf.SetScale(localMatrix, vector(scaleXZ, scaleY, scaleXZ))
 		Mathf.SetPos(localMatrix, vector(0, posY, 0))
 	end
@@ -217,17 +232,36 @@ function Game:ApplyAnimation(grid, cell)
 	grid:SetCellLocalMatrix(cell.pos, localMatrix)
 end
 
+
 function Game:HandleAnimationFinished(cell, finishedAnimType)
 	-- cell.animType is already 0 at this point
 
+	local isAppearAnim = finishedAnimType == CellAnimType.ItemAppear or finishedAnimType == CellAnimType.ItemAppearWithoutXZScale or finishedAnimType == CellAnimType.ItemAppearFromGround or finishedAnimType == CellAnimType.ItemAppearFromGroundWithoutXZScale
+
 	if finishedAnimType == CellAnimType.WheatGrowing then
 		if cell.type == CellType.WheatPlanted_0 then
-			cell.animType = CellAnimType.WheatGrowing
-			cell.animT = 0.0
-			cell.animStopT = 1.0 --TODO param
+			CellAnimations.SetAppearFromGroundWithoutXZScale(cell)
 			cell.type = CellType.WheatPlanted_1
 		elseif cell.type == CellType.WheatPlanted_1 then
+			CellAnimations.SetAppearFromGroundWithoutXZScale(cell)
 			cell.type = CellType.Wheat
+		end
+	elseif finishedAnimType == CellAnimType.TreeSproutGrowing then
+		cell.type = CellType.Tree
+		CellAnimations.SetAppearFromGround(cell)
+	elseif isAppearAnim then
+		if cell.type == CellType.TreeSprout then
+			cell.animType = CellAnimType.TreeSproutGrowing
+			cell.animT = 0.0
+			cell.animStopT = GameConsts.treeSproutToTreeGrowthTime
+		elseif cell.type == CellType.WheatPlanted_0 then
+			cell.animType = CellAnimType.WheatGrowing
+			cell.animT = 0.0
+			cell.animStopT = GameConsts.wheatGrowthTime0
+		elseif cell.type == CellType.WheatPlanted_1 then
+			cell.animType = CellAnimType.WheatGrowing
+			cell.animT = 0.0
+			cell.animStopT = GameConsts.wheatGrowthTime1
 		end
 	end
 end
@@ -237,8 +271,8 @@ function Game:AnimateCells(dt)
 	local v = Vector2Int:new()
 	local dt = Time.deltaTime()
 	local cell = GridCell:new()
-	for x = 0, gridSizeX-1, 1 do
-		for y = 0, gridSizeY-1, 1 do
+	for x = 0, self.gridSizeX-1, 1 do
+		for y = 0, self.gridSizeY-1, 1 do
 			v.x = x
 			v.y = y
 			items:GetCellOut(cell, v)
@@ -260,10 +294,61 @@ function Game:AnimateCells(dt)
 	end
 end
 
+function Game:GrowNewTrees(deltaTime : number)
+	local secondsPerMinute = 60.0
+	local numToAppear = GameConsts.newTreeApearProbabilityPerCellPerMinute * deltaTime / secondsPerMinute * self.gridSizeX * self.gridSizeY
+	
+	self.newGrowTreePercent = self.newGrowTreePercent + numToAppear
+	while self.newGrowTreePercent > 1 do
+		self.newGrowTreePercent = self.newGrowTreePercent - 1
+
+		--TODO GetRandomPoint function
+		--TODO is it within range ?
+		local xPos = math.ceil(Random.Range(0, self.gridSizeX - 1.0))
+		local yPos = math.ceil(Random.Range(0, self.gridSizeY - 1.0))
+
+		local cellPos = Vector2Int.new(0,0)
+		local canGrow = true
+		for x = xPos-1, xPos+1, 1 do
+			for y = yPos-1, yPos+1, 1 do
+				cellPos.x = x
+				cellPos.y = y
+
+				local itemsCell = World.items:GetCell(cellPos)
+				if itemsCell.type ~= CellType.None then
+					canGrow = false
+					break
+				end
+			end
+			if not canGrow then
+				break
+			end
+		end
+		if not canGrow then
+			continue
+		end
+		
+		cellPos.x = xPos
+		cellPos.y = yPos
+				
+		local groundCell = World.ground:GetCell(cellPos)
+		if groundCell.type ~= CellType.Ground and groundCell.type ~= CellType.GroundWithGrass then
+			continue
+		end
+		
+		local itemsCell = World.items:GetCell(cellPos)
+		itemsCell.type = CellType.TreeSprout
+		CellAnimations.SetAppearFromGround(itemsCell)
+		World.items:SetCell(itemsCell)
+	end
+end
+
 function Game:MainLoop()
 	local dt = Time.deltaTime()
 
 	self:AnimateCells(dt)
+
+	self:GrowNewTrees(dt)
 
 	for index, character in ipairs(World.characters) do
 		character.hunger = math.clamp(character.hunger + Time.deltaTime() / 10.0, 0.0, 1.0)

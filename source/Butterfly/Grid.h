@@ -164,6 +164,8 @@ private:
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
     REFLECT_METHOD(FindNearestPosWithType);
+    REFLECT_VAR(sizeX);
+    REFLECT_VAR(sizeY);
     REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
 };
 

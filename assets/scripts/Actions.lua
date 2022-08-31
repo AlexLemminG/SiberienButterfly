@@ -1,3 +1,4 @@
+local CellAnimations = require "CellAnimations"
 local Actions = {
 	pickableItems = {},
 	combineRules = {}
@@ -329,16 +330,17 @@ function Actions:GetCombineRule(character : Character|nil, charType : integer, i
 	return nil
 end
 
-function SetAppearAnimation(cell)
-	cell.animType = CellAnimType.ItemAppear
-	cell.animT = 0.0
-	cell.animStopT = 0.1
+function RuleCallback_ItemAppearWithoutXZScale(character, intPos)
+	local cell = World.items:GetCell(intPos)
+	if cell.type ~= CellType.None then
+		CellAnimations.SetAppearWithoutXZScale(cell)
+		World.items:SetCell(cell)
+	end
 end
-
 function RuleCallback_ItemAppear(character, intPos)
 	local cell = World.items:GetCell(intPos)
 	if cell.type ~= CellType.None then
-		SetAppearAnimation(cell)
+		CellAnimations.SetAppear(cell)
 		World.items:SetCell(cell)
 	end
 end
@@ -463,20 +465,12 @@ function Actions:RegisterAllCombineRules()
 		CellType.GroundPrepared)
 
 	-- plant wheat
-	local setDefaultStateForPlantAction =
-	function(character, intPos)
-		local cell = World.items:GetCell(intPos)
-		cell.animType = CellAnimType.WheatGrowing
-		cell.animT = 0.0
-		cell.animStopT = 1.0 --TODO param
-		World.items:SetCell(cell)
-	end
 	self:RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared,
 		CellType.None,
-		CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
+		CellType.WheatPlanted_0, CellType.GroundPrepared, RuleCallback_ItemAppearWithoutXZScale)
 	for i = 2, GameConsts.maxWheatStackSize, 1 do
 		self:RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1 - 1 + i, CellType.None, CellType.GroundPrepared,
-			CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, setDefaultStateForPlantAction)
+			CellType.WheatCollected_1 - 1 + i - 1, CellType.WheatPlanted_0, CellType.GroundPrepared, RuleCallback_ItemAppearWithoutXZScale)
 	end
 
 	local cutTreeCallback =
@@ -487,7 +481,7 @@ function Actions:RegisterAllCombineRules()
 		end
 		if cell.float4 >= 3.0 then
 			cell.type = CellType.Wood
-			SetAppearAnimation(cell)
+			CellAnimations.SetAppear(cell)
 		else
 			cell.animType = CellAnimType.GotHit
 			cell.animT = 0.0
@@ -515,7 +509,10 @@ function Actions:RegisterAllCombineRules()
 	self:RegisterCombineRule(CellType.FlintStone, CellType.StoveWithWood, CellType.FlintStone, CellType.StoveWithWoodFired,
 		RuleCallback_ItemAppear)
 	self:RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
+	self:RegisterCombineRule(CellType.None, CellType.TreeSprout, CellType.None, CellType.None)
 
+	self:RegisterCombineRuleForItemAndGround(CellType.Wood, CellType.None, CellType.Water, CellType.None, CellType.None,
+		CellType.WoodenBridge)
 end
 
 function Actions:GetCombineAction(character, intPos)

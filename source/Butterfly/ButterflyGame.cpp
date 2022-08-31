@@ -39,7 +39,13 @@ bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 	lua_State* L = LuaSystem::Get()->L;
 
 	LuaSystem::Get()->PushModule("Game");
+	if (lua_isnil(L, -1)) {
+		LogError("CreateSave: module 'Game' is nil");
+		lua_pop(L, 1);//module
+		return false;
+	}
 	lua_getfield(L, -1, "CreateSave");
+	Vector2Int f;
 	if (!lua_isnil(L, -1)) {
 		//lua_pushvalue(L, -2);
 		int callResult;

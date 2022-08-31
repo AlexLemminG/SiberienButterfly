@@ -78,7 +78,7 @@ SetCellInfoForAllBase(CellType.Bread_1, {  } )
 SetCellInfoForAllBase(CellType.Bread_2, { collision = smallObjectCollision } )
 SetCellInfo(CellType.Bread_Any, { isUtil = true } )
 
-local waterSphereRadius = 0.15
+local waterSphereRadius = 0.175
 local waterSphereOffset = 0.3
 local waterSphereOffsetY = 0.3
 SetCellInfoForAllBase(CellType.Water, { extraCollisions = {
