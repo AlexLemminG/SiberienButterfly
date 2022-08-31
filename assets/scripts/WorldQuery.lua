@@ -24,6 +24,9 @@ function WorldQuery:FindNearestCharacter(originPos : Vector2, predicate) : Chara
     local minDistance = math.huge
     local result = nil
     for index, character in ipairs(World.characters) do
+        if character:IsDead() then
+            continue
+        end
         local distance = Vector2.Distance(character:GetPosition2D(), originPos)
         if distance < minDistance and predicate(character) then
             minDistance = distance

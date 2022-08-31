@@ -29,7 +29,7 @@ private:
 	float jumpPushRadius = 5.f;
 	bool hasItem = false;
 
-	REFLECT_BEGIN(PlayerController);
+	REFLECT_COMPONENT_BEGIN(PlayerController);
 	REFLECT_VAR(speed);
 	REFLECT_VAR(speedWithItem);
 	REFLECT_VAR(jumpVelocity);

@@ -156,7 +156,7 @@ public:
 private:
     int modificationsCount = 0;
 
-    REFLECT_BEGIN(Grid);
+    REFLECT_COMPONENT_BEGIN(Grid);
     REFLECT_METHOD(GetClosestIntPos);
     REFLECT_METHOD(GetCellWorldCenter);
     REFLECT_METHOD(GetCell);
@@ -210,7 +210,7 @@ class GridDrawer : public Component {
     eastl::vector<InstancedMeshRenderer*> instancedMeshRenderers;
 
     int lastModificationsCount = -1;
-    REFLECT_BEGIN(GridDrawer);
+    REFLECT_COMPONENT_BEGIN(GridDrawer);
     REFLECT_VAR(gridCellPrefab);
     REFLECT_END();
 };
@@ -223,6 +223,6 @@ public:
 
 private:
     int lastModificationsCount = -1;
-    REFLECT_BEGIN(GridCollider);
+    REFLECT_COMPONENT_BEGIN(GridCollider);
     REFLECT_END();
 };

@@ -47,6 +47,9 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function PlayerController:Update()
+	if self.character:IsDead() then
+		return
+	end
 	local input = Input
 
 	local velocity = vector(0,0,0)

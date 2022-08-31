@@ -16,6 +16,7 @@ local Character = {
 	standAnimation = nil,
 	runWithItemAnimation = nil,
 	standWithItemAnimation = nil,
+	deathAnimation = nil,
 	animator = nil,
 	rigidBody = nil,
 	item = CellType.None,
@@ -26,7 +27,8 @@ local Character = {
 	health = 1.0,
 	desiredVelocity = vector(0,0,0),
 	characterController = nil,
-	name = "Name"
+	name = "Name",
+	isDead = false
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -44,6 +46,7 @@ function Character:SaveState() : any
 	state.hunger = self.hunger
 	state.health = self.health
 	state.name = self.name
+	state.isDead = self.isDead
 	local position = self:GetPosition()
 	local rotation = self.transform:GetRotation()
 	state.position = { x=position.x, y=position.y, z=position.z }
@@ -61,6 +64,7 @@ function Character:LoadState(savedState)
 	self.health = savedState.health
 	self.hunger = savedState.hunger
 	self.name = savedState.name
+	self.isDead = savedState.isDead
 	local position = vector(savedState.position.x, savedState.position.y, savedState.position.z)
 	local rotation = Quaternion:new()
 	rotation:set_scalar(savedState.rotation.w)
@@ -69,6 +73,8 @@ function Character:LoadState(savedState)
 	Mathf.SetPos(transform, position)
 	Mathf.SetRot(transform, rotation)
 	self.rigidBody:SetTransform(transform)
+	self.transform:SetPosition(position)
+	self.transform:SetRotation(rotation)
 	if savedState.itemName then
 		local item = CellType[savedState.itemName]
 		if item then
@@ -82,6 +88,11 @@ function Character:LoadState(savedState)
 			LogError("Have savedState.characterController but not self.characterController")
 		end
 	end
+
+	if self:IsDead() then
+		self.isDead = false
+		self:Die()
+	end
 end
 
 function Character:OnEnable()
@@ -89,6 +100,7 @@ function Character:OnEnable()
 	self.standAnimation = AssetDatabase:Load("models/Vintik.blend$Stand")
 	self.runWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$RunWithItem")
 	self.standWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$StandWithItem")
+	self.deathAnimation = AssetDatabase:Load("models/Vintik.blend$Death")
 	self.animator = self:gameObject():GetComponent("Animator")
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
@@ -109,9 +121,11 @@ function Character:OnEnable()
 	end
 	self:SetItem(self.item)
 
+	self.rigidBody:SetEnabled(true)
 	self.rigidBody:SetAngularFactor(vector(0,0,0))
 
 	table.insert(World.characters, self)
+
 end
 
 
@@ -143,6 +157,9 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function Character:Update()
+	if self:IsDead() then
+		return
+	end
 	self:UpdateMovement()
 	self:UpdateAnimation()
 
@@ -285,6 +302,21 @@ end
 
 function Character:IsInDialog() : boolean
 	return Game.currentDialog and (Game.currentDialog.characterA == self or Game.currentDialog.characterB == self)
+end
+
+function Character:IsDead() : boolean
+	return self.isDead
+end
+
+function Character:Die()
+	if self:IsDead() then
+		return
+	end
+	self.isDead = true
+	self.rigidBody:SetEnabled(false)
+	self.animator:SetAnimation(self.deathAnimation)
+
+	self.animator.speed = 1.0
 end
 
 return Character

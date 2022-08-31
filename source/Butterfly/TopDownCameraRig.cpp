@@ -19,7 +19,7 @@ public:
 	void OnEnable() override;
 	void Update() override;
 
-	REFLECT_BEGIN(TopDownCameraRig);
+	REFLECT_COMPONENT_BEGIN(TopDownCameraRig);
 	REFLECT_VAR(targetTag);
 	REFLECT_VAR(lerpT);
 	REFLECT_VAR(collisionLerpT);

@@ -327,7 +327,7 @@ function Game:GrowNewTrees(deltaTime : number)
 		if not canGrow then
 			continue
 		end
-		
+
 		cellPos.x = xPos
 		cellPos.y = yPos
 				
@@ -351,7 +351,16 @@ function Game:MainLoop()
 	self:GrowNewTrees(dt)
 
 	for index, character in ipairs(World.characters) do
-		character.hunger = math.clamp(character.hunger + Time.deltaTime() / 10.0, 0.0, 1.0)
+		character.hunger = math.clamp(character.hunger + dt * GameConsts.hungerPerSecond, 0.0, 1.0)
+		if character.hunger == 1.0 then
+			character.health = math.clamp(character.health - dt * GameConsts.healthLossFromHungerPerSecond, 0.0, 1.0)
+		end
+	end
+	for i = #World.characters, 1, -1 do
+		local character = World.characters[i]
+		if character.health == 0.0 then
+			character:Die()
+		end
 	end
 end
 
@@ -376,12 +385,37 @@ function Game:DrawStats(character : Character)
 	imgui.End()
 end
 
+function Game:DrawWorldStats()
+	local screenSize = Graphics:GetScreenSize()
+
+	imgui.SetNextWindowSize(200,150)
+	imgui.SetNextWindowPos(0, screenSize.y / 2, imgui.constant.Cond.Always, 0.0,0.5)
+	imgui.SetNextWindowBgAlpha(0.1)
+	local winFlags = imgui.constant.WindowFlags
+	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
+	imgui.Begin("World Stats", nil, flags)
+
+	local avgHealth = 0.0
+	local avgHunger = 0.0
+	if #World.characters > 0 then
+		for index, character in ipairs(World.characters) do
+			avgHealth = avgHealth + character.health
+			avgHunger = avgHunger + character.hunger
+		end
+		avgHealth = avgHealth / #World.characters
+		avgHunger = avgHunger / #World.characters
+	end
+	local text = string.format("Avg Hunger: %.3f\nAvg Health: %.3f", avgHunger, avgHealth)
+	imgui.TextUnformatted(text)
+	imgui.End()
+end
+
 function Game:DrawUI()
 	self:DrawStats(World.characters[1])
 	if self.currentDialog then
 		self.currentDialog:Draw()
 	end
-
+	self:DrawWorldStats()
 end
 
 function Game:BeginDialog(characterA : Character, characterB : Character)
