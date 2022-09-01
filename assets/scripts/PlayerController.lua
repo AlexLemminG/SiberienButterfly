@@ -35,9 +35,18 @@ function PlayerController:OnEnable()
 	self.character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
 
 	self:gameObject():GetScene():AddGameObject(self.selectionGO)
+
+	if World.playerCharacter then
+		LogError("Player character is not nil")
+	end
+	World.playerCharacter = self.character
 end
 
 function PlayerController:OnDisable()
+	if World.playerCharacter ~= self.character then
+		LogError("Player character is not this player character")
+	end
+	World.playerCharacter = nil
 	self:gameObject():GetScene():RemoveGameObject(self.selectionGO)
 end
 
@@ -88,7 +97,7 @@ function PlayerController:Update()
 	pos = pos + vector(0,0.0,0)
 	
 	local maxCharacterInteractionDistance = 0.75
-    local nearestCharacter = WorldQuery:FindNearestCharacter(self.character:GetPosition2D(), function(character : Character) return character ~= self.character end)
+    local nearestCharacter = WorldQuery:FindNearestCharacterToInterract(self.character:GetPosition2D(), function(character : Character) return character ~= self.character end)
     if nearestCharacter then
 		local distance = Vector2.Distance(nearestCharacter:GetPosition2D(), self.character:GetPosition2D())
 		if distance > maxCharacterInteractionDistance then

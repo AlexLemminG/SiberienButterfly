@@ -20,11 +20,11 @@ function WorldQuery:FindNearestActionPosFromRule(combineRule : CombineRule, orig
     return self:FindNearestItemWithGround(combineRule.itemType, combineRule.groundType, originPos)
 end
 
-function WorldQuery:FindNearestCharacter(originPos : Vector2, predicate) : Character
+function WorldQuery:FindNearestCharacterToInterract(originPos : Vector2, predicate) : Character
     local minDistance = math.huge
     local result = nil
     for index, character in ipairs(World.characters) do
-        if character:IsDead() then
+        if character:CanInteract() then
             continue
         end
         local distance = Vector2.Distance(character:GetPosition2D(), originPos)

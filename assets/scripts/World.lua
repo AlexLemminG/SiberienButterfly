@@ -2,8 +2,11 @@
 local World = {
     items = nil,
     ground = nil,
+    playerCharacter = nil,
     ---@type Character[]
-    characters = {}
+    characters = {},
+    ---@type Character[]
+    charactersIncludingDead = {}
 }
 
 function World:Init()

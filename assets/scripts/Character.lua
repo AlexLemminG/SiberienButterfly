@@ -28,7 +28,8 @@ local Character = {
 	desiredVelocity = vector(0,0,0),
 	characterController = nil,
 	name = "Name",
-	isDead = false
+	isDead = false,
+	isSpeeing = false
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -113,8 +114,11 @@ function Character:OnEnable()
 	local characterScaleInv = 1.0 / self.transform:GetScale().x
 	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
 	parentedTransform.localMatrix = itemMatrix
-	local attachBoneIdx = 24 -- TODO
-	parentedTransform:SetParentAsBone(self:gameObject():GetComponent("MeshRenderer"), attachBoneIdx)
+	local meshRenderer = self:gameObject():GetComponent("MeshRenderer")
+	local attachBoneIndex = meshRenderer.mesh:GetBoneIndex("ItemAttachPoint")
+	if attachBoneIndex ~= -1 then
+		parentedTransform:SetParentAsBone(meshRenderer, attachBoneIndex)
+	end
 
 	if not self.item then
 		self.item = CellType.None
@@ -124,8 +128,10 @@ function Character:OnEnable()
 	self.rigidBody:SetEnabled(true)
 	self.rigidBody:SetAngularFactor(vector(0,0,0))
 
-	table.insert(World.characters, self)
-
+	table.insert(World.charactersIncludingDead, self)
+	if not self:IsDead() then
+		table.insert(World.characters, self)
+	end
 end
 
 
@@ -140,12 +146,11 @@ function Character:SetItem(item : number)
 end
 
 function Character:OnDisable()
-	for index, value in ipairs(World.characters) do
-		if value == self then
-			table.remove(World.characters, index)
-			break
-		end
+	Utils.ArrayRemove(World.charactersIncludingDead, self)
+	if not self:IsDead() then
+		Utils.ArrayRemove(World.characters, self)
 	end
+	
 	self:gameObject():GetScene():RemoveGameObject(self.itemGO)
 end
 
@@ -304,6 +309,10 @@ function Character:IsInDialog() : boolean
 	return Game.currentDialog and (Game.currentDialog.characterA == self or Game.currentDialog.characterB == self)
 end
 
+function Character:CanInteract() : boolean
+	return not (self:IsDead() or self.isSpeeing)
+end
+
 function Character:IsDead() : boolean
 	return self.isDead
 end
@@ -312,6 +321,7 @@ function Character:Die()
 	if self:IsDead() then
 		return
 	end
+	Utils.ArrayRemove(World.characters, self)
 	self.isDead = true
 	self.rigidBody:SetEnabled(false)
 	self.animator:SetAnimation(self.deathAnimation)

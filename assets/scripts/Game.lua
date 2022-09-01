@@ -5,7 +5,6 @@ local CellAnimations = require("CellAnimations")
 local Game = {
 	playerGO = nil,
 	characterPrefab = nil,
-	luaPlayerGO = nil,
 	currentDialog = nil,
 	isInited = false,
 	gridSizeX = 20,--TODO sync with c++ grid
@@ -136,10 +135,13 @@ function Game:OnEnable()
 	Actions:Init()
 	-- print(AssetDatabase)
 	-- print(AssetDatabase:Load("prefabs/character.asset"))
+	
 	self.characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
-	self.luaPlayerGO = CreatePlayerGO()
-	self:gameObject():GetScene():AddGameObject(self.luaPlayerGO)
+	Game.Cleanup()
+
+	local luaPlayerGO = CreatePlayerGO()
+	self:gameObject():GetScene():AddGameObject(luaPlayerGO)
 
 	local numNPC = 9
 	for i = 1, numNPC, 1 do
@@ -148,48 +150,64 @@ function Game:OnEnable()
 	end
 end
 
+function Game.Cleanup()
+	for i = #World.charactersIncludingDead, 1, -1 do
+		SceneManager.GetCurrentScene():RemoveGameObject(World.charactersIncludingDead[i]:gameObject())
+	end
+	assert(World.playerCharacter == nil, "Player is not removed while cleaning up")
+	assert(#World.charactersIncludingDead == 0, "Not all characters are removed while cleaning up")
+	assert(#World.characters == 0, "Not all characters are removed while cleaning up")
+end
+
 function Game.CreateSave()
-	print("Creating Lua Save")
 	local save = { 
 		characters = { }
 	}
 
-	for index, character in ipairs(World.characters) do
+	for index, character in ipairs(World.charactersIncludingDead) do
 		table.insert(save.characters, character:SaveState())
 	end
+
+	save.playerIndex = Utils.ArrayIndexOf(World.charactersIncludingDead, World.playerCharacter)
 
 	return save
 end
 
 function Game.LoadSave(save) : boolean
-	print("Loading Lua Save")
 	if not save then
-		print("Lua loading failed: no save")
+		LogError("Lua loading failed: no save")
 		return false
 	end
 
 	Game.isInited = true
 
-	for i = #World.characters, 1, -1 do
-		SceneManager.GetCurrentScene():RemoveGameObject(World.characters[i]:gameObject())
-	end
-	for index, savedCharacter in pairs(save.characters) do
-		local characterGO = nil
-		if index == 1 or index == "1" then
-			characterGO = CreatePlayerGO()
-		else
-			characterGO = CreateNpcGO()
+	Game.Cleanup()
+
+	if save.characters then
+		local playerIndex = save.playerIndex or -1
+		for index, savedCharacter in pairs(save.characters) do
+			local characterGO = nil
+			if index == playerIndex then
+				characterGO = CreatePlayerGO()
+			else
+				characterGO = CreateNpcGO()
+			end
+			local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
+			SceneManager.GetCurrentScene():AddGameObject(characterGO)
+			characterScript:LoadState(savedCharacter)
 		end
-		local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
-		SceneManager.GetCurrentScene():AddGameObject(characterGO)
-		characterScript:LoadState(savedCharacter)
+	else
+		LogWarning("No characters in save")
+	end
+	if World.playerCharacter == nil then
+		LogWarning("Player is not created from save")
 	end
 	return true
 end
 
 
 function Game:OnDisable()
-
+	Game.Cleanup()
 end
 
 function Game:ApplyAnimation(grid, cell)
@@ -350,7 +368,7 @@ function Game:MainLoop()
 
 	self:GrowNewTrees(dt)
 
-	for index, character in ipairs(World.characters) do
+	for index, character in ipairs(World.charactersIncludingDead) do
 		character.hunger = math.clamp(character.hunger + dt * GameConsts.hungerPerSecond, 0.0, 1.0)
 		if character.hunger == 1.0 then
 			character.health = math.clamp(character.health - dt * GameConsts.healthLossFromHungerPerSecond, 0.0, 1.0)
@@ -365,7 +383,11 @@ function Game:MainLoop()
 end
 
 function Game:DrawStats(character : Character)
-	local isPlayer = character == World.characters[1]
+	if not character then
+		LogError("Trying to draw nil character")
+		return
+	end
+	local isPlayer = character == World.playerCharacter
 	
 	local screenSize = Graphics:GetScreenSize()
 	
@@ -405,13 +427,19 @@ function Game:DrawWorldStats()
 		avgHealth = avgHealth / #World.characters
 		avgHunger = avgHunger / #World.characters
 	end
-	local text = string.format("Avg Hunger: %.3f\nAvg Health: %.3f", avgHunger, avgHealth)
+	local text = ""
+	text = string.format("Population: %d\n", #World.characters)
+	if #World.characters > 0 then
+		text = text..string.format("Avg Hunger: %.3f\nAvg Health: %.3f\n", avgHunger, avgHealth)
+	end
 	imgui.TextUnformatted(text)
 	imgui.End()
 end
 
 function Game:DrawUI()
-	self:DrawStats(World.characters[1])
+	if World.playerCharacter then
+		self:DrawStats(World.playerCharacter)
+	end
 	if self.currentDialog then
 		self.currentDialog:Draw()
 	end

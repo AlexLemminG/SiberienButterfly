@@ -35,6 +35,16 @@ function Utils.ArrayIndexOf(array, value) : integer
     return -1
 end
 
+-- returns true if element found
+function Utils.ArrayRemove(array, value) : boolean
+    local index = Utils.ArrayIndexOf(array, value)
+    if index ~= -1 then
+        table.remove(array, index)
+        return true
+    end
+    return false
+end
+
 getmetatable(Vector2Int:new()).__eq = function(a, b) return a.x == b.x and a.y == b.y end
 
 ---@class vector

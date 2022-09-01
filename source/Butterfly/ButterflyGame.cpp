@@ -123,7 +123,7 @@ bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 		return false;
 	}
 
-	Log("Loaded Successfully");
+	Log("Loaded");
 	return true;
 }
 
