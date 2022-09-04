@@ -143,7 +143,7 @@ void GridDrawer::Update() {
             ir = new InstancedMeshRenderer();
             ir->mesh = renderer.mesh;
             ir->material = renderer.material;
-            ir->Init();
+            ir->Init(gameObject()->GetScene());
             this->instancedMeshRenderers.push_back(ir);
         }
         ir->instances.push_back({ transformMatrix });
