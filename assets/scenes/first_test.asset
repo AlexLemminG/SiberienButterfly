@@ -50,6 +50,7 @@ Scene:
           restitution: 0
         MeshCollider:
           isConvex: 1
+        MeshRenderer: {}
     - prefab: prefabs\apple.asset
       overrides:
         Transform:

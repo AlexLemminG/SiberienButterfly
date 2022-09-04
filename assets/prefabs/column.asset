@@ -11,8 +11,8 @@ Transform:
     - 1
     - 1
 MeshRenderer:
-  mesh: models\column.blend$Column
-  material: $M1
+  mesh: models/column.blend$Column
+  material: engine/materials/standard.asset$Material
 Material$M1:
   shader: engine\shaders\main.asset
   colorTex: engine\textures\white.png

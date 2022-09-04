@@ -54,25 +54,26 @@ class GridCellMeshRenderer : public MeshRendererAbstract {
     Transform transform;
 };
 
+struct GridCellDescLua_Collision {
+    int type = (int)GridCellCollisionType::NONE;
+    float radius = 0.f;
+    float height = 0.f;
+    Vector3 size = Vector3_zero;
+    Vector3 center = Vector3_zero;
+
+    REFLECT_BEGIN(GridCellDescLua_Collision);
+    REFLECT_VAR(type);
+    REFLECT_VAR(radius);
+    REFLECT_VAR(height);
+    REFLECT_VAR(size);
+    REFLECT_VAR(center);
+    REFLECT_END();
+};
 struct GridCellDescLua {
-    struct Collision {
-        int type = (int)GridCellCollisionType::NONE;
-        float radius = 0.f;
-        float height = 0.f;
-        Vector3 size = Vector3_zero;
-        Vector3 center = Vector3_zero;
-        REFLECT_BEGIN(GridCellDescLua::Collision);
-        REFLECT_VAR(type);
-        REFLECT_VAR(radius);
-        REFLECT_VAR(height);
-        REFLECT_VAR(size);
-        REFLECT_VAR(center);
-        REFLECT_END();
-    };
     bool isUtil = false;
-    Collision collision;
-    eastl::vector<Collision> extraCollisions;
-    eastl::vector<Collision> allCollisions;
+    GridCellDescLua_Collision collision;
+    eastl::vector<GridCellDescLua_Collision> extraCollisions;
+    eastl::vector<GridCellDescLua_Collision> allCollisions;
     REFLECT_BEGIN(GridCellDescLua);
     REFLECT_VAR(collision);
     REFLECT_VAR(extraCollisions);
@@ -210,9 +211,8 @@ class GridDrawer : public Component {
     eastl::vector<InstancedMeshRenderer*> instancedMeshRenderers;
 
     int lastModificationsCount = -1;
-    REFLECT_COMPONENT_BEGIN(GridDrawer);
-    REFLECT_VAR(gridCellPrefab);
-    REFLECT_END();
+
+    REFLECT_DECLARE(GridDrawer);
 };
 
 class GridCollider : public Component {

@@ -18,6 +18,11 @@ DECLARE_TEXT_ASSET(GridCollider);
 DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
+
+REFLECT_DEFINE_COMPONENT_BEGIN(GridDrawer);
+REFLECT_VAR(gridCellPrefab);
+REFLECT_DEFINE_END(GridDrawer);
+
 eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
     for (auto grid : grids) {
         if (grid->gameObject()->tag == name) {
