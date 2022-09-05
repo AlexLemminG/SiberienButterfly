@@ -1,4 +1,4 @@
 AssetPreviewSettings:
-  defaultMaterial: materials/grid.asset$Material
+  defaultMaterial: engine/materials/standard.asset$Material
   defaultMesh: engine/models/sphere.blend$Cube.001
   previewScene: engine/previewScene/scene.asset
