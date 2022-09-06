@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.1)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;DebugWithReleaseLibs")
 
+set(CMAKE_MESSAGE_LOG_LEVEL "NOTICE")
+
 set(CMAKE_BUILD_TYPE "DebugWithReleaseLibs")
 
 set(CMAKE_DEBUGWITHRELEASELIBS_POSTFIX "")
