@@ -411,11 +411,12 @@ function Game:DrawWorldStats()
 	local screenSize = Graphics:GetScreenSize()
 
 	imgui.SetNextWindowSize(200,150)
-	imgui.SetNextWindowPos(0, screenSize.y / 2, imgui.constant.Cond.Always, 0.0,0.5)
-	imgui.SetNextWindowBgAlpha(0.1)
+	imgui.SetNextWindowPos(30, 250, imgui.constant.Cond.Always, 0.0,0.5)
+	imgui.SetNextWindowBgAlpha(0.0)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
 	imgui.Begin("World Stats", nil, flags)
+	imgui.SetWindowFontScale(1.5)
 
 	local avgHealth = 0.0
 	local avgHunger = 0.0
@@ -436,9 +437,76 @@ function Game:DrawWorldStats()
 	imgui.End()
 end
 
+local function GetUISprite(x, y)
+	local sprite = Sprite.new()
+	local uvMin = sprite.uvMin
+	local uvMax = sprite.uvMax
+	local countX = 20
+	local countY = 9
+	sprite.texture = AssetDatabase:Load("textures/tiles.png")
+	uvMin.x = 1.0 / countX * x
+	uvMin.y = 1.0 / countY * y
+	uvMax.x = uvMin.x + 1.0 / countX
+	uvMax.y = uvMin.y + 1.0 / countY
+	sprite.uvMin = uvMin
+	sprite.uvMax = uvMax
+
+	return sprite
+end
+
+function Game:DrawHealthAndHungerUI(character : Character)
+	local scale = 5.0
+	imgui.SetNextWindowBgAlpha(0.0)
+	local screenSize = Graphics:GetScreenSize()
+	imgui.SetNextWindowSize(400,250)
+	imgui.SetNextWindowPos(20,20, imgui.constant.Cond.Always, 0.0,0.0)
+	local winFlags = imgui.constant.WindowFlags
+	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
+
+	imgui.Begin("HealthAndHungerUI", nil, flags)
+	--imgui.Dummy(0,-100)
+	imgui.SetCursorPosY(imgui.GetCursorPosY() - 15 * scale)
+	local CalcSpriteOffset = function(value, maxCount, currentCount)
+		local isFullHeart = value * maxCount - currentCount + 1 > 0.5
+		local isHalfHeart = value * maxCount - currentCount + 1 > 0.0
+		if isFullHeart then
+			return 2
+		elseif isHalfHeart then
+			return 1
+		end
+		return 0
+	end
+
+	local heartsCountMax = 3
+	for i = 1, heartsCountMax, 1 do
+		if i ~= 1 then imgui.SameLine(0,0) imgui.Dummy(-3 * scale ,0) imgui.SameLine(0,0) end
+		local offset = CalcSpriteOffset(character.health, heartsCountMax, i)
+		if character.hunger == 1.0 then
+			local isFirstNonZeroHeart = offset > 0 and (i == heartsCountMax or CalcSpriteOffset(character.health, heartsCountMax, i+1) == 0)
+			if isFirstNonZeroHeart and math.fmod(Time.time(), 1.0) > 0.5 then
+				if offset > 0 then 
+					offset = offset - 1
+				end
+			end
+		end
+		local sprite = GetUISprite(2 + offset, 5)
+		imgui.Image(sprite:ToImguiId(), sprite:GetSize().x * scale, sprite:GetSize().y * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
+	end
+	
+	imgui.SetCursorPosY(imgui.GetCursorPosY() - 15 * scale)
+	local hungerCountMax = 3
+	for i = 1, hungerCountMax, 1 do
+		if i ~= 1 then imgui.SameLine(0,0) imgui.Dummy(-3 * scale ,0) imgui.SameLine(0,0) end
+		local sprite = GetUISprite(5 + CalcSpriteOffset(1.0 - character.hunger, hungerCountMax, i), 5)
+		imgui.Image(sprite:ToImguiId(), sprite:GetSize().x * scale, sprite:GetSize().y * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
+	end
+	
+
+	imgui.End()
+end
 function Game:DrawUI()
 	if World.playerCharacter then
-		self:DrawStats(World.playerCharacter)
+		self:DrawHealthAndHungerUI(World.playerCharacter)
 	end
 	if self.currentDialog then
 		self.currentDialog:Draw()
