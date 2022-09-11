@@ -43,10 +43,10 @@ void GridCollider::Update() {
         LogError("no Grid with gridDrawer");
         return;
     }
-    if (lastModificationsCount == grid->GetModificationsCount()) {
+    if (lastModificationsCount == grid->GetTypeModificationsCount()) {
         return;
     }
-    lastModificationsCount = grid->GetModificationsCount();
+    lastModificationsCount = grid->GetTypeModificationsCount();
     auto gridSystem = GridSystem::Get();
 
 
@@ -178,25 +178,37 @@ void Grid::OnEnable() {
     ASSERT(thisShared);
     GridSystem::Get()->grids.push_back(thisShared);
 
-    cellsLocalMatrices.clear();
-    cellsLocalMatrices.resize(sizeX*sizeY, Matrix4::Identity());
 
     if (!isInited) {
-        cells.reserve(sizeX * sizeY);
-        for (int x = 0; x < sizeX; x++) {
-            for (int y = 0; y < sizeY; y++) {
-                auto& cell = cells.emplace_back();
-                cell.pos.x = x;
-                cell.pos.y = y;
-                cell.type = (int)GridCellType::NONE;
-            }
-        }
+        SetSize(sizeX, sizeY);
     }
     else {
         ASSERT(cells.size() == sizeX * sizeY);
+        ASSERT(cellsLocalMatrices.size() == sizeX * sizeY);
     }
     isInited = true;
 }
+
+void Grid::SetSize(int sizeX, int sizeY) {
+    this->sizeX = sizeX;
+    this->sizeY = sizeY;
+    cells.clear();
+    //TODO resize + [] instead of emplace_back
+    cells.reserve(sizeX * sizeY);
+    for (int x = 0; x < sizeX; x++) {
+        for (int y = 0; y < sizeY; y++) {
+            auto& cell = cells.emplace_back();
+            cell.pos.x = x;
+            cell.pos.y = y;
+            cell.type = (int)GridCellType::NONE;
+        }
+    }
+    cells.shrink_to_fit();
+
+    cellsLocalMatrices.clear();
+    cellsLocalMatrices.resize(sizeX * sizeY, Matrix4::Identity());
+}
+
 void Grid::OnDisable() {
     auto& grids = GridSystem::Get()->grids;
     grids.erase(eastl::find_if(grids.begin(), grids.end(), [this](auto x) { return x.get() == this; }));
@@ -333,6 +345,10 @@ GridCell Grid::GetCell(Vector2Int pos) const {
 
 void Grid::SetCell(const GridCell& cell) {
     if (cell.pos.x >= 0 && cell.pos.x < sizeX && cell.pos.y >= 0 && cell.pos.y < sizeY) {
+        const auto& prevCell = cells[cell.pos.x * sizeY + cell.pos.y];
+        if (prevCell.type != cell.type) {
+            typeModificationsCount++;
+        }
         cells[cell.pos.x * sizeY + cell.pos.y] = cell;
         modificationsCount++;
     }
@@ -451,7 +467,7 @@ void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
 
         c4::csubstr cellsBase64Substr(cellsBase64.c_str(), cellsBase64.size());
 
-        grid.cells.resize(grid.sizeX * grid.sizeY);
+        grid.SetSize(grid.sizeX, grid.sizeY);
 
         c4::blob blob(grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
 
@@ -464,10 +480,12 @@ void Grid::LoadFrom(const Grid& otherGrid) {
     OnDisable();
     
     this->cells = otherGrid.cells;
+    this->cellsLocalMatrices = otherGrid.cellsLocalMatrices;
     this->sizeX = otherGrid.sizeX;
     this->sizeY = otherGrid.sizeY;
     this->isInited = otherGrid.isInited;
     this->modificationsCount++;
+    this->typeModificationsCount++;
 
     OnEnable();
 }

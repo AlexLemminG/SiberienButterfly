@@ -148,14 +148,20 @@ public:
     int GetModificationsCount()const {
         return modificationsCount;
     }
+    int GetTypeModificationsCount()const {
+        return typeModificationsCount;
+    }
     bool FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType) const;
 
     static void SerializeGrid(SerializationContext& context, const Grid& grid);
     static void DeserializeGrid(const SerializationContext& context, Grid& grid);
 
+    void SetSize(int sizeX, int sizeY);
+
     bool isInited = false;
 private:
     int modificationsCount = 0;
+    int typeModificationsCount = 0;
 
     REFLECT_COMPONENT_BEGIN(Grid);
     REFLECT_METHOD(GetClosestIntPos);
@@ -164,6 +170,7 @@ private:
     REFLECT_METHOD(SetCellLocalMatrix);
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
+    REFLECT_METHOD(SetSize);
     REFLECT_METHOD(FindNearestPosWithType);
     REFLECT_VAR(sizeX);
     REFLECT_VAR(sizeY);

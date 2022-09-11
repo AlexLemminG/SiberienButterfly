@@ -6,4 +6,4 @@ GameObject:
 Transform: ~
 LuaComponent:
   luaObj:
-    scriptName: Game
+    scriptName: GameHandler

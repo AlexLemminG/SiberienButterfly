@@ -3,34 +3,24 @@ local GameConsts = require("GameConsts")
 local Utils      = require("Utils")
 local CellAnimations = require("CellAnimations")
 local Game = {
+	scene = nil,
 	playerGO = nil,
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 20,--TODO sync with c++ grid
+	gridSizeX = 20,
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0
 }
-local Component = require("Component")
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
 local Actions = require("Actions")
 local CharacterCommandFactory = require("CharacterCommandFactory")
 
--- require("lldebugger").start()
-
-setmetatable(Game, Component)
-Game.__index = Game
-
-function Game:new(o)
-    o = Component:new(o)
-    setmetatable(o, self)
-    return o
-end
-
-
 function Game:GenerateWorldGrid()
+	World.items:SetSize(self.gridSizeX, self.gridSizeY)
+	World.ground:SetSize(self.gridSizeX, self.gridSizeY)
 	for x = 0, self.gridSizeX-1, 1 do
 		for y = 0, self.gridSizeY-1, 1 do
 			local height = math.random(10) / 40
@@ -102,7 +92,7 @@ function CreatePlayerGO()
 	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	local luaPlayerGO = Instantiate(characterPrefab)
-	luaPlayerGO:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+	luaPlayerGO:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
 	luaPlayerGO.tag = "player"
 	-- local pointLight = luaPlayerGO:AddComponent("PointLight")
 	local playerScript = luaPlayerGO:AddComponent("LuaComponent")
@@ -120,14 +110,14 @@ function CreateNpcGO()
 	local character = Instantiate(characterPrefab)
 	local characterControllerScript = character:AddComponent("LuaComponent")
 	characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
-	character:GetComponent("Transform"):SetPosition(vector(10.0,0.0,10.0))
+	character:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
 
 	return character
 end
 --TODO Game as not component but just as a module ?
 function Game:OnEnable()
-	World:Init()
 	math.randomseed(42)
+	World:Init()
 	if not Game.isInited then
 		self:GenerateWorldGrid()
 		Game.isInited = true
@@ -141,12 +131,12 @@ function Game:OnEnable()
 	Game.Cleanup()
 
 	local luaPlayerGO = CreatePlayerGO()
-	self:gameObject():GetScene():AddGameObject(luaPlayerGO)
+	self.scene:AddGameObject(luaPlayerGO)
 
 	local numNPC = 9
 	for i = 1, numNPC, 1 do
 		local character = CreateNpcGO()
-		self:gameObject():GetScene():AddGameObject(character)
+		self.scene:AddGameObject(character)
 	end
 end
 
@@ -154,6 +144,7 @@ function Game.Cleanup()
 	for i = #World.charactersIncludingDead, 1, -1 do
 		SceneManager.GetCurrentScene():RemoveGameObject(World.charactersIncludingDead[i]:gameObject())
 	end
+	Game.isInited = false
 	assert(World.playerCharacter == nil, "Player is not removed while cleaning up")
 	assert(#World.charactersIncludingDead == 0, "Not all characters are removed while cleaning up")
 	assert(#World.characters == 0, "Not all characters are removed while cleaning up")
@@ -202,6 +193,7 @@ function Game.LoadSave(save) : boolean
 	if World.playerCharacter == nil then
 		LogWarning("Player is not created from save")
 	end
+	
 	return true
 end
 
@@ -686,6 +678,12 @@ function Game:Update()
 		local loaded = ButterflyGame:LoadFromDisk("Save")
 	elseif input:GetKeyDown("9") then
 		ButterflyGame:SaveToDisk("Save")
+	end
+	if input:GetKeyDown("8") then
+		ButterflyGame:SaveToDisk("Save")
+		local loaded = ButterflyGame:LoadFromDisk("Save")
+		ButterflyGame:SaveToDisk("Save")
+		local loaded = ButterflyGame:LoadFromDisk("Save")
 	end
 end
 
