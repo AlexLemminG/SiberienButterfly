@@ -5,6 +5,7 @@
 #include "SEngine/Serialization.h"
 #include "SEngine/Component.h"
 #include "SEngine/System.h"
+#include "SEngine/Common.h"
 
 
 REGISTER_GAME_SYSTEM(Sys);
