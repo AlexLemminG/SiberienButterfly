@@ -47,7 +47,7 @@ end
 
 function CharacterCommandFactory.EatSomething() : CharacterCommand
     local eatRules = {}
-    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.Bread_Any, CellType.Any)) do
+    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.Eatable_Any, CellType.Any)) do
         if value.newCharType == CellType.None then
             table.insert(eatRules, value)
         end

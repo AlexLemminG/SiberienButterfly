@@ -8,6 +8,7 @@
 #include "SEngine/GameEvents.h"
 #include "SEngine/Vector.h"
 
+class Grid;
 enum class GridCellType : int {
     ZERO,
     NONE,
@@ -115,13 +116,27 @@ class GridCell {
     REFLECT_VAR(float4);
     REFLECT_END();
 };
+
+
+struct GridCellIterator {
+    using CheckFunc = bool(const GridCell&);
+    GridCellIterator() {}
+    GridCellIterator(CheckFunc* checkFunc, Grid* grid) :checkFunc(checkFunc), grid(grid) {}
+
+    CheckFunc* checkFunc = nullptr;
+    Vector2Int prevCell = Vector2Int(-1, 0);
+    Grid* grid = nullptr;
+    bool GetNextCell(GridCell& outCell);
+    REFLECT_BEGIN(GridCellIterator);
+    REFLECT_METHOD(GetNextCell);
+    REFLECT_END();
+};
 class GridSettings : public Object {
    public:
     eastl::shared_ptr<FullMeshAsset> mesh;
-    eastl::vector<GridCellDesc> cellDescs;
+    eastl::unordered_map<GridCellType, GridCellDesc> cellDescs;
     REFLECT_BEGIN(GridSettings);
     REFLECT_VAR(mesh);
-    REFLECT_VAR(cellDescs);
     REFLECT_END();
 };
 class Grid : public Component {
@@ -130,17 +145,28 @@ public:
     virtual void OnDisable() override;
 
     GridCell GetCell(Vector2Int pos) const;
+    const GridCell& GetCellFast(Vector2Int pos) const {
+        return cells[pos.x * sizeY + pos.y];
+    }
     void GetCellOut(GridCell& outCell, Vector2Int pos) const;
     void SetCell(const GridCell& cell);
     void SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix);
 
     Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
     Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
+    Vector3 GetCellWorldCenterFast(const Vector2Int& cellPos) const {
+        return GetCellWorldCenter(GetCellFast(cellPos));
+    }
+    Vector3 GetCellWorldCenter(const GridCell& cell) const {
+        return Vector3{ float(cell.pos.x), cell.z, float(cell.pos.y) };
+    }
 
     void LoadFrom(const Grid& otherGrid);
 
     eastl::vector<GridCell> cells;
     eastl::vector<Matrix4> cellsLocalMatrices;
+
+    GridCellIterator GetAnimatedCellsIterator();
 
     int sizeX = 20;
     int sizeY = 20;
@@ -165,12 +191,13 @@ private:
 
     REFLECT_COMPONENT_BEGIN(Grid);
     REFLECT_METHOD(GetClosestIntPos);
-    REFLECT_METHOD(GetCellWorldCenter);
+    REFLECT_METHOD_EXPLICIT("GetCellWorldCenter", static_cast<Vector3(Grid::*)(const Vector2Int&) const>(&Grid::GetCellWorldCenter));
     REFLECT_METHOD(GetCell);
     REFLECT_METHOD(SetCellLocalMatrix);
     REFLECT_METHOD(GetCellOut);
     REFLECT_METHOD(SetCell);
     REFLECT_METHOD(SetSize);
+    REFLECT_METHOD(GetAnimatedCellsIterator);
     REFLECT_METHOD(FindNearestPosWithType);
     REFLECT_VAR(sizeX);
     REFLECT_VAR(sizeY);
@@ -212,10 +239,14 @@ class GridDrawer : public Component {
     void OnDisable() override;
     void Update() override;
 
+    void OnValidate() override;
+
+    bool useFrustumCulling = false;
+
    private:
     eastl::shared_ptr<GameObject> gridCellPrefab;
-    eastl::vector<GridCellMeshRenderer> pooledRenderers;
-    eastl::vector<InstancedMeshRenderer*> instancedMeshRenderers;
+    //eastl::vector<GridCellMeshRenderer> pooledRenderers;
+    eastl::unordered_map<GridCellType, InstancedMeshRenderer*> instancedMeshRenderers;
 
     int lastModificationsCount = -1;
 

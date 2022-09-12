@@ -25,4 +25,4 @@ Grid$Grid: ~
 GridCollider: ~
 RigidBody:
   isStatic: 1
-  isKinematic: 1
+  isKinematic: false

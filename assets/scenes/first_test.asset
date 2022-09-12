@@ -111,4 +111,4 @@ Transform$DirLightTransform:
     - 0.99999994
     - 0.99999994
 DirLight$0:
-  drawShadows: 1
+  drawShadows: false

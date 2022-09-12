@@ -6,6 +6,7 @@
 #include "SEngine/Physics.h"
 #include "btBulletCollisionCommon.h"
 #include "btBulletDynamicsCommon.h"
+#include "SEngine/Common.h"
 
 
 class TopDownCameraRig : public Component {
@@ -44,6 +45,7 @@ void TopDownCameraRig::OnEnable()
 }
 
 void TopDownCameraRig::Update() {
+	OPTICK_EVENT();
 	auto target = GameObject::FindWithTag(targetTag);
 	if (target != nullptr) {
 		auto trans = gameObject()->transform();

@@ -8,8 +8,8 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 20,
-	gridSizeY = 20,
+	gridSizeX = 60,
+	gridSizeY = 60,
 	newGrowTreePercent = 0.0
 }
 local CellType = require("CellType")
@@ -279,28 +279,20 @@ end
 function Game:AnimateCells(dt)
 	local items = World.items
 	local v = Vector2Int:new()
-	local dt = Time.deltaTime()
 	local cell = GridCell:new()
-	for x = 0, self.gridSizeX-1, 1 do
-		for y = 0, self.gridSizeY-1, 1 do
-			v.x = x
-			v.y = y
-			items:GetCellOut(cell, v)
-			if cell.animType == CellAnimType.None then
-				continue
-			end
-			cell.animT = cell.animT + dt
+	local iterator = items:GetAnimatedCellsIterator()
+	while iterator:GetNextCell(cell) do
+		cell.animT = cell.animT + dt
 
-			Game:ApplyAnimation(items, cell)
+		self:ApplyAnimation(items, cell)
 
-			if cell.animT >= cell.animStopT then
-				local animType = cell.animType
-				cell.animType = CellAnimType.None
-				self:HandleAnimationFinished(cell, animType)
-				Game:ApplyAnimation(items, cell)
-			end
-			items:SetCell(cell)
+		if cell.animT >= cell.animStopT then
+			local animType = cell.animType
+			cell.animType = CellAnimType.None
+			self:HandleAnimationFinished(cell, animType)
+			self:ApplyAnimation(items, cell)
 		end
+		items:SetCell(cell)
 	end
 end
 
@@ -482,7 +474,7 @@ function Game:DrawHealthAndHungerUI(character : Character)
 			end
 		end
 		local sprite = GetUISprite(2 + offset, 5)
-		imgui.Image(sprite:ToImguiId(), sprite:GetSize().x * scale, sprite:GetSize().y * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
+		imgui.Image(sprite:ToImguiId(), sprite:GetWidth() * scale, sprite:GetHeight() * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
 	end
 	
 	imgui.SetCursorPosY(imgui.GetCursorPosY() - 15 * scale)
@@ -490,7 +482,7 @@ function Game:DrawHealthAndHungerUI(character : Character)
 	for i = 1, hungerCountMax, 1 do
 		if i ~= 1 then imgui.SameLine(0,0) imgui.Dummy(-3 * scale ,0) imgui.SameLine(0,0) end
 		local sprite = GetUISprite(5 + CalcSpriteOffset(1.0 - character.hunger, hungerCountMax, i), 5)
-		imgui.Image(sprite:ToImguiId(), sprite:GetSize().x * scale, sprite:GetSize().y * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
+		imgui.Image(sprite:ToImguiId(), sprite:GetWidth() * scale, sprite:GetHeight() * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
 	end
 	
 

@@ -124,6 +124,11 @@ function Actions:IsSubtype(childType : integer, parentType : integer) : boolean
 			return true
 		end
 	end
+	if CellType.Eatable_Any == parentType then
+		if childType >= CellType.Bread_1 and childType <= CellType.Bread_1 + GameConsts.maxBreadStackSize - 1 or childType == CellType.BushWithBerries then
+			return true
+		end
+	end
 	if CellType.Stove_Any == parentType then
 		if childType == CellType.Stove or childType == CellType.StoveWithWood or childType == CellType.StoveWithWoodFired then
 			return true
@@ -284,7 +289,7 @@ function Actions:RegisterCombineRule(charType, itemType, newCharType, newItemTyp
 end
 
 function Actions:RegisterCombineRuleForGround(charType, groundType, newCharType, newGroundType, callback)
-	return self:RegisterCombineRuleForItemAndGround(charType, CellType.Any, groundType, newCharType, CellType.Any,
+	return self:RegisterCombineRuleForItemAndGround(charType, CellType.None, groundType, newCharType, CellType.None,
 		newGroundType
 		, callback)
 end
@@ -345,18 +350,9 @@ function RuleCallback_ItemAppear(character, intPos)
 	end
 end
 
-function RuleCallback_EatBread(character, intPos)
-	local cell = World.items:GetCell(intPos)
-	if cell.type >= CellType.Bread_1 and cell.type <= CellType.Bread_1 - 1 + GameConsts.maxBreadStackSize then
-		if cell.type == CellType.Bread_1 then
-			cell.type = CellType.None
-		else
-			cell.type = cell.type - 1
-		end
-		-- TODO dec character hunger
-		character.hunger = character.hunger - 0.25
-		World.items:SetCell(cell)
-	end
+function RuleCallback_Eat(character, intPos)
+	character.hunger = character.hunger - 0.25
+	RuleCallback_ItemAppear(character, intPos)
 end
 
 function Actions:RegisterAllCombineRules()
@@ -384,17 +380,22 @@ function Actions:RegisterAllCombineRules()
 		end
 	end
 
+	local RegisterEatRule = function (charType, itemType, newCharType, newItemType)
+		local rule = self:RegisterCombineRule(charType, itemType, newCharType,
+			newItemType, RuleCallback_Eat)
+		rule.isEat = true --TODO not like that (use tags or something)
+		rule.preCondition = function(character) return character.hunger > 0.25 end
+	end
 	-- eat bread
 	for i = 1, GameConsts.maxBreadStackSize, 1 do
 		local newBreadType = CellType.Bread_1 + i - 2
 		if i == 1 then
 			newBreadType = CellType.None
 		end
-		local rule = self:RegisterCombineRule_Custom(CellType.None, CellType.Bread_1 - 1 + i, CellType.Any, CellType.None,
-			newBreadType, CellType.Any, RuleCallback_EatBread)
-		rule.isEat = true --TODO not like that (use tags or something)
-		rule.preCondition = function(character) return character.hunger > 0.25 end
+		RegisterEatRule(CellType.None, CellType.Bread_1 - 1 + i, CellType.None, newBreadType)
 	end
+	RegisterEatRule(CellType.None, CellType.BushWithBerries, CellType.None, CellType.Bush)
+
 
 	for CurrentCellTypeName, CurrentCellType in pairs(CellType) do
 		--TODO less hacky with fence
@@ -461,8 +462,7 @@ function Actions:RegisterAllCombineRules()
 	end
 
 	self:RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
-	self:RegisterCombineRuleForItemAndGround(CellType.None, CellType.None, CellType.Ground, CellType.None, CellType.None,
-		CellType.GroundPrepared)
+	self:RegisterCombineRuleForGround(CellType.None, CellType.Ground, CellType.None,	CellType.GroundPrepared)
 
 	-- plant wheat
 	self:RegisterCombineRuleForItemAndGround(CellType.WheatCollected_1, CellType.None, CellType.GroundPrepared,
@@ -511,7 +511,7 @@ function Actions:RegisterAllCombineRules()
 	self:RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
 	self:RegisterCombineRule(CellType.None, CellType.TreeSprout, CellType.None, CellType.None)
 
-	self:RegisterCombineRuleForItemAndGround(CellType.Wood, CellType.None, CellType.Water, CellType.None, CellType.None,
+	self:RegisterCombineRuleForGround(CellType.Wood, CellType.Water, CellType.None,
 		CellType.WoodenBridge)
 end
 

@@ -48,12 +48,15 @@ SetCellInfo(CellType.None, { isUtil = true } )
 SetCellInfo(CellType.Any, { isUtil = true } )
 SetCellInfo(CellType.WheatCollected_Any, { isUtil = true } )
 SetCellInfo(CellType.WheatCollected_AnyNotFull, { isUtil = true } )
+SetCellInfo(CellType.Eatable_Any, { isUtil = true } )
 
 
 SetCellInfoForAllBase(CellType.Stove_Any, { collision = SphereCollision(0.2, vector(0,0.2,0)) } )
 SetCellInfo(CellType.Stove_Any, { isUtil = true } )
 
 SetCellInfo(CellType.Tree, { collision = CapsuleCollision(0.15, 1.0, vector(0,0.5,0)) } )
+SetCellInfo(CellType.Bush, { collision = CapsuleCollision(0.15, 1.0, vector(0,0.5,0)) } )
+SetCellInfo(CellType.BushWithBerries, { collision = CapsuleCollision(0.15, 1.0, vector(0,0.5,0)) } )
 SetCellInfo(CellType.Stone, { collision = smallObjectCollision } )
 SetCellInfo(CellType.Wood, { collision = bigObjectCollision } )
 SetCellInfo(CellType.FlintStone, { collision = smallObjectCollision } )

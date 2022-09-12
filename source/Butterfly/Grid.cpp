@@ -21,7 +21,38 @@ DECLARE_TEXT_ASSET(Grid);
 
 REFLECT_DEFINE_COMPONENT_BEGIN(GridDrawer);
 REFLECT_VAR(gridCellPrefab);
+REFLECT_VAR(useFrustumCulling);
 REFLECT_DEFINE_END(GridDrawer);
+
+bool GridCellIterator::GetNextCell(GridCell& outCell) {
+    ASSERT(grid);
+    ASSERT(checkFunc);
+    GridCell cell;
+    for (int x = prevCell.x + 1; x < grid->sizeX; x++) {
+        cell = grid->GetCellFast(Vector2Int(x, prevCell.y));
+        if (checkFunc(cell)) {
+            outCell = cell;
+            prevCell = Vector2Int(x, prevCell.y);
+            return true;
+        }
+    }
+    for (int y = prevCell.y + 1; y < grid->sizeY; y++) {
+        for (int x = 0; x < grid->sizeX; x++) {
+            cell = grid->GetCellFast(Vector2Int(x, y));
+            if (checkFunc(cell)) {
+                outCell = cell;
+                prevCell = Vector2Int(x, y);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+GridCellIterator Grid::GetAnimatedCellsIterator() {
+    return GridCellIterator([](const GridCell& cell) { return cell.animType > (int)GridCellAnimType::NONE; }, this);
+}
+
 
 eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
     for (auto grid : grids) {
@@ -38,6 +69,7 @@ void GridCollider::OnDisable() {
 
 }
 void GridCollider::Update() {
+    OPTICK_EVENT();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
         LogError("no Grid with gridDrawer");
@@ -87,19 +119,20 @@ void GridDrawer::OnEnable() {
 }
 
 void GridDrawer::OnDisable() {
-    for (auto& r : pooledRenderers) {
-        r.OnDisable();
-    }
-    for (auto* ir : instancedMeshRenderers) {
-        ir->Term();
-        delete ir;
+    //for (auto& r : pooledRenderers) {
+    //    r.OnDisable();
+    //}
+    for (auto& ir : instancedMeshRenderers) {
+        ir.second->Term();
+        delete ir.second;
     }
     instancedMeshRenderers.clear();
-    pooledRenderers.clear();
+    //pooledRenderers.clear();
 }
 
 // TODO on before camera render actually
 void GridDrawer::Update() {
+    OPTICK_EVENT();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
         LogError("no Grid with gridDrawer");
@@ -111,60 +144,54 @@ void GridDrawer::Update() {
     lastModificationsCount = grid->GetModificationsCount();
     auto gridSystem = GridSystem::Get();
     auto prefabRenderer = gridCellPrefab->GetComponent<MeshRenderer>();
-    while (pooledRenderers.size() < grid->cells.size()) {
-        pooledRenderers.emplace_back(prefabRenderer->mesh, prefabRenderer->material);
-    }
+    //while (pooledRenderers.size() < grid->cells.size()) {
+    //    pooledRenderers.emplace_back(prefabRenderer->mesh, prefabRenderer->material);
+    //}
     // TODO remove extra
 
-    for (auto* ir : instancedMeshRenderers) {
-        ir->instances.clear();
+    for (auto& ir : instancedMeshRenderers) {
+        ir.second->instances.resize(0);
     }
 
     for (int i = 0; i < grid->cells.size(); i++) {
         const auto& cell = grid->cells[i];
-        auto& renderer = pooledRenderers[i];
-
-        const auto& name = gridSystem->GetDesc((GridCellType)cell.type).meshName;
-
-        if (renderer.mesh != nullptr) {
-            renderer.OnDisable();
-        }
-        Matrix4 transformMatrix = Matrix4::Transform(grid->GetCellWorldCenter(cell.pos), Matrix3::Identity(), Vector3_one) * grid->cellsLocalMatrices[i];
-        renderer.mesh = nullptr;
-        renderer.m_transform->SetMatrix(transformMatrix);
-        renderer.mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
-        if (renderer.mesh) {
-            //renderer.OnEnable();
-        }
 
         InstancedMeshRenderer* ir = nullptr;
-        for (auto* it : instancedMeshRenderers) {
-            if (it->mesh == renderer.mesh) {
-                ir = it;
-                break;
-            }
+        auto it = instancedMeshRenderers.find((GridCellType)cell.type);
+        if (it != instancedMeshRenderers.end()) {
+            ir = it->second;
         }
-        if (ir == nullptr) {
+        else {
             ir = new InstancedMeshRenderer();
-            ir->mesh = renderer.mesh;
-            ir->material = renderer.material;
+            ir->mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
+            ir->material = prefabRenderer->material;
             ir->Init(gameObject()->GetScene());
-            this->instancedMeshRenderers.push_back(ir);
+            ir->useFrustumCulling = this->useFrustumCulling;
+            this->instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
         }
-        ir->instances.push_back({ transformMatrix });
+        auto& instance = ir->instances.emplace_back(grid->cellsLocalMatrices[i]);
+        instance.transform.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
+        //auto cellPos = grid->GetCellWorldCenter(cell);
+        //instance.transform.GetColumn(3).x += cellPos.x;
+        //instance.transform.GetColumn(3).y += cellPos.y;
+        //instance.transform.GetColumn(3).z += cellPos.z;
+    }
+}
+void GridDrawer::OnValidate() {
+    for (auto& ir : this->instancedMeshRenderers) {
+        ir.second->useFrustumCulling = this->useFrustumCulling;
     }
 }
 
 const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
-    for (const auto& desc : settings->cellDescs) {
-        if (desc.type == type) {
-            return desc;
-        }
+    auto it = settings->cellDescs.find(type);
+    if (it != settings->cellDescs.end()) {
+        return it->second;
     }
     //TODO adding desc in a const getter + returning everything by ref is a really really bad idea
     //but I am a comment and not a cop so go on
-    settings->cellDescs.push_back(GridCellDesc{ type, "UnknownType", defaultMesh });
-    return settings->cellDescs.back();
+    settings->cellDescs.emplace(type, GridCellDesc{ type, "UnknownType", defaultMesh });
+    return GetDesc(type);
 }
 
 void Grid::OnEnable() {
@@ -220,6 +247,7 @@ bool GridSystem::Init() {
     LuaReflect::RegisterShared<GridSystem>(L);
     LuaReflect::RegisterShared<Grid>(L);
     LuaReflect::Register<GridCell>(L);
+    LuaReflect::Register<GridCellIterator>(L);
 
     settings = AssetDatabase::Get()->Load<GridSettings>("grid.asset");  // TODO make visible from inspector
 
@@ -244,6 +272,7 @@ void GridSystem::Term() {
             LuaReflect::UnregisterShared<GridSystem>(L);
             LuaReflect::UnregisterShared<Grid>(L);
             LuaReflect::Unregister<GridCell>(L);
+            LuaReflect::Unregister<GridCellIterator>(L);
         }
     }
 
@@ -319,7 +348,7 @@ void GridSystem::LoadCellTypes() {
 
         auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc };
 
-        this->settings->cellDescs.push_back(desc);
+        this->settings->cellDescs.emplace(desc.type, desc);
     }
     lua_pop(L, 2);
 }
@@ -373,7 +402,7 @@ void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
 template<class CheckFunc>
 static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, CheckFunc checkFunc)
 {
-
+    OPTICK_EVENT();
     if (checkFunc(originPos)) {
         outPos = originPos;
         return true;

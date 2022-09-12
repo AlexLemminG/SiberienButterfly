@@ -34,7 +34,8 @@ ShadowSettings:
   near_far: 100
   near: 1
   pcfOffset: 0.5
-TimeSettings: {}
+TimeSettings:
+  timeScale: 1
 RenderSettings:
   test: 6
   backend: 2
