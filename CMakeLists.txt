@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
+#TODO lto
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;DebugWithReleaseLibs;RelWithDebInfo;Retail")
 
 set(CMAKE_MESSAGE_LOG_LEVEL "NOTICE")

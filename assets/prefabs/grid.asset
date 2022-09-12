@@ -21,6 +21,7 @@ Transform:
     - 1
 GridDrawer:
   gridCellPrefab: prefabs/gridCell.asset
+  useFrustumCulling: true
 Grid$Grid: ~
 GridCollider: ~
 RigidBody:
