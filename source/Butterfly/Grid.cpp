@@ -217,9 +217,9 @@ void Grid::OnDisable() {
 bool GridSystem::Init() {
     auto L = LuaSystem::Get()->L;
 
-    Luna::RegisterShared<GridSystem>(L);
-    Luna::RegisterShared<Grid>(L);
-    Luna::Register<GridCell>(L);
+    LuaReflect::RegisterShared<GridSystem>(L);
+    LuaReflect::RegisterShared<Grid>(L);
+    LuaReflect::Register<GridCell>(L);
 
     settings = AssetDatabase::Get()->Load<GridSettings>("grid.asset");  // TODO make visible from inspector
 
@@ -241,9 +241,9 @@ void GridSystem::Term() {
         luaSystem->onAfterScriptsReloading.Unsubscribe(this->onAfterLuaReloaded);
         auto L = LuaSystem::Get()->L;
         if (L) {
-            Luna::UnregisterShared<GridSystem>(L);
-            Luna::UnregisterShared<Grid>(L);
-            Luna::Unregister<GridCell>(L);
+            LuaReflect::UnregisterShared<GridSystem>(L);
+            LuaReflect::UnregisterShared<Grid>(L);
+            LuaReflect::Unregister<GridCell>(L);
         }
     }
 
@@ -266,9 +266,9 @@ void GridSystem::LoadCellTypes() {
         return;
     }
     SerializationContext contextCellType{};
-    DeserializeFromLuaToContext(L, -1, contextCellType);
+    LuaReflect::DeserializeFromLuaToContext(L, -1, contextCellType);
     SerializationContext _contextCellTypeDesc{};
-    DeserializeFromLuaToContext(L, -2, _contextCellTypeDesc);
+    LuaReflect::DeserializeFromLuaToContext(L, -2, _contextCellTypeDesc);
     this->settings->cellDescs.clear();
     const SerializationContext& contextCellTypeDesc = _contextCellTypeDesc;
 

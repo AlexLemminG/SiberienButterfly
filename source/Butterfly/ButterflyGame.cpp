@@ -12,7 +12,7 @@ static GameEventHandle onBeforeReloadingHandle;
 static GameEventHandle onAfterReloadingHandle;
 bool ButterflyGame::Init() {
 	//TODO auto register
-	Luna::RegisterShared<SaveData>(LuaSystem::Get()->L);
+	LuaReflect::RegisterShared<SaveData>(LuaSystem::Get()->L);
 
 	onBeforeReloadingHandle = LuaSystem::Get()->onBeforeScriptsReloading.Subscribe([this]() {SaveToDisk("LuaReloadingSave"); });
 	onAfterReloadingHandle = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() {LoadFromDisk("LuaReloadingSave"); });
@@ -44,6 +44,7 @@ bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 		lua_pop(L, 1);//module
 		return false;
 	}
+	//TODO create LuaReflect::CallLuaFunction method
 	lua_getfield(L, -1, "CreateSave");
 	Vector2Int f;
 	if (!lua_isnil(L, -1)) {
@@ -60,7 +61,7 @@ bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 			return true;
 		}
 		else {
-			DeserializeFromLuaToContext(L, -1, save->luaData);
+			LuaReflect::DeserializeFromLuaToContext(L, -1, save->luaData);
 			lua_pop(L, 2);//module+return result
 		}
 	}
@@ -104,7 +105,7 @@ bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 	}
 
 	lua_newtable(L);
-	MergeToLua(L, save->luaData, -1, "");
+	LuaReflect::MergeToLua(L, save->luaData, -1, "");
 	int callResult;
 	{
 		OPTICK_EVENT("Lua Game:LoadSave");
