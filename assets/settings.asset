@@ -37,11 +37,4 @@ ShadowSettings:
 TimeSettings:
   timeScale: 1
 RenderSettings:
-  test: 6
   backend: 2
-  vsync: 0
-  debug: true
-  msaa: 0
-  frustumCulling: 1
-  bgfxDebugStats: 0
-  maxAnisotropy: 1

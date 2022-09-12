@@ -8,8 +8,8 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 60,
-	gridSizeY = 60,
+	gridSizeX = 20,
+	gridSizeY = 20,
 	newGrowTreePercent = 0.0
 }
 local CellType = require("CellType")
