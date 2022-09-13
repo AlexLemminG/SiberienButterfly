@@ -7,6 +7,8 @@ local GameConsts = {
     treeSproutToTreeGrowthTime = 60.0,
     wheatGrowthTime0 = 30.0,
     wheatGrowthTime1 = 30.0,
+    bushBerriesGrowthTime = 30.0,
+    dayDurationSeconds = 60.0
 }
 
 return GameConsts

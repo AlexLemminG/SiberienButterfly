@@ -7,7 +7,8 @@ local AnimTypeInv = {
 	"ItemAppearWithoutXZScale",
 	"TreeSproutGrowing",
 	"ItemAppearFromGround",
-	"ItemAppearFromGroundWithoutXZScale"
+	"ItemAppearFromGroundWithoutXZScale",
+	"BushBerriesGrowing"
 }
 
 return AnimTypeInv

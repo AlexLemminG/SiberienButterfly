@@ -8,9 +8,10 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 60,
-	gridSizeY = 60,
-	newGrowTreePercent = 0.0
+	gridSizeX = 20,
+	gridSizeY = 20,
+	newGrowTreePercent = 0.0,
+	dayTimePercent = 0.5
 }
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
@@ -18,25 +19,46 @@ local CellAnimType = require("CellAnimType")
 local Actions = require("Actions")
 local CharacterCommandFactory = require("CharacterCommandFactory")
 
+
+
 function Game:GenerateWorldGrid()
 	World.items:SetSize(self.gridSizeX, self.gridSizeY)
 	World.ground:SetSize(self.gridSizeX, self.gridSizeY)
+	
+	local probabilities = {}
+	probabilities[CellType.Wheat] = 1
+	probabilities[CellType.Tree] = 1
+	probabilities[CellType.Stone] = 1
+	probabilities[CellType.FlintStone] = 1
+	probabilities[CellType.BushWithBerries] = 1
+	probabilities[CellType.None] = 10
+
+	local probabilitiesSum = 0
+	for key, value in pairs(probabilities) do
+		probabilitiesSum = probabilitiesSum + value
+	end
+	function GetWeightedRandom(weights, weightsSum)
+		local r = math.random() * weightsSum
+		local w = 0
+		local lastKey = nil
+		for key, value in pairs(weights) do
+			w = w + value
+			if w > r then
+				return key
+			end
+			lastKey = key
+		end
+		return lastKey
+	end
+
 	for x = 0, self.gridSizeX-1, 1 do
 		for y = 0, self.gridSizeY-1, 1 do
 			local height = math.random(10) / 40
 			local cell = World.items:GetCell({x=x,y=y})
 			local rand1 = math.random(100) / 100.0
-			if rand1 > 0.9 then
-				cell.type = CellType.Wheat
-			elseif rand1 > 0.8 then
-				cell.type = CellType.Tree
-			elseif rand1 > 0.7 then
-				cell.type = CellType.Stone
-			elseif rand1 > 0.65 then
-				cell.type = CellType.FlintStone
-			else
-				cell.type = CellType.None
-			end
+
+			cell.type = GetWeightedRandom(probabilities, probabilitiesSum)
+			
 			cell.float4 = 0.0
 			cell.z = height
 			World.items:SetCell(cell)
@@ -114,8 +136,14 @@ function CreateNpcGO()
 
 	return character
 end
+
 --TODO Game as not component but just as a module ?
 function Game:OnEnable()
+	local coeffs = self.scene.sphericalHarmonics.coeffs
+	self.sh = SphericalHarmonics.new()
+	self.sh.coeffs = coeffs
+	self.scene.sphericalHarmonics = self.sh
+	
 	math.randomseed(42)
 	World:Init()
 	if not Game.isInited then
@@ -158,7 +186,7 @@ function Game.CreateSave()
 	for index, character in ipairs(World.charactersIncludingDead) do
 		table.insert(save.characters, character:SaveState())
 	end
-
+	save.dayTimePercent = Game.dayTimePercent
 	save.playerIndex = Utils.ArrayIndexOf(World.charactersIncludingDead, World.playerCharacter)
 
 	return save
@@ -193,6 +221,8 @@ function Game.LoadSave(save) : boolean
 	if World.playerCharacter == nil then
 		LogWarning("Player is not created from save")
 	end
+
+	Game.dayTimePercent = save.dayTimePercent or Game.dayTimePercent
 	
 	return true
 end
@@ -256,6 +286,9 @@ function Game:HandleAnimationFinished(cell, finishedAnimType)
 			CellAnimations.SetAppearFromGroundWithoutXZScale(cell)
 			cell.type = CellType.Wheat
 		end
+	elseif finishedAnimType == CellAnimType.BushBerriesGrowing then
+		CellAnimations.SetAppear(cell)
+		cell.type = CellType.BushWithBerries
 	elseif finishedAnimType == CellAnimType.TreeSproutGrowing then
 		cell.type = CellType.Tree
 		CellAnimations.SetAppearFromGround(cell)
@@ -272,6 +305,10 @@ function Game:HandleAnimationFinished(cell, finishedAnimType)
 			cell.animType = CellAnimType.WheatGrowing
 			cell.animT = 0.0
 			cell.animStopT = GameConsts.wheatGrowthTime1
+		elseif cell.type == CellType.Bush then
+			cell.animType = CellAnimType.BushBerriesGrowing
+			cell.animT = 0.0
+			cell.animStopT = GameConsts.bushBerriesGrowthTime
 		end
 	end
 end
@@ -345,6 +382,83 @@ function Game:GrowNewTrees(deltaTime : number)
 	end
 end
 
+function Game:UpdateDayTime(dt : float)
+	self.dayTimePercent = self.dayTimePercent + dt / GameConsts.dayDurationSeconds
+	if self.dayTimePercent > 1.0 then
+		self.dayTimePercent = self.dayTimePercent - 1.0
+	end
+
+	function LerpHarmonicsCoeffs(a, b, t)
+		--dunno better way to create new array of colors
+		local result = SphericalHarmonics.new().coeffs
+		for i = 1, 9, 1 do
+			result[i] = Color.Lerp(a[i], b[i], t)
+		end
+		return result
+	end
+
+	local dayHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$day")
+	local nightHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$night")
+	local night2Harmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$night2")
+	local morningHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$morning")
+	local eveningHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$evening")
+	local newCoeffs = {}
+	LerpHarmonicsCoeffs(dayHarmonics.coeffs, nightHarmonics.coeffs, self.dayTimePercent)
+	local morningTime = 6/24
+	local dayTime = 12/24
+	local eveningTime = 18/24
+	local nightTime = 21/24
+	local nightTime2 = 3/24
+	if self.dayTimePercent >= morningTime and self.dayTimePercent <= dayTime then
+		local t = Mathf.InverseLerp(morningTime, dayTime, self.dayTimePercent)
+		newCoeffs = LerpHarmonicsCoeffs(morningHarmonics.coeffs, dayHarmonics.coeffs, t)
+
+	elseif self.dayTimePercent >= dayTime and self.dayTimePercent <= eveningTime then
+		local t = Mathf.InverseLerp(dayTime, eveningTime, self.dayTimePercent)
+		newCoeffs = LerpHarmonicsCoeffs(dayHarmonics.coeffs, eveningHarmonics.coeffs, t)
+
+	elseif self.dayTimePercent >= eveningTime and self.dayTimePercent <= nightTime then
+		local t = Mathf.InverseLerp(eveningTime, nightTime, self.dayTimePercent)
+		newCoeffs = LerpHarmonicsCoeffs(eveningHarmonics.coeffs, nightHarmonics.coeffs, t)
+
+	elseif self.dayTimePercent >= nightTime2 and self.dayTimePercent <= morningTime then
+		local t = Mathf.InverseLerp(nightTime2, morningTime, self.dayTimePercent)
+		newCoeffs = LerpHarmonicsCoeffs(night2Harmonics.coeffs, morningHarmonics.coeffs, t)
+		
+	elseif self.dayTimePercent >= nightTime or self.dayTimePercent <= nightTime2 then
+		local t = 0
+		if self.dayTimePercent >= nightTime then
+			t = Mathf.InverseLerp(nightTime, 1 + nightTime2, self.dayTimePercent)
+		else
+			t = Mathf.InverseLerp(nightTime-1, nightTime2, self.dayTimePercent)
+		end
+		newCoeffs = LerpHarmonicsCoeffs(nightHarmonics.coeffs, night2Harmonics.coeffs, t)
+
+	else
+		LogWarning("Broken time")
+	end
+	self.sh.coeffs = newCoeffs
+
+	local light = self.scene:FindGameObjectByTag("DirLight")
+	if light then
+		local dirLight = light:GetComponent("DirLight")
+		dirLight.color = newCoeffs[1]
+	end
+	local camera = self.scene:FindGameObjectByTag("camera")
+	if camera then
+		local cameraCamera = camera:GetComponent("Camera")
+		--cameraCamera.clearColor = newCoeffs[1]
+	end
+
+	-- imgui.Begin("DayTime")
+	-- local hour = math.floor(self.dayTimePercent * 24)
+	-- local minute = math.floor((self.dayTimePercent*24 - hour) * 60)
+	-- if hour < 10 then hour = "0"..hour end
+	-- if minute < 10 then minute = "0"..minute end
+	-- imgui.TextUnformatted(""..hour..":"..minute)
+	-- imgui.End()
+end
+
 function Game:MainLoop()
 	local dt = Time.deltaTime()
 
@@ -364,6 +478,8 @@ function Game:MainLoop()
 			character:Die()
 		end
 	end
+	
+	self:UpdateDayTime(dt)
 end
 
 function Game:DrawStats(character : Character)
@@ -417,6 +533,12 @@ function Game:DrawWorldStats()
 	if #World.characters > 0 then
 		text = text..string.format("Avg Hunger: %.3f\nAvg Health: %.3f\n", avgHunger, avgHealth)
 	end
+	
+	local hour = math.floor(self.dayTimePercent * 24)
+	local minute = math.floor((self.dayTimePercent*24 - hour) * 60)
+	if hour < 10 then hour = "0"..hour end
+	if minute < 10 then minute = "0"..minute end
+	text = text.."Time: "..hour..":"..minute.."\n"
 	imgui.TextUnformatted(text)
 	imgui.End()
 end
