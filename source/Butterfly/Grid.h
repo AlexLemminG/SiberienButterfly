@@ -242,6 +242,7 @@ class GridDrawer : public Component {
     void OnValidate() override;
 
     bool useFrustumCulling = false;
+    bool castsShadows = true;
 
    private:
     eastl::shared_ptr<GameObject> gridCellPrefab;

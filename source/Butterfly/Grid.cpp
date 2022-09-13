@@ -22,6 +22,7 @@ DECLARE_TEXT_ASSET(Grid);
 REFLECT_DEFINE_COMPONENT_BEGIN(GridDrawer);
 REFLECT_VAR(gridCellPrefab);
 REFLECT_VAR(useFrustumCulling);
+REFLECT_VAR(castsShadows);
 REFLECT_DEFINE_END(GridDrawer);
 
 bool GridCellIterator::GetNextCell(GridCell& outCell) {
@@ -167,6 +168,7 @@ void GridDrawer::Update() {
             ir->material = prefabRenderer->material;
             ir->Init(gameObject()->GetScene());
             ir->useFrustumCulling = this->useFrustumCulling;
+            ir->castsShadows = this->castsShadows;
             this->instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
         }
         auto& instance = ir->instances.emplace_back(grid->cellsLocalMatrices[i]);
@@ -180,6 +182,7 @@ void GridDrawer::Update() {
 void GridDrawer::OnValidate() {
     for (auto& ir : this->instancedMeshRenderers) {
         ir.second->useFrustumCulling = this->useFrustumCulling;
+        ir.second->castsShadows = this->castsShadows;
     }
 }
 

@@ -1,5 +1,5 @@
 Scene:
-  sphericalHarmonics: engine\dayHarmonics.asset
+  sphericalHarmonics: $sh
   prefabInstances:
     - prefab: prefabs\grid.asset
       overrides:
@@ -51,39 +51,6 @@ Scene:
         MeshCollider:
           isConvex: 1
         MeshRenderer: {}
-    - prefab: prefabs\apple.asset
-      overrides:
-        Transform:
-          pos:
-            - -2.5
-            - 2.707
-            - -4.3402977
-          euler:
-            - 6.8586075e-07
-            - -0
-            - 0
-          scale:
-            - 0.9999832
-            - 0.99999523
-            - 0.99998546
-        SpotLight: {}
-        LuaComponent:
-          luaObject:
-            editor:
-              i: 13.844607
-            someInt: 1.8795909
-          luaObj:
-            scriptName: Apple
-            data:
-              editor:
-                i: 321.12622
-                str: abc
-                b: 1
-                inner:
-                  f: 0.69
-              someInt: 1.2174877
-              followSpeed: 1
-          script: Appled
     - prefab: prefabs\game.asset
       overrides: {}
   gameObjects:
@@ -111,4 +78,48 @@ Transform$DirLightTransform:
     - 0.99999994
     - 0.99999994
 DirLight$0:
-  drawShadows: false
+  drawShadows: true
+  intensity: 4
+  color:
+    r: 1
+    g: 0.9607843
+    b: 0.85490197
+    a: 1
+SphericalHarmonics$sh:
+  coeffs:
+    - r: 0.36940417
+      g: 0.4553028
+      b: 0.5405406
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0

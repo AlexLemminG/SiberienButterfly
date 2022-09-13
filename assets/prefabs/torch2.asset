@@ -23,5 +23,5 @@ PointLight:
     b: 1
     a: 1
   intensity: 595.6212
-  radius: 500
+  radius: 0
   innerRadius: 1.6752217

@@ -29,12 +29,14 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  far: 30
-  stabilize: 1
-  near_far: 100
-  near: 1
-  pcfOffset: 0.5
+  stabilize: true
+  near_far: 30.502783
+  far: 7.1912413
+  near: 1.9539989
+  numSplits: 1
+  resolution: 2048
 TimeSettings:
   timeScale: 1
 RenderSettings:
   backend: 2
+  debug: true
