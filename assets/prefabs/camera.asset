@@ -10,7 +10,7 @@ Camera:
     g: 0.3011583
     b: 0.2674738
     a: 1
-  fov: 40
+  fov: 30
   nearPlane: 1.2769767
   farPlane: 1000
 Transform:

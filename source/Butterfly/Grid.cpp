@@ -19,6 +19,14 @@ DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
 
+REFLECT_DEFINE_BEGIN(GridCellDesc);
+REFLECT_VAR(type);
+REFLECT_VAR(meshName);
+REFLECT_VAR(mesh);
+REFLECT_VAR(prefab);
+REFLECT_VAR(luaDesc);
+REFLECT_DEFINE_END(GridCellDesc);
+
 REFLECT_DEFINE_COMPONENT_BEGIN(GridDrawer);
 REFLECT_VAR(gridCellPrefab);
 REFLECT_VAR(useFrustumCulling);
@@ -73,7 +81,7 @@ void GridCollider::Update() {
     OPTICK_EVENT();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
-        LogError("no Grid with gridDrawer");
+        LogError("no Grid with GridCollider");
         return;
     }
     if (lastModificationsCount == grid->GetTypeModificationsCount()) {
@@ -153,6 +161,11 @@ void GridDrawer::Update() {
     for (auto& ir : instancedMeshRenderers) {
         ir.second->instances.resize(0);
     }
+    auto scene = gameObject()->GetScene();
+    for (auto& go : gameObjects) {
+        scene->RemoveGameObject(go);
+    }
+    gameObjects.clear();
 
     for (int i = 0; i < grid->cells.size(); i++) {
         const auto& cell = grid->cells[i];
@@ -163,8 +176,18 @@ void GridDrawer::Update() {
             ir = it->second;
         }
         else {
+            const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
+            if (desc.prefab) {
+                auto go = Instantiate(desc.prefab);
+                auto matrix = grid->cellsLocalMatrices[i];
+                matrix.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
+                go->transform()->SetMatrix(matrix);
+                scene->AddGameObject(go);
+                gameObjects.push_back(go);
+                continue;
+            }
             ir = new InstancedMeshRenderer();
-            ir->mesh = gridSystem->GetDesc((GridCellType)cell.type).mesh;
+            ir->mesh = desc.mesh;
             ir->material = prefabRenderer->material;
             ir->Init(gameObject()->GetScene());
             ir->useFrustumCulling = this->useFrustumCulling;
@@ -173,10 +196,6 @@ void GridDrawer::Update() {
         }
         auto& instance = ir->instances.emplace_back(grid->cellsLocalMatrices[i]);
         instance.transform.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
-        //auto cellPos = grid->GetCellWorldCenter(cell);
-        //instance.transform.GetColumn(3).x += cellPos.x;
-        //instance.transform.GetColumn(3).y += cellPos.y;
-        //instance.transform.GetColumn(3).z += cellPos.z;
     }
 }
 void GridDrawer::OnValidate() {
@@ -261,6 +280,7 @@ bool GridSystem::Init() {
     }
 
     this->onAfterLuaReloaded = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() { LoadCellTypes(); });
+    this->onAfterAssetDatabaseReloaded = AssetDatabase::Get()->onAfterUnloaded.Subscribe([this]() {LoadCellTypes(); });
     LoadCellTypes();
 
     return true;
@@ -278,6 +298,7 @@ void GridSystem::Term() {
             LuaReflect::Unregister<GridCellIterator>(L);
         }
     }
+    AssetDatabase::Get()->onAfterUnloaded.Unsubscribe(this->onAfterAssetDatabaseReloaded);
 
     settings = nullptr;
 }
@@ -348,8 +369,14 @@ void GridSystem::LoadCellTypes() {
                 LogError("No mesh found for cell type '%s'", c.c_str());
             }
         }
-
-        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc };
+        eastl::shared_ptr<GameObject> prefab;
+        if (!luaDesc.prefabName.empty()) {
+            prefab = AssetDatabase::Get()->Load<GameObject>(luaDesc.prefabName);
+            if (!prefab) {
+                LogWarning("Failed to find prefab '%s' for cellType '%s'", luaDesc.prefabName.c_str(), c.c_str());
+            }
+        }
+        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc, prefab };
 
         this->settings->cellDescs.emplace(desc.type, desc);
     }

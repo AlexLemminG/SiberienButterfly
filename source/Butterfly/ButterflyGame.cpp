@@ -13,7 +13,7 @@ static GameEventHandle onAfterReloadingHandle;
 bool ButterflyGame::Init() {
 	//TODO auto register
 	LuaReflect::RegisterShared<SaveData>(LuaSystem::Get()->L);
-
+	//TODO game is running(not in edit mode check)
 	onBeforeReloadingHandle = LuaSystem::Get()->onBeforeScriptsReloading.Subscribe([this]() {SaveToDisk("LuaReloadingSave"); });
 	onAfterReloadingHandle = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() {LoadFromDisk("LuaReloadingSave"); });
 	return true;

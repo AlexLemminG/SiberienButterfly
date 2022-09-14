@@ -75,7 +75,9 @@ struct GridCellDescLua {
     GridCellDescLua_Collision collision;
     eastl::vector<GridCellDescLua_Collision> extraCollisions;
     eastl::vector<GridCellDescLua_Collision> allCollisions;
+    eastl::string prefabName;
     REFLECT_BEGIN(GridCellDescLua);
+    REFLECT_VAR(prefabName);
     REFLECT_VAR(collision);
     REFLECT_VAR(extraCollisions);
     REFLECT_VAR(isUtil);
@@ -88,12 +90,8 @@ class GridCellDesc {
     eastl::string meshName;
     eastl::shared_ptr<Mesh> mesh;
     GridCellDescLua luaDesc;
-    REFLECT_BEGIN(GridCellDesc);
-    REFLECT_VAR(type);
-    REFLECT_VAR(meshName);
-    REFLECT_VAR(mesh);
-    REFLECT_VAR(luaDesc);
-    REFLECT_END();
+    eastl::shared_ptr<GameObject> prefab;
+    REFLECT_DECLARE(GridCellDesc);
 };
 
 class GridCell {
@@ -223,6 +221,7 @@ class GridSystem : public GameSystem<GridSystem> {
     eastl::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
 
     GameEventHandle onAfterLuaReloaded;
+    GameEventHandle onAfterAssetDatabaseReloaded;
 
     bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const;
 
@@ -248,6 +247,7 @@ class GridDrawer : public Component {
     eastl::shared_ptr<GameObject> gridCellPrefab;
     //eastl::vector<GridCellMeshRenderer> pooledRenderers;
     eastl::unordered_map<GridCellType, InstancedMeshRenderer*> instancedMeshRenderers;
+    eastl::vector<eastl::shared_ptr<GameObject>> gameObjects;
 
     int lastModificationsCount = -1;
 

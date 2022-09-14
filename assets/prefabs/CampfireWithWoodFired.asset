@@ -1,0 +1,69 @@
+GameObject:
+  tag: 'CampfireWithWoodFired'
+  components:
+    - $Transform
+    - $MeshRenderer
+    - $SpawnOnEnableComponent
+    - $SpawnOnEnableComponent2
+Transform: ~
+MeshRenderer:
+  mesh: models/GridCells.blend$CampfireWithWoodFired
+  material: materials/grid.asset$Material
+PointLight$PointLight:
+  radius: 5.458946
+  intensity: 29.076387
+  color:
+    r: 0.7065637
+    g: 0.437688
+    b: 0.15822662
+    a: 1
+  innerRadius: 0.45999998
+PointLight$PointLight2:
+  radius: 5.458946
+  intensity: 5.0971546
+  color:
+    r: 0.78039217
+    g: 0.70980394
+    b: 0.1254902
+    a: 1
+  innerRadius: 0.5
+SpawnOnEnableComponent$SpawnOnEnableComponent:
+  gameObjectToSpawn: prefabs/CampfireWithWoodFired.asset$Light
+SpawnOnEnableComponent$SpawnOnEnableComponent2:
+  gameObjectToSpawn: prefabs/CampfireWithWoodFired.asset$Light2
+GameObject$Light:
+  tag: 'CampfireWithWoodFired_Light'
+  components:
+    - $LightTransform
+    - $PointLight
+    - $ParentedTransform
+    - $LuaComponent
+Transform$LightTransform: ~
+ParentedTransform$ParentedTransform:
+  parentTransform: prefabs/CampfireWithWoodFired.asset$Transform
+  localMatrix:
+    pos:
+      - 0
+      - 0.73
+      - 0
+LuaComponent$LuaComponent:
+  luaObj:
+    scriptName: CampfireLightComponent
+GameObject$Light2:
+  tag: 'CampfireWithWoodFired_Light2'
+  components:
+    - $LightTransform2
+    - $PointLight2
+    - $ParentedTransform2
+    - $LuaComponent2
+Transform$LightTransform2: ~
+ParentedTransform$ParentedTransform2:
+  parentTransform: prefabs/CampfireWithWoodFired.asset$Transform
+  localMatrix:
+    pos:
+      - 0
+      - -0.5
+      - 0
+LuaComponent$LuaComponent2:
+  luaObj:
+    scriptName: CampfireLightComponent
