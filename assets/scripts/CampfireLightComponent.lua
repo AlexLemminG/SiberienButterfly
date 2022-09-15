@@ -14,11 +14,12 @@ function CampfireLightComponent:new(o)
 end
 
 function CampfireLightComponent:Update()
+    local time = Time.time()
     self.light.intensity = self.initialIntencity *
         (1
-            + 0.1 * math.sin(Time.time() * 13)
-            + 0.1 * math.sin(Time.time() * 7)
-            + 0.03 * math.sin(Time.time() * 77)
+            + 0.1 * math.sin(time * 13)
+            + 0.1 * math.sin(time * 7)
+            + 0.03 * math.sin(time * 77)
         )
 end
 

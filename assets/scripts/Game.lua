@@ -596,6 +596,7 @@ function Game:DrawHealthAndHungerUI(character : Character)
 			end
 		end
 		local sprite = GetUISprite(2 + offset, 5)
+		--TODO imgui func to accept sprite + scale
 		imgui.Image(sprite:ToImguiId(), sprite:GetWidth() * scale, sprite:GetHeight() * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
 	end
 	
