@@ -3,9 +3,9 @@ GameObject:
   components:
     - $Transform
     - $GridDrawer
-    - $Grid
     - $GridCollider
     - $RigidBody
+    - $Grid
 Transform:
   pos:
     - 0

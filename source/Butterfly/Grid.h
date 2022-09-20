@@ -113,6 +113,10 @@ class GridCell {
     REFLECT_VAR(animStopT);
     REFLECT_VAR(float4);
     REFLECT_END();
+
+    bool operator ==(const GridCell& otherCell) const {
+        return std::memcmp(this, &otherCell, sizeof(GridCell)) == 0;
+    }
 };
 
 
@@ -141,6 +145,7 @@ class Grid : public Component {
 public:
     virtual void OnEnable() override;
     virtual void OnDisable() override;
+    virtual void Update() override;
 
     GridCell GetCell(Vector2Int pos) const;
     const GridCell& GetCellFast(Vector2Int pos) const {
@@ -163,6 +168,9 @@ public:
 
     eastl::vector<GridCell> cells;
     eastl::vector<Matrix4> cellsLocalMatrices;
+
+    eastl::vector<GridCell> cellsPrev;
+    eastl::vector<Matrix4> cellsLocalMatricesPrev;
 
     GridCellIterator GetAnimatedCellsIterator();
 
@@ -248,8 +256,9 @@ class GridDrawer : public Component {
     //eastl::vector<GridCellMeshRenderer> pooledRenderers;
     eastl::unordered_map<GridCellType, InstancedMeshRenderer*> instancedMeshRenderers;
     eastl::vector<eastl::shared_ptr<GameObject>> gameObjects;
-
+    
     int lastModificationsCount = -1;
+    eastl::vector<int> instanceIndices;
 
     REFLECT_DECLARE(GridDrawer);
 };
@@ -262,6 +271,7 @@ public:
 
 private:
     int lastModificationsCount = -1;
+    eastl::vector<eastl::shared_ptr<class Collider>> gridColliders;
     REFLECT_COMPONENT_BEGIN(GridCollider);
     REFLECT_END();
 };
