@@ -1,0 +1,23 @@
+GameObject:
+  tag: GridChunkCollider
+  components:
+    - $Transform
+    - $GridChunkCollider
+    - $RigidBody
+Transform:
+  pos:
+    - 0
+    - 0
+    - 0
+  euler:
+    - 0
+    - -0
+    - 0
+  scale:
+    - 1
+    - 1
+    - 1
+GridChunkCollider: ~
+RigidBody:
+  isStatic: 1
+  isKinematic: false

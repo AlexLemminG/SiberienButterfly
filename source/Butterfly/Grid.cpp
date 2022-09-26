@@ -10,11 +10,13 @@
 #include "../../engine/source/libs/luau/VM/src/ltable.h"
 #include "SEngine/Collider.h"
 #include "SEngine/BoxCollider.h"
+#include <EASTL/sort.h>
 
 DECLARE_TEXT_ASSET(GridSystem);
 DECLARE_TEXT_ASSET(GridSettings);
 REGISTER_GAME_SYSTEM(GridSystem);
 DECLARE_TEXT_ASSET(GridCollider);
+DECLARE_TEXT_ASSET(GridChunkCollider);
 DECLARE_TEXT_ASSET(GridDrawer);
 DECLARE_TEXT_ASSET(Grid);
 
@@ -32,6 +34,11 @@ REFLECT_VAR(gridCellPrefab);
 REFLECT_VAR(useFrustumCulling);
 REFLECT_VAR(castsShadows);
 REFLECT_DEFINE_END(GridDrawer);
+
+
+REFLECT_DEFINE_COMPONENT_BEGIN(GridCollider);
+REFLECT_VAR(chunkPrefab);
+REFLECT_DEFINE_END(GridCollider);
 
 bool GridCellIterator::GetNextCell(GridCell& outCell) {
     ASSERT(grid);
@@ -71,57 +78,124 @@ eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
     }
     return nullptr;
 }
-void GridCollider::OnEnable() {
 
+template<typename T>
+static void Unique(eastl::vector<T>& v) {
+    if (v.size() < 2) {
+        return;
+    }
+    int i1 = 0;
+    int i2 = 1;
+    for (; i2 < v.size();i2++) {
+        if (v[i1] != v[i2]) {
+            v[i1+1] = v[i2];
+            i1++;
+        }
+    }
+    v.resize(i1+1);
 }
-void GridCollider::OnDisable() {
 
-}
 void Grid::Update() {
     OPTICK_EVENT();
     //TODO ensure this is happening before everything else
     ASSERT(this->cellsPrev.size() == this->cells.size());
     ASSERT(this->cellsLocalMatricesPrev.size() == this->cellsLocalMatrices.size());
-    std::memcpy(this->cellsLocalMatricesPrev.data(), this->cellsLocalMatrices.data(), sizeof(Matrix4) * this->cellsLocalMatricesPrev.size());
-    std::memcpy(this->cellsPrev.data(), this->cells.data(), sizeof(GridCell) * this->cells.size());
+
+    eastl::sort(changedIndices.begin(), changedIndices.end());
+    Unique(changedIndices);
+
+    auto gc = gameObject()->GetComponent<GridCollider>();
+    if (gc) {
+        gc->_Update();
+    }
+    auto gd = gameObject()->GetComponent<GridDrawer>();
+    if (gd) {
+        gd->_Update();
+    }
+    
+    bool a = false;
+    if (a) {
+        {
+            OPTICK_EVENT("update cellsLocalMatricesPrev");
+            int matricesSize = sizeof(Matrix4) * this->cellsLocalMatricesPrev.size();
+            memcpy(this->cellsLocalMatricesPrev.data(), this->cellsLocalMatrices.data(), matricesSize);
+        }
+
+        {
+            OPTICK_EVENT("update cellsPrev");
+            int cellsSize = sizeof(GridCell) * this->cells.size();
+            memcpy(this->cellsPrev.data(), this->cells.data(), cellsSize);
+        }
+    }
+    else {
+        for (int i : changedIndices) {
+            cellsPrev[i] = cells[i];
+            cellsLocalMatricesPrev[i] = cellsLocalMatrices[i];
+        }
+    }
+    changedIndices.clear();
 }
-void GridCollider::Update() {
+
+void GridCollider::_Update() {
     OPTICK_EVENT();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
         LogError("no Grid with GridCollider");
         return;
     }
+    if (!chunkPrefab) {
+        LogError("no ChunkPrefab set in GridCollider");
+        return;
+    }
     if (lastModificationsCount == grid->GetTypeModificationsCount()) {
         return;
+    }
+
+    if (chunks.size() != grid->chunksCountX * grid->chunksCountY) {
+        for (auto c : chunks) {
+            gameObject()->GetScene()->RemoveGameObject(c->gameObject());
+        }
+        chunks.clear();
+        for (int iX = 0; iX < grid->chunksCountX; iX++) {
+            for (int iY = 0; iY < grid->chunksCountY; iY++) {
+                auto go = Instantiate(chunkPrefab);
+                gameObject()->GetScene()->AddGameObject(go);
+                chunks.push_back(go->GetComponent<GridChunkCollider>());
+            }
+        }
     }
     lastModificationsCount = grid->GetTypeModificationsCount();
     auto gridSystem = GridSystem::Get();
 
-
-    if (gridColliders.size() != grid->cells.size()) {
-        //TODO grid cells are only updated if cellsPrev differ
-        for (auto collider : gridColliders) {
-            gameObject()->RemoveComponent(collider);
+    for (auto chunk : chunks) {
+        if (chunk->gridColliders.size() != grid->cellsPerChunkX * grid->cellsPerChunkY) {
+            //TODO grid cells are only updated if cellsPrev differ
+            for (auto collider : chunk->gridColliders) {
+                gameObject()->RemoveComponent(collider);
+            }
+            chunk->gridColliders.clear();
+            chunk->gridColliders.resize(grid->cellsPerChunkX * grid->cellsPerChunkY, nullptr);
         }
-        gridColliders.clear();
-        gridColliders.resize(grid->cells.size(), nullptr);
     }
-
-    for (int i = 0; i < grid->cells.size(); i++) {
+    for (int i : grid->changedIndices) {
         const auto& cell = grid->cells[i];
         const auto& cellPrev = grid->cellsPrev[i];
         if (cellPrev.type == cell.type) {
             //TODO check location
             continue;
         }
-        else {
-            auto& collider = gridColliders[i];
+        int iChunk = grid->GetChunkIndex(cell.pos);
+        auto& chunk = chunks[iChunk];
+        int iInChunk = grid->GetIndexInChunk(cell.pos);
+        if (chunk) {
+            auto& collider = chunk->gridColliders[iInChunk];
             if (collider) {
-                gameObject()->RemoveComponent(collider);
-                gridColliders[i] = nullptr;
+                chunk->gameObject()->RemoveComponent(collider);
+                chunk->gridColliders[iInChunk] = nullptr;
+                chunk->changed = true;
             }
         }
+        
         const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
         for (const auto& collision : desc.luaDesc.allCollisions) {
             eastl::shared_ptr<Collider> colliderCurrent;
@@ -145,15 +219,22 @@ void GridCollider::Update() {
                 colliderCurrent = collider;
             }
             if (colliderCurrent) {
-                this->gridColliders[i] = colliderCurrent;
-                gameObject()->AddComponent(colliderCurrent);
+                chunk->gridColliders[iInChunk] = colliderCurrent;
+                chunk->gameObject()->AddComponent(colliderCurrent);
+                chunk->changed = true;
+
             }
         }
     }
-    //TODO split into blocks
-    auto rb = gameObject()->GetComponent<RigidBody>();
-    rb->SetEnabled(false);
-    rb->SetEnabled(true);
+    for (auto c : chunks) {
+        if (!c->changed) {
+            continue;
+        }
+        auto rb = c->gameObject()->GetComponent<RigidBody>();
+        rb->SetEnabled(false);
+        rb->SetEnabled(true);
+        c->changed = false;
+    }
 }
 void GridDrawer::OnEnable() {
 }
@@ -162,16 +243,27 @@ void GridDrawer::OnDisable() {
     //for (auto& r : pooledRenderers) {
     //    r.OnDisable();
     //}
-    for (auto& ir : instancedMeshRenderers) {
-        ir.second->Term();
-        delete ir.second;
+    for (auto& irs : instancedMeshRenderers) {
+        for (auto& ir : irs.second) {
+            ir.second->Term();
+            delete ir.second;
+        }
     }
     instancedMeshRenderers.clear();
     //pooledRenderers.clear();
 }
 
+int Grid::GetIndexInChunk(const Vector2Int& pos) const {
+    return pos.x % cellsPerChunkX + (pos.y % cellsPerChunkY) * cellsPerChunkX;
+}
+
+int Grid::GetChunkIndex(const Vector2Int& pos) const {
+    return pos.x / cellsPerChunkX + pos.y / cellsPerChunkY * chunksCountX;
+}
+
+
 // TODO on before camera render actually
-void GridDrawer::Update() {
+void GridDrawer::_Update() {
     OPTICK_EVENT();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
@@ -189,9 +281,9 @@ void GridDrawer::Update() {
     //}
     // TODO remove extra
 
-    for (auto& ir : instancedMeshRenderers) {
+    //for (auto& ir : instancedMeshRenderers) {
         //ir.second->Clear();
-    }
+    //}
     auto scene = gameObject()->GetScene();
 
     if (instanceIndices.size() != grid->cells.size()) {
@@ -200,14 +292,16 @@ void GridDrawer::Update() {
         }
         gameObjects.clear();
 
-        for (auto& ir : instancedMeshRenderers) {
-            ir.second->Clear();
+        for (auto& irs : instancedMeshRenderers) {
+            for (auto& ir : irs.second) {
+                ir.second->Clear();
+            }
         }
         instanceIndices.clear();
         instanceIndices.resize(grid->cells.size(), -1);
     }
 
-    for (int i = 0; i < grid->cells.size(); i++) {
+    for (int i : grid->changedIndices) {
         const auto& cell = grid->cells[i];
         const auto& cellPrev = grid->cellsPrev[i];
         const auto& cellLocalMatrix = grid->cellsLocalMatrices[i];
@@ -215,15 +309,17 @@ void GridDrawer::Update() {
         if (cell.type == cellPrev.type && cellLocalMatrix == cellLocalMatrixPrev) {
             continue;
         }
+
+        int chunkIndex = grid->GetChunkIndex(cell.pos);
+        auto& instancedMeshRenderers = this->instancedMeshRenderers[chunkIndex];
         if (cell.type != cellPrev.type && cellPrev.type != (int)GridCellType::NONE) {
             int prevIndex = instanceIndices[i];
             if (prevIndex != -1) {
                 InstancedMeshRenderer* irPrev = nullptr;
 
-                auto it = instancedMeshRenderers.find((GridCellType)cellPrev.type);
-                if (it != instancedMeshRenderers.end()) {
-                    irPrev = it->second;
-                    //TODO
+                auto it2 = instancedMeshRenderers.find((GridCellType)cellPrev.type);
+                if (it2 != instancedMeshRenderers.end()) {
+                    irPrev = it2->second;
                     irPrev->RemoveInstance(prevIndex);
                 }
                 else {
@@ -281,7 +377,7 @@ void GridDrawer::Update() {
             ir->Init(gameObject()->GetScene());
             ir->SetFrustumCullingEnabled(this->useFrustumCulling);
             ir->SetCastShadowsEnabled(this->castsShadows);
-            this->instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
+            instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
         }
         InstancedMeshRenderer::InstanceInfo* instance;
         if (cell.type == cellPrev.type) {
@@ -295,9 +391,11 @@ void GridDrawer::Update() {
     }
 }
 void GridDrawer::OnValidate() {
-    for (auto& ir : this->instancedMeshRenderers) {
-        ir.second->SetFrustumCullingEnabled(this->useFrustumCulling);
-        ir.second->SetCastShadowsEnabled(this->castsShadows);
+    for (auto& irs : this->instancedMeshRenderers) {
+        for (auto& ir : irs.second) {
+            ir.second->SetFrustumCullingEnabled(this->useFrustumCulling);
+            ir.second->SetCastShadowsEnabled(this->castsShadows);
+        }
     }
 }
 
@@ -331,6 +429,9 @@ void Grid::OnEnable() {
         ASSERT(cells.size() == sizeX * sizeY);
         ASSERT(cellsLocalMatrices.size() == sizeX * sizeY);
     }
+    chunksCountX = ((sizeX + cellsPerChunkX - 1) / cellsPerChunkX);
+    chunksCountY = ((sizeY + cellsPerChunkY - 1) / cellsPerChunkY);
+
     isInited = true;
 }
 
@@ -354,6 +455,14 @@ void Grid::SetSize(int sizeX, int sizeY) {
     cellsLocalMatrices.clear();
     cellsLocalMatrices.resize(sizeX * sizeY, Matrix4::Identity());
     cellsLocalMatricesPrev = cellsLocalMatrices;
+
+    chunksCountX = ((sizeX + cellsPerChunkX - 1) / cellsPerChunkX);
+    chunksCountY = ((sizeY + cellsPerChunkY - 1) / cellsPerChunkY);
+
+    changedIndices.clear();
+    for (int i = 0; i < cells.size(); i++) {
+        changedIndices.push_back(i);
+    }
 }
 
 void Grid::OnDisable() {
@@ -502,18 +611,22 @@ GridCell Grid::GetCell(Vector2Int pos) const {
 
 void Grid::SetCell(const GridCell& cell) {
     if (cell.pos.x >= 0 && cell.pos.x < sizeX && cell.pos.y >= 0 && cell.pos.y < sizeY) {
-        const auto& prevCell = cells[cell.pos.x * sizeY + cell.pos.y];
+        int index = cell.pos.x * sizeY + cell.pos.y;
+        const auto& prevCell = cells[index];
         if (prevCell.type != cell.type) {
             typeModificationsCount++;
         }
-        cells[cell.pos.x * sizeY + cell.pos.y] = cell;
+        cells[index] = cell;
+        changedIndices.push_back(index);
         modificationsCount++;
     }
 }
 
 void Grid::SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix) {
     if (pos.x >= 0 && pos.x < sizeX && pos.y >= 0 && pos.y < sizeY) {
-        cellsLocalMatrices[pos.x * sizeY + pos.y] = matrix;
+        int index = pos.x * sizeY + pos.y;
+        cellsLocalMatrices[index] = matrix;
+        changedIndices.push_back(index);
         modificationsCount++;//TODO callback to update single instance matrix
     }
 }
@@ -636,12 +749,11 @@ void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
 void Grid::LoadFrom(const Grid& otherGrid) {
     OnDisable();
     
+    this->SetSize(otherGrid.sizeX, otherGrid.sizeY);
     this->cells = otherGrid.cells;
     this->cellsPrev = otherGrid.cells;
     this->cellsLocalMatrices = otherGrid.cellsLocalMatrices;
     this->cellsLocalMatricesPrev = otherGrid.cellsLocalMatrices;
-    this->sizeX = otherGrid.sizeX;
-    this->sizeY = otherGrid.sizeY;
     this->isInited = otherGrid.isInited;
     this->modificationsCount++;
     this->typeModificationsCount++;

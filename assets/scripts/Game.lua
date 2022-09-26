@@ -511,7 +511,7 @@ end
 function Game:DrawWorldStats()
 	local screenSize = Graphics:GetScreenSize()
 
-	imgui.SetNextWindowSize(200,150)
+	imgui.SetNextWindowSize(300,250)
 	imgui.SetNextWindowPos(30, 250, imgui.constant.Cond.Always, 0.0,0.5)
 	imgui.SetNextWindowBgAlpha(0.0)
 	local winFlags = imgui.constant.WindowFlags
@@ -540,6 +540,15 @@ function Game:DrawWorldStats()
 	if hour < 10 then hour = "0"..hour end
 	if minute < 10 then minute = "0"..minute end
 	text = text.."Time: "..hour..":"..minute.."\n"
+
+	local playerPos = nil
+	if World.playerCharacter then 
+		playerPos = World.playerCharacter:GetPosition() 
+	else 
+		playerPos = Vector3.new() 
+		print("ssss")
+	end
+	text = text..string.format("playerPos: %.1f %.1f", playerPos.x, playerPos.z)
 	imgui.TextUnformatted(text)
 	imgui.End()
 end

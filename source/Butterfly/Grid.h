@@ -177,6 +177,15 @@ public:
     int sizeX = 20;
     int sizeY = 20;
 
+    int cellsPerChunkX = 16;
+    int cellsPerChunkY = 16;
+
+    int chunksCountX = 0;
+    int chunksCountY = 0;
+
+    int GetChunkIndex(const Vector2Int& pos) const;
+    int GetIndexInChunk(const Vector2Int& pos) const;
+
     int GetModificationsCount()const {
         return modificationsCount;
     }
@@ -191,6 +200,8 @@ public:
     void SetSize(int sizeX, int sizeY);
 
     bool isInited = false;
+
+    eastl::vector<int> changedIndices;
 private:
     int modificationsCount = 0;
     int typeModificationsCount = 0;
@@ -244,7 +255,7 @@ class GridDrawer : public Component {
    public:
     void OnEnable() override;
     void OnDisable() override;
-    void Update() override;
+    void _Update() ;
 
     void OnValidate() override;
 
@@ -254,7 +265,7 @@ class GridDrawer : public Component {
    private:
     eastl::shared_ptr<GameObject> gridCellPrefab;
     //eastl::vector<GridCellMeshRenderer> pooledRenderers;
-    eastl::unordered_map<GridCellType, InstancedMeshRenderer*> instancedMeshRenderers;
+    eastl::unordered_map<int, eastl::unordered_map<GridCellType, InstancedMeshRenderer*>> instancedMeshRenderers;
     eastl::vector<eastl::shared_ptr<GameObject>> gameObjects;
     
     int lastModificationsCount = -1;
@@ -263,15 +274,23 @@ class GridDrawer : public Component {
     REFLECT_DECLARE(GridDrawer);
 };
 
+class GridChunkCollider : public Component {
+
+public:
+    bool changed = false;
+    eastl::vector<eastl::shared_ptr<class Collider>> gridColliders;
+    REFLECT_COMPONENT_BEGIN(GridChunkCollider);
+    REFLECT_END();
+};
+
 class GridCollider : public Component {
 public:
-    void OnEnable() override;
-    void OnDisable() override;
-    void Update() override;
+    void _Update();
 
 private:
     int lastModificationsCount = -1;
-    eastl::vector<eastl::shared_ptr<class Collider>> gridColliders;
-    REFLECT_COMPONENT_BEGIN(GridCollider);
-    REFLECT_END();
+    eastl::shared_ptr<GameObject> chunkPrefab;
+    eastl::vector<eastl::shared_ptr<GridChunkCollider>> chunks;
+    
+    REFLECT_DECLARE(GridCollider);
 };

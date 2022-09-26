@@ -24,7 +24,8 @@ GridDrawer:
   useFrustumCulling: true
   castsShadows: true
 Grid$Grid: ~
-GridCollider: ~
+GridCollider:
+  chunkPrefab: prefabs/gridChunkCollider.asset$GameObject
 RigidBody:
   isStatic: 1
   isKinematic: false
