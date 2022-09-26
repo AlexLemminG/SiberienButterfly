@@ -22,6 +22,7 @@ Transform:
 GridDrawer:
   gridCellPrefab: prefabs/gridCell.asset
   useFrustumCulling: true
+  castsShadows: true
 Grid$Grid: ~
 GridCollider: ~
 RigidBody:

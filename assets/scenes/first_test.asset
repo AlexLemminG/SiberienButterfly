@@ -9,6 +9,7 @@ Scene:
       overrides:
         GameObject:
           tag: GroundGrid
+        GridDrawer: {}
     - prefab: prefabs\column.asset
       overrides:
         Transform:

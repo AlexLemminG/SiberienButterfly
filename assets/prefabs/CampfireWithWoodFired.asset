@@ -10,7 +10,7 @@ MeshRenderer:
   mesh: models/GridCells.blend$CampfireWithWoodFired
   material: materials/grid.asset$Material
 PointLight$PointLight:
-  radius: 5.458946
+  radius: 3
   intensity: 29.076387
   color:
     r: 0.7065637
@@ -19,14 +19,14 @@ PointLight$PointLight:
     a: 1
   innerRadius: 0.45999998
 PointLight$PointLight2:
-  radius: 5.458946
+  radius: 0
   intensity: 5.0971546
   color:
     r: 0.78039217
     g: 0.70980394
     b: 0.1254902
     a: 1
-  innerRadius: 0.5
+  innerRadius: 0
 SpawnOnEnableComponent$SpawnOnEnableComponent:
   gameObjectToSpawn: prefabs/CampfireWithWoodFired.asset$Light
 SpawnOnEnableComponent$SpawnOnEnableComponent2:

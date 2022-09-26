@@ -32,6 +32,7 @@ function Game:GenerateWorldGrid()
 	probabilities[CellType.FlintStone] = 1
 	probabilities[CellType.BushWithBerries] = 1
 	probabilities[CellType.None] = 10
+	-- probabilities[CellType.CampfireWithWoodFired] = 10
 
 	local probabilitiesSum = 0
 	for key, value in pairs(probabilities) do

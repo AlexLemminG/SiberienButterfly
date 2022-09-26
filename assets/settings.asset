@@ -34,9 +34,10 @@ ShadowSettings:
   far: 7.1912413
   near: 1.9539989
   numSplits: 1
-  resolution: 2048
+  resolution: 1024
+  hardShadows: true
 TimeSettings:
   timeScale: 1
 RenderSettings:
   backend: 2
-  debug: true
+  debug: false
