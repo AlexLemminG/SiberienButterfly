@@ -59,6 +59,37 @@ function CharacterCommandFactory.EatSomething() : CharacterCommand
     return command
 end
 
+function CharacterCommandFactory.GoToSleep() : CharacterCommand
+    local sleepRules = {}
+
+    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.Bed, CellType.Any)) do
+        if value.newCharType == CellType.None then
+            table.insert(sleepRules, value)
+        end
+    end
+    local command = CharacterCommandFactory.CreateFromMultipleRules(sleepRules)
+    command.savedState = {
+        factoryFunctionName = "GoToSleep"
+    }
+    return command
+end
+
+function CharacterCommandFactory.WakeUp() : CharacterCommand
+    --TODO there should be betterWay
+    local wakeUpRules = {}
+
+    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.BedOccupied, CellType.Any)) do
+        if value.newCharType == CellType.None then
+            table.insert(wakeUpRules, value)
+        end
+    end
+    local command = CharacterCommandFactory.CreateFromMultipleRules(wakeUpRules)
+    command.savedState = {
+        factoryFunctionName = "WakeUp"
+    }
+    return command
+end
+
 ---@param combineRules CombineRule[]
 function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : CharacterCommand
     local command = {}

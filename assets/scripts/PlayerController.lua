@@ -3,6 +3,7 @@ local Grid = require("Grid")
 local World = require("World")
 local WorldQuery = require("WorldQuery")
 local Game       = require("Game")
+local CellTypeInv= require("CellTypeInv")
 
 ---@class PlayerController
 ---@field character Character|nil
@@ -115,7 +116,7 @@ function PlayerController:Update()
 	if not action then
 		action = self.character:GetActionOnCellPos(cellPos)
 	end
-	if action == nil or action.isCharacter then
+	if action == nil or action.isCharacter or not action:CanExecute() then
 		pos = pos - vector(0,10000,0) --TODO propper hide selection
 	end
 	selectionTrans:SetPosition(pos)
@@ -130,6 +131,7 @@ function PlayerController:Update()
 	if Input:GetKeyDown("Space") then
 		self.character:ExecuteAction(action)
 	end
+	Dbg.Text(string.format("%s", CellTypeInv[grid:GetCell(cellPos).type]))
 end
 
 return PlayerController

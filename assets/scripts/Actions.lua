@@ -18,11 +18,13 @@ local CombineRule = {
 	newCharType = CellType.Any,
 	newItemType = CellType.Any,
 	newGroundType = CellType.Any,
+	isCustom = false
 }
 function CombineRule.preCondition(character : Character) : boolean
 	return true
 end
-function CombineRule:callback(character : Character, pos : Vector2Int) 
+
+function CombineRule:callback(character : Character, pos : Vector2Int, checkOnly : boolean) : boolean
 
 end
 
@@ -178,15 +180,19 @@ function Action_ExecuteRule(character, intPos, rule) : CharacterAction
 		and 
 		Actions:IsSubtype(currentGroundType, self.rule.groundType)
 
+		if rule.callback and not rule.callback(character, self.intPos, true) then
+			canExecute = false
+		end
+
 		if checkOnly or not canExecute then
 			return canExecute
 		end
 
 		if rule.isCustom then
 			if rule.callback then
-				rule.callback(character, intPos)
+				rule.callback(character, intPos, false)
 			else
-				print("Custom rule without callback ", Actions.RuleToString(rule))
+				LogWarning("Custom rule without callback ", Actions.RuleToString(rule))
 			end
 			return true
 		end
@@ -208,7 +214,7 @@ function Action_ExecuteRule(character, intPos, rule) : CharacterAction
 		end
 
 		if rule.callback then
-			rule.callback(character, intPos)
+			rule.callback(character, intPos, false)
 		end
 		return true
 	end
@@ -335,24 +341,30 @@ function Actions:GetCombineRule(character : Character|nil, charType : integer, i
 	return nil
 end
 
-function RuleCallback_ItemAppearWithoutXZScale(character, intPos)
+function RuleCallback_ItemAppearWithoutXZScale(character, intPos, checkOnly : boolean)
+	if checkOnly then return true end
 	local cell = World.items:GetCell(intPos)
 	if cell.type ~= CellType.None then
 		CellAnimations.SetAppearWithoutXZScale(cell)
 		World.items:SetCell(cell)
 	end
+	return true
 end
-function RuleCallback_ItemAppear(character, intPos)
+function RuleCallback_ItemAppear(character, intPos, checkOnly : boolean)
+	if checkOnly then return true end
 	local cell = World.items:GetCell(intPos)
 	if cell.type ~= CellType.None then
 		CellAnimations.SetAppear(cell)
 		World.items:SetCell(cell)
 	end
+	return true
 end
 
-function RuleCallback_Eat(character, intPos)
+function RuleCallback_Eat(character, intPos, checkOnly : boolean)
+	if checkOnly then return true end
 	character.hunger = character.hunger - 0.25
 	RuleCallback_ItemAppear(character, intPos)
+	return true
 end
 
 function Actions:RegisterAllCombineRules()
@@ -438,9 +450,10 @@ function Actions:RegisterAllCombineRules()
 		if thisCell.type ~= typeBefore then
 			World.items:SetCell(thisCell)
 		end
-		RuleCallback_ItemAppear(nil, intPos)
+		RuleCallback_ItemAppear(nil, intPos, false)
 	end
-	function UpdateFencesCallback(character, intPos)
+	function UpdateFencesCallback(character, intPos, checkOnly) : boolean
+		if checkOnly then return true end
 		UpdateSingleFence(intPos)
 		intPos.x = intPos.x + 1
 		UpdateSingleFence(intPos)
@@ -453,6 +466,7 @@ function Actions:RegisterAllCombineRules()
 		UpdateSingleFence(intPos)
 
 		intPos.y = intPos.y + 1 --intPos is object so return it back to initial state
+		return true
 	end
 	for name, groundedFenceType in pairs(self:GetAllIsSubtype(CellType.Fence_Any)) do
 		-- pick
@@ -474,7 +488,8 @@ function Actions:RegisterAllCombineRules()
 	end
 
 	local cutTreeCallback =
-	function(character, intPos)
+	function(character, intPos, checkOnly : boolean) : boolean
+		if checkOnly then return true end
 		local cell = World.items:GetCell(intPos)
 		if cell.animType ~= CellAnimType.None then
 			return
@@ -490,6 +505,7 @@ function Actions:RegisterAllCombineRules()
 			cell.float4 = cell.float4 + 1.0
 		end
 		World.items:SetCell(cell)
+		return true
 	end
 	self:RegisterCombineRule_Custom(CellType.None, CellType.Tree, CellType.Any, CellType.None, CellType.Wood, CellType.Any,
 		cutTreeCallback)
@@ -513,6 +529,45 @@ function Actions:RegisterAllCombineRules()
 
 	self:RegisterCombineRuleForGround(CellType.Wood, CellType.Water, CellType.None,
 		CellType.WoodenBridge)
+
+
+	local isBedOccupied = function (intPos) : boolean
+		for index, character in ipairs(World.characters) do
+			if character.isSleeping and intPos == character.sleepingPos then
+				return true
+			end
+		end
+		return false
+	end
+
+	local sleepCallback = function(character : Character, intPos, checkOnly : boolean) : boolean
+		if isBedOccupied(intPos) then
+			return false
+		end
+		--TODO is bed empty check and character is ready to sleep
+		if checkOnly then return true end
+
+		character:SetIsSleeping(true, intPos)
+		--TODO implementation
+		return true
+	end
+	self:RegisterCombineRule(CellType.None, CellType.Bed, CellType.None, CellType.BedOccupied,
+		sleepCallback)
+
+		
+	local wakeUpCallback = function(character : Character, intPos, checkOnly : boolean) : boolean
+		if not character.isSleeping or character.sleepingPos ~= intPos then
+			return false
+		end
+		--TODO is bed empty check and character is ready to sleep
+		if checkOnly then return true end
+
+		character:SetIsSleeping(false, nil)
+		--TODO implementation
+		return true
+	end
+	self:RegisterCombineRule(CellType.None, CellType.BedOccupied, CellType.None, CellType.Bed,
+		wakeUpCallback)
 end
 
 function Actions:GetCombineAction(character, intPos)

@@ -546,9 +546,9 @@ function Game:DrawWorldStats()
 		playerPos = World.playerCharacter:GetPosition() 
 	else 
 		playerPos = Vector3.new() 
-		print("ssss")
 	end
 	text = text..string.format("playerPos: %.1f %.1f", playerPos.x, playerPos.z)
+
 	imgui.TextUnformatted(text)
 	imgui.End()
 end

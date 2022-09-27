@@ -250,6 +250,7 @@ void GridDrawer::OnDisable() {
         }
     }
     instancedMeshRenderers.clear();
+    instanceIndices.clear();
     //pooledRenderers.clear();
 }
 

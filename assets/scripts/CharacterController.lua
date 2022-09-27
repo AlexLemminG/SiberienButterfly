@@ -1,5 +1,8 @@
 local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
+local Game                   = require "Game"
+local GameConsts                   = require "GameConsts"
+
 ---@class CharacterController
 ---@field command CharacterCommand|nil
 ---@field character Character|nil
@@ -64,6 +67,14 @@ function CharacterController:Think()
     table.insert(commandsPriorityList, self.command)
     if self.character.hunger > 0.7 then
         table.insert(commandsPriorityList, 1, CharacterCommandFactory.EatSomething())
+    end
+
+    local goToSleepDayTimePercent = 0.8
+    local wakeUpDayTimePercent = 0.2
+    if Game.dayTimePercent >= goToSleepDayTimePercent or Game.dayTimePercent <= wakeUpDayTimePercent then
+        table.insert(commandsPriorityList, 1, CharacterCommandFactory.GoToSleep())
+    elseif self.character.isSleeping then
+        table.insert(commandsPriorityList, 1, CharacterCommandFactory.WakeUp())
     end
 
     for index, command in ipairs(commandsPriorityList) do

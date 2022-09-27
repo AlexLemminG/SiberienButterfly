@@ -49,6 +49,8 @@ local CellType = {
     Bush = 46,
     BushWithBerries = 47,
     Eatable_Any = 48,
+    Bed = 49,
+    BedOccupied = 50,
 }
 
 return CellType

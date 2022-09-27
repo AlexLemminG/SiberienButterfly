@@ -29,7 +29,8 @@ local Character = {
 	characterController = nil,
 	name = "Name",
 	isDead = false,
-	isSpeeing = false
+	isSleeping = false,
+	sleepingPos = nil
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -48,6 +49,10 @@ function Character:SaveState() : any
 	state.health = self.health
 	state.name = self.name
 	state.isDead = self.isDead
+	state.isSleeping = self.isSleeping
+	if self.isSleeping then
+		state.sleepingPos = {x=self.sleepingPos.x, y=self.sleepingPos.y}
+	end
 	local position = self:GetPosition()
 	local rotation = self.transform:GetRotation()
 	state.position = { x=position.x, y=position.y, z=position.z }
@@ -66,6 +71,12 @@ function Character:LoadState(savedState)
 	self.hunger = savedState.hunger
 	self.name = savedState.name
 	self.isDead = savedState.isDead
+	self.isSleeping = savedState.isSleeping
+	if self.isSleeping then
+		self.sleepingPos = Vector2Int.new()
+		self.sleepingPos.x = savedState.sleepingPos.x
+		self.sleepingPos.y = savedState.sleepingPos.y
+	end
 	local position = vector(savedState.position.x, savedState.position.y, savedState.position.z)
 	local rotation = Quaternion:new()
 	rotation:set_scalar(savedState.rotation.w)
@@ -93,6 +104,11 @@ function Character:LoadState(savedState)
 	if self:IsDead() then
 		self.isDead = false
 		self:Die()
+	end
+
+	if self.isSleeping then
+		self.isSleeping = false
+		self:SetIsSleeping(true, self.sleepingPos)
 	end
 end
 
@@ -162,7 +178,7 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function Character:Update()
-	if self:IsDead() then
+	if self:IsDead() or self.isSleeping then
 		return
 	end
 	self:UpdateMovement()
@@ -310,11 +326,23 @@ function Character:IsInDialog() : boolean
 end
 
 function Character:CanInteract() : boolean
-	return not (self:IsDead() or self.isSpeeing)
+	return not (self:IsDead() or self.isSleeping)
 end
 
 function Character:IsDead() : boolean
 	return self.isDead
+end
+
+function Character:SetIsSleeping(isSleeping : boolean, sleepingPos)
+	if self.isSleeping == isSleeping then
+		return
+	end
+	self.isSleeping = isSleeping
+	self.sleepingPos = sleepingPos
+	self.rigidBody:SetEnabled(not isSleeping)
+	if isSleeping then
+		self.animator:SetAnimation(self.deathAnimation)
+	end
 end
 
 function Character:Die()
