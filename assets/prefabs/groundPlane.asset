@@ -26,6 +26,7 @@ Material$M1:
   colorTex: engine\textures\uv.png
 RigidBody:
   isStatic: 1
+  layer: staticGeom
 BoxCollider:
   size:
     - 100

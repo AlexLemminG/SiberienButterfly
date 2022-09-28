@@ -29,3 +29,4 @@ GridCollider:
 RigidBody:
   isStatic: 1
   isKinematic: false
+  layer: staticGeom

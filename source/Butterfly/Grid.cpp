@@ -170,11 +170,13 @@ void GridCollider::_Update() {
     for (auto chunk : chunks) {
         if (chunk->gridColliders.size() != grid->cellsPerChunkX * grid->cellsPerChunkY) {
             //TODO grid cells are only updated if cellsPrev differ
-            for (auto collider : chunk->gridColliders) {
-                gameObject()->RemoveComponent(collider);
+            for (auto colliders : chunk->gridColliders) {
+                for (auto collider : colliders) {
+                    gameObject()->RemoveComponent(collider);
+                }
             }
             chunk->gridColliders.clear();
-            chunk->gridColliders.resize(grid->cellsPerChunkX * grid->cellsPerChunkY, nullptr);
+            chunk->gridColliders.resize(grid->cellsPerChunkX * grid->cellsPerChunkY, {});
         }
     }
     for (int i : grid->changedIndices) {
@@ -188,12 +190,11 @@ void GridCollider::_Update() {
         auto& chunk = chunks[iChunk];
         int iInChunk = grid->GetIndexInChunk(cell.pos);
         if (chunk) {
-            auto& collider = chunk->gridColliders[iInChunk];
-            if (collider) {
+            for(auto& collider : chunk->gridColliders[iInChunk]){
                 chunk->gameObject()->RemoveComponent(collider);
-                chunk->gridColliders[iInChunk] = nullptr;
-                chunk->changed = true;
             }
+            chunk->gridColliders[iInChunk].clear();
+            chunk->changed = true;
         }
         
         const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
@@ -219,7 +220,7 @@ void GridCollider::_Update() {
                 colliderCurrent = collider;
             }
             if (colliderCurrent) {
-                chunk->gridColliders[iInChunk] = colliderCurrent;
+                chunk->gridColliders[iInChunk].push_back(colliderCurrent);
                 chunk->gameObject()->AddComponent(colliderCurrent);
                 chunk->changed = true;
 

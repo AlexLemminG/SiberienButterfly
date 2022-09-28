@@ -278,7 +278,7 @@ class GridChunkCollider : public Component {
 
 public:
     bool changed = false;
-    eastl::vector<eastl::shared_ptr<class Collider>> gridColliders;
+    eastl::vector<eastl::vector<eastl::shared_ptr<class Collider>>> gridColliders;
     REFLECT_COMPONENT_BEGIN(GridChunkCollider);
     REFLECT_END();
 };

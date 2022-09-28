@@ -5,11 +5,13 @@ Scene:
       overrides:
         GameObject:
           tag: ItemsGrid
+        RigidBody: {}
     - prefab: prefabs\grid.asset
       overrides:
         GameObject:
           tag: GroundGrid
         GridDrawer: {}
+        RigidBody: {}
     - prefab: prefabs\column.asset
       overrides:
         Transform:
@@ -49,6 +51,7 @@ Scene:
           mass: 1000
           friction: 1
           restitution: 0
+          layer: ''
         MeshCollider:
           isConvex: 1
         MeshRenderer: {}

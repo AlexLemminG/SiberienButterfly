@@ -20,3 +20,4 @@ MeshCollider:
   mesh: models\column.blend$Column
 RigidBody:
   isStatic: true
+  layer: staticGeom
