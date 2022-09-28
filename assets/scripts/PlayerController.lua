@@ -114,6 +114,7 @@ function PlayerController:Update()
 	end
 	
 	if not action then
+		--TODO sleep on bed vs pick bed action differentiation
 		action = self.character:GetActionOnCellPos(cellPos)
 	end
 	if action == nil or action.isCharacter or not action:CanExecute() then
@@ -131,7 +132,13 @@ function PlayerController:Update()
 	if Input:GetKeyDown("Space") then
 		self.character:ExecuteAction(action)
 	end
-	Dbg.Text(string.format("%s", CellTypeInv[grid:GetCell(cellPos).type]))
+
+	local cellTypeText = CellTypeInv[grid:GetCell(cellPos).type]
+	if cellTypeText then
+		Dbg.Text(string.format("%s", cellTypeText))
+	else
+		Dbg.Text(string.format("%d", grid:GetCell(cellPos).type))
+	end
 end
 
 return PlayerController

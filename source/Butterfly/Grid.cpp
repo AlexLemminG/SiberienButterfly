@@ -558,6 +558,9 @@ void GridSystem::LoadCellTypes() {
         //no mesh for util
         eastl::string meshName = c;
         eastl::shared_ptr<Mesh> cellMesh = this->defaultMesh;
+        if (!luaDesc.meshName.empty()) {
+            meshName = luaDesc.meshName;
+        }
         if (luaDesc.isUtil) {
             meshName = "None";
             cellMesh = nullptr;

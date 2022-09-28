@@ -99,7 +99,18 @@ function CharacterCommandFactory.CreateFromMultipleRules(combineRules) : Charact
     }
     --To make sure after loading they are valid objects
     for index, value in ipairs(combineRules) do
-        combineRules[index] = Actions:GetCombineRule_NoAnyChecks(nil, value.charType, value.itemType, value.groundType)
+        --TODO get one specific rule from Actions
+        local allRules = Actions:GetAllCombineRules_NoAnyChecks(nil, value.charType, value.itemType, value.groundType)
+        if not allRules then
+            error("Failed to find specified rule")
+            continue
+        end
+        for index2, rule in ipairs(allRules) do
+            if rule.newCharType == value.newCharType and rule.newItemType == value.newItemType and rule.newGroundType == value.newGroundType then
+                combineRules[index] = rule
+                break
+            end
+        end
     end
     command.combineRules = combineRules
     if not combineRules then

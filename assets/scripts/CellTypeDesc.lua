@@ -91,4 +91,9 @@ SetCellInfoForAllBase(CellType.Water, { extraCollisions = {
     SphereCollision(waterSphereRadius, vector(waterSphereOffset,waterSphereOffsetY,waterSphereOffset)),
 } } )
 
+local bedCollider = BoxCollision(vector(0.4,0.5,0.8))
+SetCellInfo(CellType.Bed, { collision = bedCollider } )
+SetCellInfo(CellType.BedOccupied, { collision = bedCollider, meshName = "Bed" } )
+
+
 return CellTypeDesc

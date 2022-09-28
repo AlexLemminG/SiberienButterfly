@@ -339,7 +339,23 @@ function Character:SetIsSleeping(isSleeping : boolean, sleepingPos)
 	end
 	self.isSleeping = isSleeping
 	self.sleepingPos = sleepingPos
+
+	local cellPos = World.ground:GetCellWorldCenter(sleepingPos)
+
+	if isSleeping then
+		local position = cellPos + vector(0,0.25,0)
+		local rotation = Quaternion.LookAt(vector(0,0,1), vector(0,1,0))
+		-- rotation:set_scalar(savedState.rotation.w)
+		-- rotation:set_vector(vector(savedState.rotation.x,savedState.rotation.y,savedState.rotation.z))
+		local transform = self.transform:GetMatrix()
+		Mathf.SetPos(transform, position)
+		Mathf.SetRot(transform, rotation)
+		
+		self.transform:SetMatrix(transform)
+	end
+
 	self.rigidBody:SetEnabled(not isSleeping)
+	
 	if isSleeping then
 		self.animator:SetAnimation(self.deathAnimation)
 	end

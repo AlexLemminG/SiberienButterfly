@@ -51,6 +51,7 @@ local CellType = {
     Eatable_Any = 48,
     Bed = 49,
     BedOccupied = 50,
+    Wool = 51,
 }
 
 return CellType

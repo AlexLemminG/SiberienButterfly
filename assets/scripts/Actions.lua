@@ -98,6 +98,8 @@ function Actions:RegisterPickableItems()
 	pickableItems[CellType.Flour] = true
 	pickableItems[CellType.Stove] = true
 	pickableItems[CellType.StoveWithWood] = true
+	pickableItems[CellType.Wool] = true
+	pickableItems[CellType.Bed] = true
 end
 
 function Actions:IsPickable(itemType)
@@ -298,6 +300,31 @@ function Actions:RegisterCombineRuleForGround(charType, groundType, newCharType,
 	return self:RegisterCombineRuleForItemAndGround(charType, CellType.None, groundType, newCharType, CellType.None,
 		newGroundType
 		, callback)
+end
+
+function Actions:GetAllCombineRules_NoAnyChecks(character : Character|nil, charType : integer, itemType : integer, groundType : integer)
+	local charRules = self.combineRules[charType]
+	if charRules == nil then
+		return nil
+	end
+	local itemRules = charRules[itemType]
+	if itemRules == nil then
+		return nil
+	end
+	local rules = itemRules[groundType]
+	if not rules then
+		return nil
+	end
+	local result = nil
+	for i, rule in ipairs(rules) do
+		if not rule.preCondition or not character or rule.preCondition(character) then
+			if not result then
+				result = {}
+			end
+			table.insert(result, rule)
+		end
+	end
+	return result
 end
 
 function Actions:GetCombineRule_NoAnyChecks(character : Character|nil, charType : integer, itemType : integer, groundType : integer)
@@ -526,6 +553,7 @@ function Actions:RegisterAllCombineRules()
 		RuleCallback_ItemAppear)
 	self:RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
 	self:RegisterCombineRule(CellType.None, CellType.TreeSprout, CellType.None, CellType.None)
+	self:RegisterCombineRule(CellType.Wool, CellType.Wood, CellType.None, CellType.Bed)
 
 	self:RegisterCombineRuleForGround(CellType.Wood, CellType.Water, CellType.None,
 		CellType.WoodenBridge)

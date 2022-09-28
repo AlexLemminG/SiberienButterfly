@@ -76,8 +76,10 @@ struct GridCellDescLua {
     eastl::vector<GridCellDescLua_Collision> extraCollisions;
     eastl::vector<GridCellDescLua_Collision> allCollisions;
     eastl::string prefabName;
+    eastl::string meshName;
     REFLECT_BEGIN(GridCellDescLua);
     REFLECT_VAR(prefabName);
+    REFLECT_VAR(meshName);
     REFLECT_VAR(collision);
     REFLECT_VAR(extraCollisions);
     REFLECT_VAR(isUtil);
