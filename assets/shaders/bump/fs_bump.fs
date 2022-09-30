@@ -1,4 +1,4 @@
-$input v_wpos, v_normal, v_tangent, v_bitangent, v_texcoord0// in...
+$input v_wpos, v_normal, v_texcoord0// in...
 
 /*
  * Copyright 2011-2021 Branimir Karadzic. All rights reserved.
@@ -266,7 +266,7 @@ vec4 CalcPBR(Surface surface){
 
 void main()
 {
-	mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
+	//mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
 	vec2 uv = v_texcoord0 + u_uvOffset;
 	//vec3 localNormal;
 	//localNormal.xy = texture2D(s_texNormal, uv).xy * 2.0 - 1.0;

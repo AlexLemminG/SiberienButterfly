@@ -5,7 +5,7 @@
 
 class GameLib : public GameLibrary {
 	virtual bool Init(Engine* engine) override;
-	void Term() {}
+	void Term() { GameLibrary::Term(); }
 	INNER_LIBRARY();
 };
 

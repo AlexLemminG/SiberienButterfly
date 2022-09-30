@@ -36,8 +36,7 @@ ShadowSettings:
   numSplits: 1
   resolution: 1024
   hardShadows: true
-TimeSettings:
-  timeScale: 1
+TimeSettings: {}
 RenderSettings:
   backend: 2
   debug: false

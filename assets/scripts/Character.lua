@@ -178,7 +178,7 @@ end
 function Lerp(a,b,t) return a * (1-t) + b * t end
 
 function Character:Update()
-	if self:IsDead() or self.isSleeping then
+	if self.isDead or self.isSleeping then
 		return
 	end
 	self:UpdateMovement()

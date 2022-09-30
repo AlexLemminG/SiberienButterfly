@@ -384,12 +384,14 @@ void GridDrawer::_Update() {
         InstancedMeshRenderer::InstanceInfo* instance;
         if (cell.type == cellPrev.type) {
             instance = &ir->GetInstanceByIndex(instanceIndices[i]);
-            instance->transform = grid->cellsLocalMatrices[i];
+            //instance->transform = grid->cellsLocalMatrices[i];
+            instance->transform = Matrix4::ToAffineTransform(grid->cellsLocalMatrices[i]);
         }
         else {
-            instance = &ir->EmplaceBackOutIndex(instanceIndices[i], grid->cellsLocalMatrices[i]);
+            instance = &ir->EmplaceBackOutIndex(instanceIndices[i], Matrix4::ToAffineTransform(grid->cellsLocalMatrices[i]));
         }
-        instance->transform.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
+        Vector3 offset = grid->GetCellWorldCenter(cell);
+        SetPos(instance->transform, GetPos(instance->transform) + offset);
     }
 }
 void GridDrawer::OnValidate() {
