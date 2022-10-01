@@ -7,7 +7,7 @@ REFLECT_DEFINE_COMPONENT_BEGIN(SpawnOnEnableComponent);
 REFLECT_ATTRIBUTE(ExecuteInEditModeAttribute());
 REFLECT_VAR(gameObjectToSpawn);
 //REFLECT_VAR(destroyOnDisable);
-REFLECT_DEFINE_END(SpawnOnEnableComponent);
+REFLECT_DEFINE_END();
 
 void SpawnOnEnableComponent::OnEnable() {
 	if (gameObjectToSpawn) {
