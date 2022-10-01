@@ -52,10 +52,13 @@ function Game:GenerateWorldGrid()
 		return lastKey
 	end
 
+	local cellPos = Vector2Int.new()
 	for x = 0, self.gridSizeX-1, 1 do
 		for y = 0, self.gridSizeY-1, 1 do
+			cellPos.x = x
+			cellPos.y = y
 			local height = math.random(10) / 40
-			local cell = World.items:GetCell({x=x,y=y})
+			local cell = World.items:GetCell(cellPos)
 			local rand1 = math.random(100) / 100.0
 
 			cell.type = GetWeightedRandom(probabilities, probabilitiesSum)
@@ -63,8 +66,7 @@ function Game:GenerateWorldGrid()
 			cell.float4 = 0.0
 			cell.z = height
 			World.items:SetCell(cell)
-
-			cell = World.ground:GetCell({x=x,y=y})
+			cell = World.ground:GetCell(cellPos)
 			if math.random(100) > 32 then
 				cell.type = CellType.GroundWithGrass
 			elseif math.random(100) > 50 then
@@ -79,13 +81,14 @@ function Game:GenerateWorldGrid()
 
 	for x = 3, 4, 1 do
 		for y = 0, self.gridSizeY-1, 1 do
-
-			local cell = World.items:GetCell({x=x,y=y})
+			cellPos.x = x
+			cellPos.y = y
+			local cell = World.items:GetCell(cellPos)
 			cell.type = CellType.None
 			cell.z = 0.0
 			World.items:SetCell(cell)
 
-			cell = World.ground:GetCell({x=x,y=y})
+			cell = World.ground:GetCell(cellPos)
 			cell.type = CellType.Water
 			cell.z = 0.0
 
@@ -104,8 +107,10 @@ function Game:GenerateWorldGrid()
 			y = 5
 			x = x + 1
 		end
+		cellPos.x = x
+		cellPos.y = y
 		
-		local cell = World.items:GetCell({x=x,y=y})
+		local cell = World.items:GetCell(cellPos)
 		cell.type = itemIdx
 		World.items:SetCell(cell)
 	end

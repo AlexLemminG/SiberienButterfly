@@ -30,18 +30,17 @@ public:
 private:
 	Vector3 currentPosWithoutCollision;
 };
-DECLARE_TEXT_ASSET(TopDownCameraRig);
+REFLECT_DEFINE(TopDownCameraRig);
 
 void TopDownCameraRig::OnEnable()
 {
+	auto trans = gameObject()->transform();
 	auto target = GameObject::FindWithTag(targetTag);
 	if (target != nullptr) {
-		auto trans = gameObject()->transform();
 		auto targetPos = target->transform()->GetPosition() + offset;
-
 		trans->SetPosition(targetPos);
-		currentPosWithoutCollision = trans->GetPosition();
 	}
+	currentPosWithoutCollision = trans->GetPosition();
 }
 
 void TopDownCameraRig::Update() {

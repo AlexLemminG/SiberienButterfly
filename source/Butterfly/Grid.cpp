@@ -12,13 +12,11 @@
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
 
-DECLARE_TEXT_ASSET(GridSystem);
-DECLARE_TEXT_ASSET(GridSettings);
+REFLECT_DEFINE(GridSystem);
+REFLECT_DEFINE(GridSettings);
 REGISTER_GAME_SYSTEM(GridSystem);
-DECLARE_TEXT_ASSET(GridCollider);
-DECLARE_TEXT_ASSET(GridChunkCollider);
-DECLARE_TEXT_ASSET(GridDrawer);
-DECLARE_TEXT_ASSET(Grid);
+REFLECT_DEFINE(GridChunkCollider);
+REFLECT_DEFINE(Grid);
 
 
 REFLECT_DEFINE_BEGIN(GridCellDesc);
@@ -39,6 +37,8 @@ REFLECT_DEFINE_END(GridDrawer);
 REFLECT_DEFINE_COMPONENT_BEGIN(GridCollider);
 REFLECT_VAR(chunkPrefab);
 REFLECT_DEFINE_END(GridCollider);
+
+REFLECT_DEFINE(GridCellIterator);
 
 bool GridCellIterator::GetNextCell(GridCell& outCell) {
     ASSERT(grid);
@@ -475,16 +475,8 @@ void Grid::OnDisable() {
 }
 
 bool GridSystem::Init() {
-    auto L = LuaSystem::Get()->L;
-
-    LuaReflect::RegisterShared<GridSystem>(L);
-    LuaReflect::RegisterShared<Grid>(L);
-    LuaReflect::Register<GridCell>(L);
-    LuaReflect::Register<GridCellIterator>(L);
 
     settings = AssetDatabase::Get()->Load<GridSettings>("grid.asset");  // TODO make visible from inspector
-
-
 
     if (!settings) {
         return false;
@@ -498,17 +490,6 @@ bool GridSystem::Init() {
 }
 
 void GridSystem::Term() {
-    auto luaSystem = LuaSystem::Get();
-    if (luaSystem) {
-        luaSystem->onAfterScriptsReloading.Unsubscribe(this->onAfterLuaReloaded);
-        auto L = LuaSystem::Get()->L;
-        if (L) {
-            LuaReflect::UnregisterShared<GridSystem>(L);
-            LuaReflect::UnregisterShared<Grid>(L);
-            LuaReflect::Unregister<GridCell>(L);
-            LuaReflect::Unregister<GridCellIterator>(L);
-        }
-    }
     AssetDatabase::Get()->onAfterUnloaded.Unsubscribe(this->onAfterAssetDatabaseReloaded);
 
     settings = nullptr;

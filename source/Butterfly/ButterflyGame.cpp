@@ -6,7 +6,7 @@
 #include "SEngine/Resources.h"
 
 REGISTER_GAME_SYSTEM(ButterflyGame);
-DECLARE_TEXT_ASSET(SaveData);
+REFLECT_DEFINE(SaveData);
 
 static GameEventHandle onBeforeReloadingHandle;
 static GameEventHandle onAfterReloadingHandle;

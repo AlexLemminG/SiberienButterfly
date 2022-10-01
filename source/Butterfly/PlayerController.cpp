@@ -183,4 +183,4 @@ bool PlayerController::CanJump() {
     return true;
 }
 
-DECLARE_TEXT_ASSET(PlayerController);
+REFLECT_DEFINE(PlayerController);

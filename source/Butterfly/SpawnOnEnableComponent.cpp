@@ -9,8 +9,6 @@ REFLECT_VAR(gameObjectToSpawn);
 //REFLECT_VAR(destroyOnDisable);
 REFLECT_DEFINE_END(SpawnOnEnableComponent);
 
-DECLARE_TEXT_ASSET(SpawnOnEnableComponent);
-
 void SpawnOnEnableComponent::OnEnable() {
 	if (gameObjectToSpawn) {
 		spawnedGameObject = Instantiate(gameObjectToSpawn);
