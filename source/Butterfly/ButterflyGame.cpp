@@ -5,6 +5,7 @@
 #include "SEngine/LuaReflect.h"
 #include "SEngine/Resources.h"
 
+REFLECT_DEFINE(ButterflyGame);
 REGISTER_GAME_SYSTEM(ButterflyGame);
 REFLECT_DEFINE(SaveData);
 

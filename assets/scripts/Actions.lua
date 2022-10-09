@@ -65,6 +65,58 @@ function Actions.RuleToString(rule)
 															CellTypeInv[rule.newCharType], CellTypeInv[rule.newItemType], CellTypeInv[rule.newGroundType])
 end
 
+function Actions.CreateDoNothingAtPosAction(character : Character, pos : Vector2Int) : CharacterAction
+	local action = CharacterAction:new()
+
+	action.character = character
+	action.intPos = pos
+
+	function action:ExecuteImpl(checkOnly) : boolean
+		return true
+	end
+
+	return action
+end
+
+function Actions.CreateWakeUpImmediatelyAction(character : Character) : CharacterAction
+	local action = CharacterAction:new()
+
+	action.character = character
+
+	function action:ExecuteImpl(checkOnly) : boolean
+		--TODO more clear why sleepingPos ~= nil (sleeping not in bed)
+		if not character.isSleeping or character.sleepingPos ~= nil then
+			return false
+		end
+		if checkOnly then
+			return true
+		end
+		character:SetIsSleeping(false)
+		
+		return true
+	end
+
+	return action
+end
+
+function Actions.CreateSleepImmediatelyAction(character : Character) : CharacterAction
+	local action = CharacterAction:new()
+
+	action.character = character
+
+	function action:ExecuteImpl(checkOnly) : boolean
+		--TODO dont sleep if already sleeping ?
+		if checkOnly then
+			return true
+		end
+		character:SetIsSleeping(true)
+		
+		return true
+	end
+
+	return action
+end
+
 function Actions:Init()
 	self:Term()
 

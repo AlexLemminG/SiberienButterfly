@@ -4,6 +4,7 @@ local World = require("World")
 local WorldQuery = require("WorldQuery")
 local Game       = require("Game")
 local CellTypeInv= require("CellTypeInv")
+local GameConsts = require("GameConsts")
 
 ---@class PlayerController
 ---@field character Character|nil
@@ -40,6 +41,9 @@ function PlayerController:OnEnable()
 	if World.playerCharacter then
 		LogError("Player character is not nil")
 	end
+
+	self.character.name = "Player"
+
 	World.playerCharacter = self.character
 end
 
@@ -60,6 +64,21 @@ function PlayerController:Update()
 	if self.character:IsDead() then
 		return
 	end
+
+	Game:DrawStats(self.character)
+	
+    if Game.dayTimePercent >= GameConsts.goToSleepImmediatelyTimePercent or Game.dayTimePercent < GameConsts.wakeUpDayTimePercent then
+		self.character:SetIsSleeping(true)
+    elseif Game.dayTimePercent >= GameConsts.goToSleepDayTimePercent or Game.dayTimePercent <= GameConsts.wakeUpDayTimePercent then
+		-- time to go to bed mr. player
+	elseif self.character.isSleeping then
+		self.character:SetIsSleeping(false)
+    end
+
+	if self.character.isSleeping then
+		return
+	end
+
 	local input = Input
 
 	local velocity = vector(0,0,0)
@@ -112,6 +131,7 @@ function PlayerController:Update()
         Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
 		Game:DrawStats(nearestCharacter)
 	end
+
 	
 	if not action then
 		--TODO sleep on bed vs pick bed action differentiation

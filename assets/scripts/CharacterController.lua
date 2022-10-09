@@ -2,6 +2,7 @@ local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
 local Game                   = require "Game"
 local GameConsts                   = require "GameConsts"
+local Actions                   = require "Actions"
 
 ---@class CharacterController
 ---@field command CharacterCommand|nil
@@ -57,26 +58,32 @@ function CharacterController:Think()
     self.immediateTargetPos = nil
     self.desiredAction = nil
 
-    -- local closestWheat = WorldQuery:FindNearestItem(CellType.Bread_1, self.character:GetIntPos())
-    -- if closestWheat then
-    --     self.immediateTargetPos = closestWheat
-    --     self.desiredAction = self.character:GetActionOnCellPos(closestWheat)
-    -- end
-
+    --TODO 
     local commandsPriorityList = {}
-    table.insert(commandsPriorityList, self.command)
-    if self.character.hunger > 0.7 then
-        table.insert(commandsPriorityList, 1, CharacterCommandFactory.EatSomething())
-    end
 
-    local goToSleepDayTimePercent = 0.8
-    local wakeUpDayTimePercent = 0.2
-    if Game.dayTimePercent >= goToSleepDayTimePercent or Game.dayTimePercent <= wakeUpDayTimePercent then
-        table.insert(commandsPriorityList, 1, CharacterCommandFactory.GoToSleep())
+    if Game.dayTimePercent >= GameConsts.goToSleepImmediatelyTimePercent then
+        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleepImmediately())
+    elseif Game.dayTimePercent >= GameConsts.goToSleepDayTimePercent or Game.dayTimePercent <= GameConsts.wakeUpDayTimePercent then
+        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleep())
     elseif self.character.isSleeping then
-        table.insert(commandsPriorityList, 1, CharacterCommandFactory.WakeUp())
+        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUp())
+        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUpImmediately())
     end
 
+    if self.character.hunger > 0.7 then
+        --TODO eat until really full if possible
+        table.insert(commandsPriorityList, CharacterCommandFactory.EatSomething())
+    end
+    
+    if Game.dayTimePercent >= GameConsts.goToCampfireDayTimePercent then
+        table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
+    end
+
+    if self.command then
+        table.insert(commandsPriorityList, self.command)
+    end 
+    
+    
     for index, command in ipairs(commandsPriorityList) do
         -- print("A", self.playerAssignedRule)
         -- print(WorldQuery:FindNearestItem(self.playerAssignedRule.itemType, self.character:GetIntPos()))
@@ -84,11 +91,10 @@ function CharacterController:Think()
         if self.desiredAction then
             break
         end
-        -- print(self.desiredAction)
     end
 
     if self.desiredAction then
-        if self.desiredAction.intPos then
+         if self.desiredAction.intPos then
             self.immediateTargetPos = self.desiredAction.intPos
         end
     end
@@ -96,7 +102,7 @@ end
 
 function CharacterController:Act()
     if self.desiredAction and self.character:CanExecuteAction(self.desiredAction) then
-        if self.character:GetIntPos() == self.desiredAction.intPos then
+        if self.character:GetIntPos() == self.desiredAction.intPos or self.desiredAction.intPos == nil then
             self.character:ExecuteAction(self.desiredAction)
         end
     end

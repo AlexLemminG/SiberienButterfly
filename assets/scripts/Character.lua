@@ -50,7 +50,7 @@ function Character:SaveState() : any
 	state.name = self.name
 	state.isDead = self.isDead
 	state.isSleeping = self.isSleeping
-	if self.isSleeping then
+	if self.isSleeping and self.sleepingPos then
 		state.sleepingPos = {x=self.sleepingPos.x, y=self.sleepingPos.y}
 	end
 	local position = self:GetPosition()
@@ -73,9 +73,11 @@ function Character:LoadState(savedState)
 	self.isDead = savedState.isDead
 	self.isSleeping = savedState.isSleeping
 	if self.isSleeping then
-		self.sleepingPos = Vector2Int.new()
-		self.sleepingPos.x = savedState.sleepingPos.x
-		self.sleepingPos.y = savedState.sleepingPos.y
+		if savedState.sleepingPos then
+			self.sleepingPos = Vector2Int.new()
+			self.sleepingPos.x = savedState.sleepingPos.x
+			self.sleepingPos.y = savedState.sleepingPos.y
+		end
 	end
 	local position = vector(savedState.position.x, savedState.position.y, savedState.position.z)
 	local rotation = Quaternion:new()
@@ -197,6 +199,8 @@ function Character:Update()
 	local velocity = self.rigidBody:GetLinearVelocity()
 	velocity = vector(velocity.x, 0.0, velocity.z)
 	self.rigidBody:SetLinearVelocity(velocity)
+
+	self:DrawName()
 end
 
 function Character:UpdateMovement()
@@ -340,18 +344,19 @@ function Character:SetIsSleeping(isSleeping : boolean, sleepingPos)
 	self.isSleeping = isSleeping
 	self.sleepingPos = sleepingPos
 
-	local cellPos = World.ground:GetCellWorldCenter(sleepingPos)
 
 	if isSleeping then
-		local position = cellPos + vector(0,0.25,0)
-		local rotation = Quaternion.LookAt(vector(0,0,1), vector(0,1,0))
-		-- rotation:set_scalar(savedState.rotation.w)
-		-- rotation:set_vector(vector(savedState.rotation.x,savedState.rotation.y,savedState.rotation.z))
-		local transform = self.transform:GetMatrix()
-		Mathf.SetPos(transform, position)
-		Mathf.SetRot(transform, rotation)
-		
+		if sleepingPos then
+			local cellPos = World.ground:GetCellWorldCenter(sleepingPos)
+			local position = cellPos + vector(0,0.25,0)
+			local rotation = Quaternion.LookAt(vector(0,0,1), vector(0,1,0))
+			-- rotation:set_scalar(savedState.rotation.w)
+			-- rotation:set_vector(vector(savedState.rotation.x,savedState.rotation.y,savedState.rotation.z))
+			local transform = self.transform:GetMatrix()
+			Mathf.SetPos(transform, position)
+			Mathf.SetRot(transform, rotation)
 		self.transform:SetMatrix(transform)
+		end
 	end
 
 	self.rigidBody:SetEnabled(not isSleeping)
@@ -359,6 +364,32 @@ function Character:SetIsSleeping(isSleeping : boolean, sleepingPos)
 	if isSleeping then
 		self.animator:SetAnimation(self.deathAnimation)
 	end
+end
+
+function Character:DrawName()
+	if self == World.playerCharacter then
+		--return
+	end
+	local camera = Camera
+	camera = camera.GetMain()
+
+	--TODO head pos
+	local pos3d = self:GetPosition() + vector(0,1.5,0)
+	local pos = camera:WorldPointToScreen(pos3d)
+
+	local deltaX, deltaY = imgui.CalcTextSize(self.name)
+	pos.x = pos.x - deltaX / 2.0
+
+	imgui.SetNextWindowSize(deltaX * 2.0,deltaY * 2.0)
+	imgui.SetNextWindowPos(pos.x,pos.y, imgui.constant.Cond.Always, 0.0,0.5)
+	imgui.SetNextWindowBgAlpha(0.0)
+	local winFlags = imgui.constant.WindowFlags
+	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs, winFlags.NoScrollbar)
+	imgui.PushID(tostring(self))
+	imgui.Begin(string.format("CharacterName##%s",tostring(self)), nil, flags)
+	imgui.TextUnformatted(self.name)
+	imgui.End()
+	imgui.PopID()
 end
 
 function Character:Die()
@@ -371,6 +402,11 @@ function Character:Die()
 	self.animator:SetAnimation(self.deathAnimation)
 
 	self.animator.speed = 1.0
+end
+
+function Character:GetWarmthImmediate() : number
+	local temperature = Game:GetTemperatureAt(self:GetIntPos())
+	return temperature
 end
 
 return Character

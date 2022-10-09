@@ -2,6 +2,7 @@ local World = require("World")
 local GameConsts = require("GameConsts")
 local Utils      = require("Utils")
 local CellAnimations = require("CellAnimations")
+local WorldQuery     = require("WorldQuery")
 local Game = {
 	scene = nil,
 	playerGO = nil,
@@ -11,7 +12,12 @@ local Game = {
 	gridSizeX = 20,
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
-	dayTimePercent = 0.5
+	dayTimePercent = 0.3,
+	goodConditionsToSpawnCharacterDuration = 0.0,
+	avgHunger = 0.0,
+	avgHealth = 0.0,
+	newNpcPercent = 0.0,
+	isPause = false
 }
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
@@ -25,19 +31,30 @@ function Game:GenerateWorldGrid()
 	World.items:SetSize(self.gridSizeX, self.gridSizeY)
 	World.ground:SetSize(self.gridSizeX, self.gridSizeY)
 	
-	local probabilities = {}
-	probabilities[CellType.Wheat] = 1
-	probabilities[CellType.Tree] = 1
-	probabilities[CellType.Stone] = 1
-	probabilities[CellType.FlintStone] = 1
-	probabilities[CellType.BushWithBerries] = 1
-	probabilities[CellType.None] = 10
+	local probabilitiesItems = {}
+	probabilitiesItems[CellType.Wheat] = 1
+	probabilitiesItems[CellType.Tree] = 1
+	probabilitiesItems[CellType.Stone] = 1
+	probabilitiesItems[CellType.FlintStone] = 1
+	probabilitiesItems[CellType.BushWithBerries] = 0.1
+	probabilitiesItems[CellType.None] = 10
 	-- probabilities[CellType.CampfireWithWoodFired] = 10
 
-	local probabilitiesSum = 0
-	for key, value in pairs(probabilities) do
-		probabilitiesSum = probabilitiesSum + value
+	local probabilitiesItemsSum = 0
+	for key, value in pairs(probabilitiesItems) do
+		probabilitiesItemsSum = probabilitiesItemsSum + value
 	end
+	
+	local probabilitiesGround = {}
+	probabilitiesGround[CellType.GroundWithGrass] = 9
+	probabilitiesGround[CellType.Ground] = 1
+	-- probabilities[CellType.CampfireWithWoodFired] = 10
+
+	local probabilitiesGroundSum = 0
+	for key, value in pairs(probabilitiesGround) do
+		probabilitiesGroundSum = probabilitiesGroundSum + value
+	end
+
 	function GetWeightedRandom(weights, weightsSum)
 		local r = math.random() * weightsSum
 		local w = 0
@@ -61,58 +78,56 @@ function Game:GenerateWorldGrid()
 			local cell = World.items:GetCell(cellPos)
 			local rand1 = math.random(100) / 100.0
 
-			cell.type = GetWeightedRandom(probabilities, probabilitiesSum)
+			cell.type = GetWeightedRandom(probabilitiesItems, probabilitiesItemsSum)
 			
 			cell.float4 = 0.0
 			cell.z = height
 			World.items:SetCell(cell)
+
 			cell = World.ground:GetCell(cellPos)
-			if math.random(100) > 32 then
-				cell.type = CellType.GroundWithGrass
-			elseif math.random(100) > 50 then
-				cell.type = CellType.GroundPrepared
-			else
-				cell.type = CellType.Ground
-			end
 			cell.z = height
+			cell.type = GetWeightedRandom(probabilitiesGround, probabilitiesGroundSum)
 			World.ground:SetCell(cell)
 		end
 	end
 
-	for x = 3, 4, 1 do
-		for y = 0, self.gridSizeY-1, 1 do
+		for x = 3, 4, 1 do
+			for y = 0, self.gridSizeY-1, 1 do
+				cellPos.x = x
+				cellPos.y = y
+				local cell = World.items:GetCell(cellPos)
+				cell.type = CellType.None
+				cell.z = 0.0
+				World.items:SetCell(cell)
+	
+				cell = World.ground:GetCell(cellPos)
+				cell.type = CellType.Water
+				cell.z = 0.0
+	
+				World.ground:SetCell(cell)
+			end
+		end
+
+
+	local generateAllItems = false
+	if generateAllItems then
+		local itemIdx = 1
+		local y = 5
+		local x = 10
+		while CellTypeInv[itemIdx] do
+			itemIdx = itemIdx + 1
+			y = y + 1
+			if y >= 15 then
+				y = 5
+				x = x + 1
+			end
 			cellPos.x = x
 			cellPos.y = y
+			
 			local cell = World.items:GetCell(cellPos)
-			cell.type = CellType.None
-			cell.z = 0.0
+			cell.type = itemIdx
 			World.items:SetCell(cell)
-
-			cell = World.ground:GetCell(cellPos)
-			cell.type = CellType.Water
-			cell.z = 0.0
-
-			World.ground:SetCell(cell)
 		end
-	end
-
-
-	local itemIdx = 1
-	local y = 5
-	local x = 10
-	while CellTypeInv[itemIdx] do
-		itemIdx = itemIdx + 1
-		y = y + 1
-		if y >= 15 then
-			y = 5
-			x = x + 1
-		end
-		cellPos.x = x
-		cellPos.y = y
-		
-		local cell = World.items:GetCell(cellPos)
-		cell.type = itemIdx
-		World.items:SetCell(cell)
 	end
 end
 
@@ -127,6 +142,7 @@ function CreatePlayerGO()
 	
 	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
 
+	SceneManager.GetCurrentScene():AddGameObject(luaPlayerGO)
 	-- playerScript.scriptName = "Character"	--- TODO support from engine
 	-- playerScript.scale = 0.8
 	return luaPlayerGO
@@ -140,6 +156,7 @@ function CreateNpcGO()
 	characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
 	character:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
 
+	SceneManager.GetCurrentScene():AddGameObject(character)
 	return character
 end
 
@@ -165,12 +182,10 @@ function Game:OnEnable()
 	Game.Cleanup()
 
 	local luaPlayerGO = CreatePlayerGO()
-	self.scene:AddGameObject(luaPlayerGO)
 
-	local numNPC = 9
+	local numNPC = 1
 	for i = 1, numNPC, 1 do
-		local character = CreateNpcGO()
-		self.scene:AddGameObject(character)
+		CreateNpcGO()
 	end
 end
 
@@ -218,7 +233,6 @@ function Game.LoadSave(save) : boolean
 				characterGO = CreateNpcGO()
 			end
 			local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
-			SceneManager.GetCurrentScene():AddGameObject(characterGO)
 			characterScript:LoadState(savedCharacter)
 		end
 	else
@@ -486,6 +500,32 @@ function Game:MainLoop()
 	end
 	
 	self:UpdateDayTime(dt)
+	
+	local avgHealth = 0.0
+	local avgHunger = 0.0
+	if #World.characters > 0 then
+		for index, character in ipairs(World.characters) do
+			avgHealth = avgHealth + character.health
+			avgHunger = avgHunger + character.hunger
+		end
+		avgHealth = avgHealth / #World.characters
+		avgHunger = avgHunger / #World.characters
+	end
+	self.avgHunger = avgHunger
+	self.avgHealth = avgHealth
+
+	--TODO consts
+	if self.avgHealth > 0.5 and avgHunger < 0.7 then
+		self.goodConditionsToSpawnCharacterDuration = self.goodConditionsToSpawnCharacterDuration + dt
+	else
+		--TODO speed const
+		self.goodConditionsToSpawnCharacterDuration = math.max(self.goodConditionsToSpawnCharacterDuration - dt * 0.25, 0.0)
+	end
+	self.newNpcPercent = self.goodConditionsToSpawnCharacterDuration / GameConsts.goodConditionsToSpawnCharacterDuration
+	if self.goodConditionsToSpawnCharacterDuration > GameConsts.goodConditionsToSpawnCharacterDuration then
+		self.goodConditionsToSpawnCharacterDuration = 0.0
+		CreateNpcGO()
+	end
 end
 
 function Game:DrawStats(character : Character)
@@ -508,7 +548,7 @@ function Game:DrawStats(character : Character)
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
 	imgui.Begin("Character stats "..tostring(isPlayer), nil, flags)
 
-	local text = string.format("Name: %s\nHunger: %.3f \nHealth: %.3f", character.name, character.hunger, character.health)
+	local text = string.format("Name: %s\nHunger: %.3f \nHealth: %.3f \nWarmth: %.3f", character.name, character.hunger, character.health, character:GetWarmthImmediate())
 	imgui.TextUnformatted(text)
 	imgui.End()
 end
@@ -524,20 +564,10 @@ function Game:DrawWorldStats()
 	imgui.Begin("World Stats", nil, flags)
 	imgui.SetWindowFontScale(1.5)
 
-	local avgHealth = 0.0
-	local avgHunger = 0.0
-	if #World.characters > 0 then
-		for index, character in ipairs(World.characters) do
-			avgHealth = avgHealth + character.health
-			avgHunger = avgHunger + character.hunger
-		end
-		avgHealth = avgHealth / #World.characters
-		avgHunger = avgHunger / #World.characters
-	end
 	local text = ""
 	text = string.format("Population: %d\n", #World.characters)
 	if #World.characters > 0 then
-		text = text..string.format("Avg Hunger: %.3f\nAvg Health: %.3f\n", avgHunger, avgHealth)
+		text = text..string.format("Avg Hunger: %.3f\nAvg Health: %.3f\nNew Npc: %.1f%s\n", self.avgHunger, self.avgHealth, self.newNpcPercent * 100.0, "%")
 	end
 	
 	local hour = math.floor(self.dayTimePercent * 24)
@@ -797,13 +827,13 @@ function Game:EndDialog() --TODO pass DialogHandle and end one particular dialog
 end
 
 function Game:Update()
-	for i = 1, 1, 1 do
-		self:MainLoop()
+	local input = Input
+	if input:GetKeyDown("Escape") then
+		self.isPause = not self.isPause
 	end
 
 	self:DrawUI()
 
-	local input = Input
 	if input:GetKeyDown("0") then
 		local loaded = ButterflyGame:LoadFromDisk("Save")
 	elseif input:GetKeyDown("9") then
@@ -812,9 +842,43 @@ function Game:Update()
 	if input:GetKeyDown("8") then
 		ButterflyGame:SaveToDisk("Save")
 		local loaded = ButterflyGame:LoadFromDisk("Save")
-		ButterflyGame:SaveToDisk("Save")
+		ButterflyGame:SaveToDisk("Save")	
 		local loaded = ButterflyGame:LoadFromDisk("Save")
 	end
+
+	--TODO pause rest of the game as well (component Update methods)
+	if self.isPause then
+
+		return
+	end
+
+	for i = 1, 1, 1 do
+		self:MainLoop()
+	end
+end
+
+function Game:GetAmbientTemperature() : number
+	--TODO consts
+	if self.dayTimePercent > 0.8 then
+		return 0.0
+	end
+	if self.dayTimePercent < 0.3 then
+		return 0.0
+	end
+	return 1.0
+end
+
+function Game:GetTemperatureAt(intPos : Vector2Int) : number
+	local ambientTemperature = self:GetAmbientTemperature()
+	local temperature = ambientTemperature
+
+	local nearestCampfirePos = WorldQuery:FindNearestItem(CellType.CampfireWithWoodFired, intPos, 3)
+	if nearestCampfirePos then
+		--TODO not 1.0
+		temperature = temperature + 1.0
+	end
+	--TODO cell temp
+	return temperature
 end
 
 return Game

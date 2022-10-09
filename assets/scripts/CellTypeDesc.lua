@@ -65,6 +65,8 @@ SetCellInfo(CellType.WheatCollected_6, { collision = smallObjectCollision } )
 SetCellInfo(CellType.CampfireWithWoodFired, { collision = bigObjectCollision, prefabName = "prefabs/CampfireWithWoodFired.asset" } )
 SetCellInfo(CellType.Campfire_Any, { isUtil = true } )
 
+SetCellInfo(CellType.StoveWithWoodFired, { collision = bigObjectCollision, prefabName = "prefabs/StoveWithWoodFired.asset" } )
+
 local fenceHeight = 1.0
 local fenceLength = 1.0
 local fenceRadius = 0.1

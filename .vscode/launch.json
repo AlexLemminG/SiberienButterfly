@@ -30,6 +30,11 @@
             "args": [
                 "${workspaceFolder}"
             ]
+        },
+        {
+            "type": "luau_dap",
+            "request": "attach",
+            "name": "Attach to lua"
         }
     ]
 }

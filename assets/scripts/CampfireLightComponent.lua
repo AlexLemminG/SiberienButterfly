@@ -24,7 +24,7 @@ function CampfireLightComponent:Update()
 end
 
 function CampfireLightComponent:OnEnable()
-    self.light = self:gameObject():GetComponent("PointLight")
+    self.light = self:gameObject():GetComponent("Light")
     self.initialIntencity = self.light.intensity
 end
 

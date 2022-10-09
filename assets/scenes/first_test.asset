@@ -57,6 +57,8 @@ Scene:
         MeshRenderer: {}
     - prefab: prefabs\game.asset
       overrides: {}
+    - prefab: prefabs\StoveWithWoodFired.asset
+      overrides: {}
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset

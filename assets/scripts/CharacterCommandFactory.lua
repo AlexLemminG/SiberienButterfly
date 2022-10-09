@@ -59,6 +59,50 @@ function CharacterCommandFactory.EatSomething() : CharacterCommand
     return command
 end
 
+function CharacterCommandFactory.GoToCampfire() : CharacterCommand
+    local command = {}
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        local campfirePos = WorldQuery:FindNearestItem(CellType.CampfireWithWoodFired, character:GetIntPos())
+        if campfirePos == nil then
+            return nil
+        end
+        --TODO account for current character position
+        local nearestEmpty = WorldQuery:FindNearestItem(CellType.None, campfirePos, 3)
+        if nearestEmpty == nil then
+            return nil
+        end 
+        
+        local action = Actions.CreateDoNothingAtPosAction(character, nearestEmpty)
+        return action
+    end
+    command.savedState = {
+        factoryFunctionName = "GoToCampfire"
+    }
+    return command
+end
+
+function CharacterCommandFactory.GoToSleepImmediately() : CharacterCommand
+    local command = {}
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        return Actions.CreateSleepImmediatelyAction(character)
+    end
+    command.savedState = {
+        factoryFunctionName = "GoToSleepImmediately"
+    }
+    return command
+end
+
+function CharacterCommandFactory.WakeUpImmediately() : CharacterCommand
+    local command = {}
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        return Actions.CreateWakeUpImmediatelyAction(character)
+    end
+    command.savedState = {
+        factoryFunctionName = "WakeUpImmediately"
+    }
+    return command
+end
+
 function CharacterCommandFactory.GoToSleep() : CharacterCommand
     local sleepRules = {}
 

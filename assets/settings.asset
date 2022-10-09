@@ -39,4 +39,5 @@ ShadowSettings:
 TimeSettings: {}
 RenderSettings:
   backend: 2
-  debug: false
+  debug: true
+  vsync: true

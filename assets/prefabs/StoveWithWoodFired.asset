@@ -1,0 +1,89 @@
+GameObject:
+  tag: 'StoveWithWoodFired'
+  components:
+    - $Transform
+    - $MeshRenderer
+    - $SpawnOnEnableComponent
+    - $SpawnOnEnableComponent2
+Transform: ~
+MeshRenderer:
+  mesh: models/GridCells.blend$StoveWithWoodFired
+  material: materials/grid.asset$Material
+SpawnOnEnableComponent$SpawnOnEnableComponent:
+  gameObjectToSpawn: prefabs/StoveWithWoodFired.asset$Light
+SpawnOnEnableComponent$SpawnOnEnableComponent2:
+  gameObjectToSpawn: prefabs/StoveWithWoodFired.asset$Light2
+GameObject$Light:
+  tag: 'StoveWithWoodFired_Light'
+  components:
+    - $LightTransform
+    - $ParentedTransform
+    - $LuaComponent
+    - $SpotLight
+Transform$LightTransform:
+  euler:
+    - 0
+    - 90
+    - 0
+ParentedTransform$ParentedTransform:
+  parentTransform: prefabs/StoveWithWoodFired.asset$Transform
+  localMatrix:
+    pos:
+      - 0.1
+      - 0.24
+      - 0
+    euler:
+      - 0
+      - 90
+      - 0
+LuaComponent$LuaComponent:
+  luaObj:
+    scriptName: CampfireLightComponent
+GameObject$Light2:
+  tag: 'StoveWithWoodFired_Light2'
+  components:
+    - $LightTransform2
+    - $SpotLight2
+    - $ParentedTransform2
+    - $LuaComponent2
+Transform$LightTransform2:
+  euler:
+    - 0
+    - 90
+    - 0
+ParentedTransform$ParentedTransform2:
+  parentTransform: prefabs/StoveWithWoodFired.asset$Transform
+  localMatrix:
+    pos:
+      - 0.5
+      - 0.2
+      - 0
+    euler:
+      - 0
+      - 90
+      - 0
+LuaComponent$LuaComponent2:
+  luaObj:
+    scriptName: CampfireLightComponent
+SpotLight$SpotLight:
+  radius: 2
+  innerRadius: 0.24
+  intensity: 5
+  color:
+    r: 0.9490196
+    g: 0.2509804
+    b: 0.09019608
+    a: 1
+  innerAngle: 0
+  outerAngle: 135
+SpotLight$SpotLight2:
+  radius: 3
+  innerRadius: 0.5
+  intensity: 0
+  color:
+    r: 0.9266409
+    g: 0.57142
+    b: 0.26475453
+    a: 1
+  innerAngle: 65
+  outerAngle: 125
