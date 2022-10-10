@@ -410,6 +410,7 @@ function Game:UpdateDayTime(dt : float)
 
 	function LerpHarmonicsCoeffs(a, b, t)
 		--dunno better way to create new array of colors
+		--TODO this is potential freed memory access?
 		local result = SphericalHarmonics.new().coeffs
 		for i = 1, 9, 1 do
 			result[i] = Color.Lerp(a[i], b[i], t)
