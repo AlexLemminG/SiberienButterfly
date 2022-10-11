@@ -11,6 +11,7 @@
 #include "SEngine/Collider.h"
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
+#include <EASTL/priority_queue.h>
 
 REFLECT_DEFINE(GridSystem);
 REFLECT_DEFINE(GridSettings);
@@ -38,7 +39,239 @@ REFLECT_DEFINE_COMPONENT_BEGIN(GridCollider);
 REFLECT_VAR(chunkPrefab);
 REFLECT_DEFINE_END();
 
+
+REFLECT_DEFINE_BEGIN(NavigationGrid);
+REFLECT_METHOD(IsWalkable);
+REFLECT_METHOD(CalcPath);
+REFLECT_VAR(sourceGrids);
+REFLECT_DEFINE_END();
+
+
+REFLECT_DEFINE_BEGIN(GridPath);
+REFLECT_VAR(from);
+REFLECT_VAR(to);
+REFLECT_VAR(isComplete);
+REFLECT_VAR(points);
+REFLECT_DEFINE_END();
+
 REFLECT_DEFINE(GridCellIterator);
+
+
+void GridSystem::Update() {
+    navigation->Update();
+}
+
+
+GridPath NavigationGrid::CalcPath(Vector2Int from, Vector2Int to) const {
+    GridPath path;
+    path.from = from;
+    path.to = to;
+
+    if (sizeX == 0) {
+        return path;
+    }
+
+    if (to == from) {
+        path.isComplete = true;
+        path.points.push_back(from);
+        return path;
+    }
+
+
+    eastl::vector<float> costsApprox;
+    costsApprox.resize(sizeX * sizeY, -1.f);
+
+    eastl::vector<float> realCosts;
+    realCosts.resize(sizeX * sizeY, -1.f);
+
+    class Compare {
+    public:
+        int sizeX;
+        int sizeY;
+        eastl::vector<float>* costs;
+        bool operator()(const Vector2Int& a, const Vector2Int& b) const
+        {
+            return (*costs)[a.x * sizeY + a.y] > (*costs)[b.x * sizeY + b.y];
+        }
+    };
+    eastl::priority_queue<Vector2Int, eastl::vector<Vector2Int>, Compare> nextCellsToCheck;
+    nextCellsToCheck.comp.sizeX = sizeX;
+    nextCellsToCheck.comp.sizeY = sizeY;
+    nextCellsToCheck.comp.costs = &costsApprox;
+
+    auto approxCostFunc = [](Vector2Int from, Vector2Int to) {
+        return Mathf::Abs(from.x - to.x) + Mathf::Abs(from.y - to.y);
+    };
+
+    constexpr int maxIterationsCount = 1000;
+    int iterationsCount = 0;
+    //TODO just use indices everywhere
+    auto checkAndAddNewCell = [&](const Vector2Int& cell, float realCost) {
+        if (cell.x < 0 || cell.x >= sizeX || cell.y < 0 || cell.y >= sizeY) {
+            return;
+        }
+        int idx = cell.x * sizeY + cell.y;
+        if (realCosts[idx] != -1.f) {
+            //already added
+            return;
+        }
+        if (!this->IsWalkable(cell.x, cell.y)) {
+            return;
+        }
+        realCosts[idx] = realCost;
+        costsApprox[idx] = realCost + approxCostFunc(to, cell);
+        nextCellsToCheck.push(cell);
+    };
+
+    checkAndAddNewCell(from, 0);
+    while (nextCellsToCheck.size() > 0) {
+        Vector2Int cell;
+        nextCellsToCheck.pop(cell);
+
+        if (cell == to) {
+            break;
+        }
+        iterationsCount++;
+        if (iterationsCount >= maxIterationsCount) {
+            continue;
+        }
+        float realCost = realCosts[cell.x * sizeY + cell.y];
+
+        checkAndAddNewCell({ cell.x + 1, cell.y + 1 }, realCost + Mathf::sqrt2);
+        checkAndAddNewCell({ cell.x - 1, cell.y - 1 }, realCost + Mathf::sqrt2);
+        checkAndAddNewCell({ cell.x - 1, cell.y + 1 }, realCost + Mathf::sqrt2);
+        checkAndAddNewCell({ cell.x + 1, cell.y - 1 }, realCost + Mathf::sqrt2);
+
+        checkAndAddNewCell({ cell.x+1, cell.y }, realCost + 1.f);
+        checkAndAddNewCell({ cell.x-1, cell.y }, realCost + 1.f);
+        checkAndAddNewCell({ cell.x, cell.y+1 }, realCost + 1.f);
+        checkAndAddNewCell({ cell.x, cell.y-1 }, realCost + 1.f);
+    }
+
+    if (realCosts[to.x * sizeY + to.y] == -1.f) {
+        //path not found
+        return path;
+    }
+
+    //backtracing path
+    path.isComplete = true;
+    Vector2Int currentCell = to;
+
+    auto getCost = [&](const Vector2Int& cell) {
+        if (cell.x < 0 || cell.x >= sizeX || cell.y < 0 || cell.y >= sizeY) {
+            return FLT_MAX;
+        }
+        int idx = cell.x * sizeY + cell.y;
+        if (realCosts[idx] != -1.f) {
+            return realCosts[idx];
+        }
+        else {
+            return FLT_MAX;
+        }
+    };
+
+    float currentCellCost = realCosts[currentCell.x * sizeY + currentCell.y];
+    const Vector2Int deltas[] = { {-1, -1}, {-1, 1}, {1, -1}, {1, 1}, {-1, 0}, {1, 0}, {0, 1}, {0, -1} };
+    path.points.push_back(to);
+    while (currentCell != from) {
+        float minCost = currentCellCost;
+        Vector2Int minCell = currentCell;
+        for (const auto& delta : deltas) {
+            Vector2Int cell = currentCell + delta;
+            float cost = getCost(cell);
+            if (cost < minCost) {
+                minCost = cost;
+                minCell = cell;
+            }
+        }
+        ASSERT(minCell != currentCell);
+
+        currentCellCost = minCost;
+        currentCell = minCell;
+        path.points.push_back(currentCell);
+    }
+
+    eastl::reverse(path.points.begin(), path.points.end());
+
+    return path;
+}
+
+void NavigationGrid::Update() {
+    //TODO separate init method
+    sourceGrids = GridSystem::Get()->grids;
+    int newSizeX = -1;
+    int newSizeY = -1;
+    for (auto grid : this->sourceGrids) {
+        if (newSizeX == -1) {
+            newSizeX = grid->sizeX;
+            newSizeY = grid->sizeY;
+        }
+        else {
+            ASSERT(newSizeX == grid->sizeX);
+            ASSERT(newSizeY == grid->sizeY);
+        }
+    }
+    if (newSizeX != sizeX || newSizeY != sizeY) {
+        this->sizeX = newSizeX;
+        this->sizeY = newSizeY;
+        this->walkableCells.clear();
+        this->walkableCells.resize(sizeX * sizeY);
+
+        for (int x = 0; x < sizeX; x++) {
+            for (int y = 0; y < sizeY; y++) {
+                this->walkableCells[x * sizeY + y] = CalcIsWalkable(x, y);
+            }
+        }
+        return;
+    }
+
+
+    for (auto g : sourceGrids) {
+        for (auto i : g->changedIndices) {
+            int x = i / sizeY;
+            int y = i % sizeX;
+            this->walkableCells[i] = CalcIsWalkable(x, y);
+        }
+    }
+}
+
+eastl::shared_ptr<NavigationGrid> GridSystem::GetNavigation() const {
+    return navigation;
+}
+
+bool NavigationGrid::CalcIsWalkable(int x, int y) const {
+    WalkableType result = WalkableType::WALKABLE;
+    for (auto g : sourceGrids) {
+        auto type = (GridCellType)(g->GetCell({ x,y }).type);
+        const auto& desc = GridSystem::Get()->GetDesc(type);
+        auto walkableType = desc.walkableType;
+        switch (walkableType)
+        {
+        case WalkableType::NOT_WALKABLE:
+            if (result == WalkableType::WALKABLE) {
+                result = WalkableType::NOT_WALKABLE;
+            }
+            break;
+        case WalkableType::WALKABLE:
+
+            break;
+        case WalkableType::FORCE_MAKE_WALKABLE:
+            result = WalkableType::FORCE_MAKE_WALKABLE;
+            break;
+        default:
+            ASSERT(false);
+            break;
+        }
+    }
+    return result != WalkableType::NOT_WALKABLE;
+}
+
+bool NavigationGrid::IsWalkable(int x, int y) const {
+    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY) {
+        return this->walkableCells[x * sizeY + y];
+    }
+    return false;
+}
 
 bool GridCellIterator::GetNextCell(GridCell& outCell) {
     ASSERT(grid);
@@ -415,15 +648,7 @@ const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
 }
 
 void Grid::OnEnable() {
-    eastl::shared_ptr<Grid> thisShared;
-    for (auto c : gameObject()->components) {
-        if (c.get() == this) {
-            thisShared = eastl::dynamic_pointer_cast<Grid>(c);
-            break;
-        }
-    }
-    ASSERT(thisShared);
-    GridSystem::Get()->grids.push_back(thisShared);
+    GridSystem::Get()->grids.push_back(Component::ToShared(this));
 
 
     if (!isInited) {
@@ -481,6 +706,8 @@ bool GridSystem::Init() {
     if (!settings) {
         return false;
     }
+
+    navigation = eastl::make_shared<NavigationGrid>();
 
     this->onAfterLuaReloaded = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() { LoadCellTypes(); });
     this->onAfterAssetDatabaseReloaded = AssetDatabase::Get()->onAfterUnloaded.Subscribe([this]() {LoadCellTypes(); });
@@ -572,6 +799,8 @@ void GridSystem::LoadCellTypes() {
             }
         }
         auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc, prefab };
+
+        desc.walkableType = luaDesc.forceMakeWalkable ? WalkableType::FORCE_MAKE_WALKABLE : (luaDesc.isWalkable ? WalkableType::WALKABLE : WalkableType::NOT_WALKABLE);
 
         this->settings->cellDescs.emplace(desc.type, desc);
     }
@@ -679,6 +908,13 @@ static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& or
     return false;
 }
 
+bool GridSystem::FindNearestWalkable(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius) const
+{
+    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [this](const Vector2Int& pos) {
+        return navigation->IsWalkable(pos.x, pos.y);
+        });
+}
+
 bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const
 {
     auto* itemsGrid = this->GetGrid("ItemsGrid").get();
@@ -686,7 +922,7 @@ bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& o
 
     ASSERT(itemsGrid && groundGrid);
 
-    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [itemsGrid, groundGrid, itemType, groundType](const Vector2Int& pos) {
+    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [itemsGrid, groundGrid, itemType, groundType, this](const Vector2Int& pos) {
         return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType;
         });
 }

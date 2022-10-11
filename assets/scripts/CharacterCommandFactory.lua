@@ -59,6 +59,22 @@ function CharacterCommandFactory.EatSomething() : CharacterCommand
     return command
 end
 
+function CharacterCommandFactory.GoToPoint(pointX, pointY) : CharacterCommand
+    local command = {}
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        local point = Vector2Int.new()
+        point.x = pointX
+        point.y = pointY
+        local action = Actions.CreateDoNothingAtPosAction(character, point)
+        return action
+    end
+    command.savedState = {
+        factoryFunctionName = "GoToPoint",
+        args = { pointX, pointY }
+    }
+    return command
+end
+
 function CharacterCommandFactory.GoToCampfire() : CharacterCommand
     local command = {}
     function command:CalcNextAction(character : Character) : CharacterAction|nil
@@ -67,7 +83,7 @@ function CharacterCommandFactory.GoToCampfire() : CharacterCommand
             return nil
         end
         --TODO account for current character position
-        local nearestEmpty = WorldQuery:FindNearestItem(CellType.None, campfirePos, 3)
+        local nearestEmpty = WorldQuery:FindNearestWalkable(campfirePos, 3)
         if nearestEmpty == nil then
             return nil
         end 

@@ -402,6 +402,17 @@ function Game:GrowNewTrees(deltaTime : number)
 	end
 end
 
+function Game.DbgDrawPath(path)
+	if path and path.isComplete then
+		for i = 1, path.points:size(), 1 do
+			local pointInt2D = path.points[i]
+			local point = World.ground:GetCellWorldCenter(pointInt2D)
+			--print(point)
+			Dbg.DrawPoint(point, 0.25 * (path.points:size() - i) / path.points:size())
+		end
+	end
+end
+
 function Game:UpdateDayTime(dt : float)
 	self.dayTimePercent = self.dayTimePercent + dt / GameConsts.dayDurationSeconds
 	if self.dayTimePercent > 1.0 then
@@ -578,12 +589,17 @@ function Game:DrawWorldStats()
 	text = text.."Time: "..hour..":"..minute.."\n"
 
 	local playerPos = nil
+	local playerIntPos = nil
 	if World.playerCharacter then 
 		playerPos = World.playerCharacter:GetPosition() 
+		playerIntPos = World.playerCharacter:GetIntPos()
 	else 
 		playerPos = Vector3.new() 
+		playerIntPos = Vector2Int.new()
 	end
-	text = text..string.format("playerPos: %.1f %.1f", playerPos.x, playerPos.z)
+	text = text..string.format("playerPos: %.1f %.1f\n", playerPos.x, playerPos.z)
+	
+	text = text..string.format("isWalkable: %s\n", tostring(World.navigation:IsWalkable(playerIntPos.x, playerIntPos.y)))
 
 	imgui.TextUnformatted(text)
 	imgui.End()

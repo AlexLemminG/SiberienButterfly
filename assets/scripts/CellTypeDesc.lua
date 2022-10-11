@@ -70,12 +70,12 @@ SetCellInfo(CellType.StoveWithWoodFired, { collision = bigObjectCollision, prefa
 local fenceHeight = 1.0
 local fenceLength = 1.0
 local fenceRadius = 0.1
-SetCellInfoForAllBase(CellType.Fence, { collision = CapsuleCollision(fenceRadius, fenceHeight, vector(0,fenceHeight / 2 ,0)) } )
+SetCellInfoForAllBase(CellType.Fence, { isWalkable = false, collision = CapsuleCollision(fenceRadius, fenceHeight, vector(0,fenceHeight / 2 ,0)) } )
 local fenceColliderX = BoxCollision(vector(fenceLength,fenceHeight,fenceRadius*2), vector(fenceLength/2,fenceHeight/2,0))
 local fenceColliderZ = BoxCollision(vector(fenceRadius*2,fenceHeight,fenceLength), vector(0,fenceHeight/2,fenceLength/2))
-SetCellInfoForAllBase(CellType.FenceX, { collision = fenceColliderX } )
-SetCellInfoForAllBase(CellType.FenceZ, { collision = fenceColliderZ } )
-SetCellInfoForAllBase(CellType.FenceXZ, { collision = fenceColliderX, extraCollisions = {fenceColliderZ} } )
+SetCellInfoForAllBase(CellType.FenceX, { isWalkable = false, collision = fenceColliderX } )
+SetCellInfoForAllBase(CellType.FenceZ, { isWalkable = false, collision = fenceColliderZ } )
+SetCellInfoForAllBase(CellType.FenceXZ, { isWalkable = false, collision = fenceColliderX, extraCollisions = {fenceColliderZ} } )
 SetCellInfo(CellType.Fence_Any, { isUtil = true } )
 
 SetCellInfoForAllBase(CellType.Bread_Any, { collision = CapsuleCollision(0.15, 1.0, vector(0,0.5,0)) } )
@@ -86,7 +86,9 @@ SetCellInfo(CellType.Bread_Any, { isUtil = true } )
 local waterSphereRadius = 0.175
 local waterSphereOffset = 0.3
 local waterSphereOffsetY = 0.3
-SetCellInfoForAllBase(CellType.Water, { extraCollisions = {
+SetCellInfoForAllBase(CellType.Water, { 
+    isWalkable = false,
+extraCollisions = {
     SphereCollision(waterSphereRadius, vector(waterSphereOffset,waterSphereOffsetY,-waterSphereOffset)),
     SphereCollision(waterSphereRadius, vector(-waterSphereOffset,waterSphereOffsetY,-waterSphereOffset)),
     SphereCollision(waterSphereRadius, vector(-waterSphereOffset,waterSphereOffsetY,waterSphereOffset)),
@@ -97,5 +99,11 @@ local bedCollider = BoxCollision(vector(0.4,0.5,0.8))
 SetCellInfo(CellType.Bed, { collision = bedCollider } )
 SetCellInfo(CellType.BedOccupied, { collision = bedCollider, meshName = "Bed" } )
 
+
+-- for key, value in pairs(CellTypeDesc) do    
+--     if value.collision or value.extraCollisions then
+--         value.isWalkable = false
+--     end
+-- end
 
 return CellTypeDesc

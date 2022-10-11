@@ -72,6 +72,8 @@ struct GridCellDescLua_Collision {
 };
 struct GridCellDescLua {
     bool isUtil = false;
+    bool isWalkable = true;
+    bool forceMakeWalkable = false;
     GridCellDescLua_Collision collision;
     eastl::vector<GridCellDescLua_Collision> extraCollisions;
     eastl::vector<GridCellDescLua_Collision> allCollisions;
@@ -83,7 +85,15 @@ struct GridCellDescLua {
     REFLECT_VAR(collision);
     REFLECT_VAR(extraCollisions);
     REFLECT_VAR(isUtil);
+    REFLECT_VAR(isWalkable);
+    REFLECT_VAR(forceMakeWalkable);
     REFLECT_END();
+};
+
+enum class WalkableType {
+    NOT_WALKABLE,
+    WALKABLE,
+    FORCE_MAKE_WALKABLE,
 };
 
 class GridCellDesc {
@@ -93,6 +103,7 @@ class GridCellDesc {
     eastl::shared_ptr<Mesh> mesh;
     GridCellDescLua luaDesc;
     eastl::shared_ptr<GameObject> prefab;
+    WalkableType walkableType = WalkableType::NOT_WALKABLE;
     REFLECT_DECLARE(GridCellDesc);
 };
 
@@ -223,19 +234,47 @@ private:
     REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
 };
 
+struct GridPath {
+    Vector2Int from;
+    Vector2Int to;
+    bool isComplete = false;
+    eastl::vector<Vector2Int> points;
+
+    REFLECT_DECLARE(GridPath);
+};
+
+class NavigationGrid : public Object {
+public:
+    bool IsWalkable(int x, int y) const;
+    void Update();
+
+    GridPath CalcPath(Vector2Int from, Vector2Int to) const;
+private:
+    bool CalcIsWalkable(int x, int y) const;
+    int sizeX;
+    int sizeY;
+    eastl::vector<bool> walkableCells; //TODO more packed then bool vector
+    eastl::vector<eastl::shared_ptr<Grid>> sourceGrids;
+
+    REFLECT_DECLARE(NavigationGrid);
+};
+
 class GridSystem : public GameSystem<GridSystem> {
    public:
     const GridCellDesc& GetDesc(GridCellType type) const;
 
     bool Init() override;
+    void Update() override;
     void Term() override;
 
     eastl::shared_ptr<GridSettings> settings;
 
+    eastl::shared_ptr<NavigationGrid> navigation;
     eastl::vector<eastl::shared_ptr<Grid>> grids;
     eastl::shared_ptr<Mesh> defaultMesh;
 
     eastl::shared_ptr<Grid> GetGrid(const eastl::string& name) const;
+    eastl::shared_ptr<NavigationGrid> GetNavigation() const;
 
     void LoadCellTypes();
 
@@ -245,11 +284,14 @@ class GridSystem : public GameSystem<GridSystem> {
     GameEventHandle onAfterAssetDatabaseReloaded;
 
     bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const;
+    bool FindNearestWalkable(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius) const;
 
     REFLECT_BEGIN(GridSystem);
     REFLECT_METHOD(GetGrid);
+    REFLECT_METHOD(GetNavigation);
     REFLECT_METHOD(GetMeshByCellType);
     REFLECT_METHOD(FindNearestPosWithTypes);
+    REFLECT_METHOD(FindNearestWalkable);
     REFLECT_END();
 };
 

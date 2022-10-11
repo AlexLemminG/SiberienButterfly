@@ -113,7 +113,13 @@ function PlayerController:Update()
 	
 	local cellPos = grid:GetClosestIntPos(self.transform:GetPosition())
 	local pos = grid:GetCellWorldCenter(cellPos)
-	
+
+	-- local zeroPos = Vector2Int.new()
+	-- zeroPos.x = 10
+	-- zeroPos.y = 10
+	-- local path = World.navigation:CalcPath(cellPos, zeroPos)
+	-- Game.DbgDrawPath(path)
+
 	pos = pos + vector(0,0.0,0)
 	
 	local maxCharacterInteractionDistance = 0.75

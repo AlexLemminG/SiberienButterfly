@@ -45,7 +45,9 @@ function Utils.ArrayRemove(array, value) : boolean
     return false
 end
 
+
 getmetatable(Vector2Int:new()).__eq = function(a, b) return a.x == b.x and a.y == b.y end
+getmetatable(Vector2Int:new()).__sub = function(a, b) local result = Vector2Int.new() result.x = a.x - b.x result.y = a.y - b.y return result end
 
 ---@class vector
 ---@field x number

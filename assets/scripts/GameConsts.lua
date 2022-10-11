@@ -8,7 +8,7 @@ local GameConsts = {
     wheatGrowthTime0 = 30.0,
     wheatGrowthTime1 = 30.0,
     bushBerriesGrowthTime = 30.0,
-    dayDurationSeconds = 60.0,
+    dayDurationSeconds = 600.0,
     goodConditionsToSpawnCharacterDuration = 30.0,
 
     goToSleepDayTimePercent = 0.8,

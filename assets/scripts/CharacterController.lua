@@ -11,7 +11,9 @@ local CharacterController = {
     character = nil,
     immediateTargetPos = nil,
     desiredAction = nil,
-    command = nil
+    command = nil,
+    currentPath = nil,
+    currentPathPointIndex = 0
 }
 local Component = require("Component")
 setmetatable(CharacterController, Component)
@@ -78,6 +80,7 @@ function CharacterController:Think()
     if Game.dayTimePercent >= GameConsts.goToCampfireDayTimePercent then
         table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
     end
+    --table.insert(commandsPriorityList, CharacterCommandFactory.GoToPoint(1,13))
 
     if self.command then
         table.insert(commandsPriorityList, self.command)
@@ -95,21 +98,61 @@ function CharacterController:Think()
 
     if self.desiredAction then
          if self.desiredAction.intPos then
-            self.immediateTargetPos = self.desiredAction.intPos
+            self.currentPath = World.navigation:CalcPath(self.character:GetIntPos(), self.desiredAction.intPos)
+            if not self.currentPath.isComplete then
+                self.currentPath = nil
+                LogWarning("Failed to find path (not handled)")
+                --TODO no path, so need to abandon this action
+            else
+                self.currentPathPointIndex = 1
+            end
+        end
+    end
+end
+
+function CharacterController:UpdatePathFollowing()
+    if self.currentPath == nil then
+        return
+    end
+    local characterIntPos = self.character:GetIntPos()
+
+    if characterIntPos == self.currentPath.points[self.currentPathPointIndex] then
+        if self.currentPath.points:size() > self.currentPathPointIndex then
+            self.currentPathPointIndex = self.currentPathPointIndex + 1
+        else
+            --TODO some event?
+            self.currentPath = nil
+        end
+    end
+
+    if self.currentPath then
+        local intPos = self.currentPath.points[self.currentPathPointIndex]
+        self.immediateTargetPos = World.items:GetCellWorldCenter(intPos)
+        if World.items:GetCell(intPos).type ~= CellType.None or World.items:GetCell(characterIntPos).type ~= CellType.None then
+            if self.currentPath.points:size() > self.currentPathPointIndex then
+                --assuming not walkable through center
+                local nextIntPos = self.currentPath.points[self.currentPathPointIndex+1]
+                local delta = nextIntPos - intPos
+                local offset = vector(-delta.y * 0.3, 0.0, delta.x * 0.3)
+                self.immediateTargetPos = self.immediateTargetPos + offset
+            end
+        else
+            
         end
     end
 end
 
 function CharacterController:Act()
+    self:UpdatePathFollowing()
+    Game.DbgDrawPath(self.currentPath)
     if self.desiredAction and self.character:CanExecuteAction(self.desiredAction) then
         if self.character:GetIntPos() == self.desiredAction.intPos or self.desiredAction.intPos == nil then
             self.character:ExecuteAction(self.desiredAction)
         end
     end
     if self.immediateTargetPos then
-        local dir = vector(self.immediateTargetPos.x, 0, self.immediateTargetPos.y) -
-            self.character.transform:GetPosition()
-        dir = dir * 3.0
+        local dir = self.immediateTargetPos - self.character.transform:GetPosition()
+        dir = dir * 30.0
         self.character:SetVelocity(dir)
     else
         self.character:SetVelocity(vector(0, 0, 0))

@@ -56,7 +56,11 @@ Scene:
           isConvex: 1
         MeshRenderer: {}
     - prefab: prefabs\game.asset
-      overrides: {}
+      overrides:
+        NavigationGrid:
+          sourceGrids:
+            - ''
+            - ''
     - prefab: prefabs\StoveWithWoodFired.asset
       overrides: {}
   gameObjects:

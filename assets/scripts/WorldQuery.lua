@@ -24,7 +24,7 @@ function WorldQuery:FindNearestCharacterToInterract(originPos : Vector2, predica
     local minDistance = math.huge
     local result = nil
     for index, character in ipairs(World.characters) do
-        if character:CanInteract() then
+        if not (predicate(character) and character:CanInteract()) then
             continue
         end
         local distance = Vector2.Distance(character:GetPosition2D(), originPos)
@@ -54,6 +54,15 @@ function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int, 
     local closestPos = Vector2Int:new()
     local grid = World.items
     if grid:FindNearestPosWithType(closestPos, originPos, queryRadius, cellType) then
+        return closestPos
+    end
+    return nil
+end
+
+function WorldQuery:FindNearestWalkable(originPos : Vector2Int, radius) : Vector2Int|nil
+    local queryRadius = radius or 10
+    local closestPos = Vector2Int:new()
+    if GridSystem:FindNearestWalkable(closestPos, originPos, queryRadius) then
         return closestPos
     end
     return nil
