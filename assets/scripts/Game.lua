@@ -846,7 +846,7 @@ end
 function Game:Update()
 	local input = Input
 	if input:GetKeyDown("Escape") then
-		self.isPause = not self.isPause
+		--self.isPause = not self.isPause
 	end
 
 	self:DrawUI()
