@@ -1,3 +1,5 @@
+local Component               = require("Component")
+local CharacterControllerBase = require("CharacterControllerBase")
 local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
 local Game                    = require "Game"
@@ -5,27 +7,24 @@ local GameConsts              = require "GameConsts"
 local Actions                 = require "Actions"
 local CharacterControllerBase = require "CharacterControllerBase"
 local Component               = require("Component")
+local WorldQuery              = require("WorldQuery")
+local CellType                = require("CellType")
+local World                   = require("World")
 
---TODO use mini fsm instead if command
---save them to state with current desired action
-
----@class CharacterController: CharacterControllerBase
-local CharacterController = {
+---@class SheepCharacterController: CharacterControllerBase
+local SheepCharacterController = {
 }
-setmetatable(CharacterController, CharacterControllerBase)
-CharacterController.__index = CharacterController
 
-local WorldQuery = require("WorldQuery")
-local CellType = require("CellType")
-local World = require("World")
+setmetatable(SheepCharacterController, CharacterControllerBase)
+SheepCharacterController.__index = SheepCharacterController
 
-function CharacterController:new(o)
+function SheepCharacterController:new(o)
     o = Component:new(o)
     setmetatable(o, self)
     return o
 end
 
-function CharacterController:Think()
+function SheepCharacterController:Think()
     self.immediateTargetPos = nil
     self.desiredAction = nil
 
@@ -50,13 +49,6 @@ function CharacterController:Think()
     if Game.dayTimePercent >= GameConsts.goToCampfireDayTimePercent then
         table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
     end
-    --table.insert(commandsPriorityList, CharacterCommandFactory.GoToPoint(1,13))
-
-    if self.command then
-        table.insert(commandsPriorityList, self.command)
-    end
-
-    table.insert(commandsPriorityList, CharacterCommandFactory.DropItem())
 
     table.insert(commandsPriorityList, CharacterCommandFactory.Wander())
 
@@ -95,20 +87,4 @@ function CharacterController:Think()
     end
 end
 
-function CharacterController:GetActionOnCharacter(character : Character)
-	--TODO only for player
-	local action = {}
-	action.isCharacter = true
-	action.selfCharacter = character
-	action.otherCharacter = self.character
-	function action:Execute()
-			if Game.currentDialog then
-				Game:EndDialog()
-			else
-				Game:BeginDialog(self.selfCharacter, self.otherCharacter)
-			end
-		end
-	return action
-end
-
-return CharacterController
+return SheepCharacterController

@@ -70,6 +70,10 @@ GridPath NavigationGrid::CalcPath(Vector2Int from, Vector2Int to) const {
     if (sizeX == 0) {
         return path;
     }
+    if (from.x < 0 || from.x >= sizeX || from.y < 0 || from.y >= sizeY ||
+        to.x < 0 || to.x >= sizeX || to.y < 0 || to.y >= sizeY) {
+        return path;
+    }
 
     if (to == from) {
         path.isComplete = true;
@@ -298,6 +302,17 @@ bool GridCellIterator::GetNextCell(GridCell& outCell) {
     return false;
 }
 
+GridCellIterator Grid::GetTypeIterator(int cellType) {
+    return GridCellIterator([cellType](const GridCell& cell) 
+        { 
+            return cell.type == cellType; 
+        }, this);
+}
+
+GridCellIterator Grid::GetTypeWithAnimIterator(int cellType, int animType) {
+    return GridCellIterator([cellType, animType](const GridCell& cell) { return cell.type == cellType && cell.animType == animType; }, this);
+}
+
 GridCellIterator Grid::GetAnimatedCellsIterator() {
     return GridCellIterator([](const GridCell& cell) { return cell.animType > (int)GridCellAnimType::NONE; }, this);
 }
@@ -383,8 +398,10 @@ void GridCollider::_Update() {
     if (lastModificationsCount == grid->GetTypeModificationsCount()) {
         return;
     }
-
-    if (chunks.size() != grid->chunksCountX * grid->chunksCountY) {
+    bool fullUpdate = false;
+    if (chunks.size() != grid->chunksCountX * grid->chunksCountY || lastFullyClearedCount != grid->GetFullyClearedCount()) {
+        fullUpdate = true;
+        lastFullyClearedCount = grid->GetFullyClearedCount();
         for (auto c : chunks) {
             gameObject()->GetScene()->RemoveGameObject(c->gameObject());
         }
@@ -396,6 +413,7 @@ void GridCollider::_Update() {
                 chunks.push_back(go->GetComponent<GridChunkCollider>());
             }
         }
+        ASSERT(grid->changedIndices.size() == grid->cells.size());
     }
     lastModificationsCount = grid->GetTypeModificationsCount();
     auto gridSystem = GridSystem::Get();
@@ -415,7 +433,7 @@ void GridCollider::_Update() {
     for (int i : grid->changedIndices) {
         const auto& cell = grid->cells[i];
         const auto& cellPrev = grid->cellsPrev[i];
-        if (cellPrev.type == cell.type) {
+        if (cellPrev.type == cell.type && !fullUpdate) {
             //TODO check location
             continue;
         }
@@ -506,6 +524,7 @@ void GridDrawer::_Update() {
         return;
     }
     if (lastModificationsCount == grid->GetModificationsCount()) {
+        ASSERT(lastFullyClearedCount == grid->GetFullyClearedCount());
         return;
     }
     lastModificationsCount = grid->GetModificationsCount();
@@ -521,9 +540,14 @@ void GridDrawer::_Update() {
     //}
     auto scene = gameObject()->GetScene();
 
-    if (instanceIndices.size() != grid->cells.size()) {
+    bool isFullUpdate = false;
+    if (instanceIndices.size() != grid->cells.size() || lastFullyClearedCount != grid->GetFullyClearedCount()) {
+        isFullUpdate = true;
+        lastFullyClearedCount = grid->GetFullyClearedCount();
         for (auto& go : gameObjects) {
-            scene->RemoveGameObject(go);
+            if (go) {
+                scene->RemoveGameObject(go);
+            }
         }
         gameObjects.clear();
 
@@ -534,6 +558,9 @@ void GridDrawer::_Update() {
         }
         instanceIndices.clear();
         instanceIndices.resize(grid->cells.size(), -1);
+        
+        //TODO not exacly if have repeating indices
+        ASSERT(grid->changedIndices.size() == grid->cells.size());
     }
 
     for (int i : grid->changedIndices) {
@@ -541,7 +568,7 @@ void GridDrawer::_Update() {
         const auto& cellPrev = grid->cellsPrev[i];
         const auto& cellLocalMatrix = grid->cellsLocalMatrices[i];
         const auto& cellLocalMatrixPrev = grid->cellsLocalMatricesPrev[i];
-        if (cell.type == cellPrev.type && cellLocalMatrix == cellLocalMatrixPrev) {
+        if (cell.type == cellPrev.type && cellLocalMatrix == cellLocalMatrixPrev && !isFullUpdate) {
             continue;
         }
 
@@ -583,7 +610,7 @@ void GridDrawer::_Update() {
                 auto matrix = grid->cellsLocalMatrices[i];
                 matrix.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
                 eastl::shared_ptr<GameObject> go;
-                if (cell.type == cellPrev.type) {
+                if (cell.type == cellPrev.type && !isFullUpdate) {
                     go = gameObjects[instanceIndices[i]];
                     go->transform()->SetMatrix(matrix);
                 }
@@ -615,7 +642,7 @@ void GridDrawer::_Update() {
             instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
         }
         InstancedMeshRenderer::InstanceInfo* instance;
-        if (cell.type == cellPrev.type) {
+        if (cell.type == cellPrev.type && !isFullUpdate) {
             instance = &ir->GetInstanceByIndex(instanceIndices[i]);
             //instance->transform = grid->cellsLocalMatrices[i];
             instance->transform = Matrix4::ToAffineTransform(grid->cellsLocalMatrices[i]);
@@ -692,6 +719,7 @@ void Grid::SetSize(int sizeX, int sizeY) {
     for (int i = 0; i < cells.size(); i++) {
         changedIndices.push_back(i);
     }
+    fullyClearedCount++;//TODO not only here?
 }
 
 void Grid::OnDisable() {

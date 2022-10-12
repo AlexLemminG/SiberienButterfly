@@ -38,11 +38,13 @@ function PlayerController:OnEnable()
 
 	self:gameObject():GetScene():AddGameObject(self.selectionGO)
 
+	self.character.maxSpeed += 0.5
+
 	if World.playerCharacter then
 		LogError("Player character is not nil")
 	end
 
-	self.character.name = "Player"
+	--self.character.name = "Player"
 
 	World.playerCharacter = self.character
 end
@@ -133,8 +135,10 @@ function PlayerController:Update()
 
 	local action = nil
 	if nearestCharacter then
-		action = self.character:GetActionOnCharacter(nearestCharacter)
-        Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
+		action = nearestCharacter:GetActionOnCharacter(self.character)
+		if action then
+			Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
+		end
 		Game:DrawStats(nearestCharacter)
 	end
 

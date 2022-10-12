@@ -2,6 +2,7 @@ local WorldQuery = require("WorldQuery")
 local CellType   = require("CellType")
 local Actions = require("Actions")
 local Utils   = require("Utils")
+local World   = require("World")
 
 local CharacterCommandFactory = {}
 
@@ -71,6 +72,66 @@ function CharacterCommandFactory.GoToPoint(pointX, pointY) : CharacterCommand
     command.savedState = {
         factoryFunctionName = "GoToPoint",
         args = { pointX, pointY }
+    }
+    return command
+end
+
+function CharacterCommandFactory.DropItem() : CharacterCommand
+    local command = {}
+    
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        if character.item == CellType.None or not Actions:IsPickable(character.item) then
+            return nil
+        end
+        local characterIntPos = character:GetIntPos()
+        local rule = Actions:GetDropRule(character.item)
+        if not rule then
+            --TODO error
+           return nil 
+        end
+        return WorldQuery:FindNearestActionFromRule(character, rule)
+    end
+    command.savedState = {
+        factoryFunctionName = "DropItem",
+    }
+    return command
+end
+
+function CharacterCommandFactory.Wander() : CharacterCommand
+    local command = {}
+    
+    function command:OnEnable(character : Character)
+        if not character.characterController.commandState.wander then
+            character.characterController.commandState.wander = {}
+        end
+    end
+
+    function command:OnFailed(character : Character)
+        character.characterController.commandState.wander = {}
+    end
+
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        local pos = character:GetIntPos()
+
+        local radius = 3
+        local state = character.characterController.commandState.wander
+        --TODO clamp to radius
+        if not state.pos or state.pos == pos then
+           state.pos = Vector2Int.new() 
+           state.pos.x = math.random(pos.x - radius, pos.x + radius)
+           state.pos.y = math.random(pos.y - radius, pos.y + radius)
+
+           state.pos.x = math.max(state.pos.x, 0)
+           state.pos.y = math.max(state.pos.y, 0)
+
+           state.pos.x = math.min(state.pos.x, World.items.sizeX-1)
+           state.pos.y = math.min(state.pos.y, World.items.sizeY-1)
+        end
+        local action = Actions.CreateDoNothingAtPosAction(character, state.pos)
+        return action
+    end
+    command.savedState = {
+        factoryFunctionName = "Wander",
     }
     return command
 end

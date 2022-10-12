@@ -18,10 +18,7 @@ Transform:
     - 0
 MeshRenderer:
   mesh: models\Vintik.blend$Mesh
-  material: $M1
-Material$M1:
-  shader: engine\shaders\main.asset
-  colorTex: engine\textures\white.png
+  material: materials/grid.asset$Material
 CapsuleCollider:
   radius: 0.34
   center:

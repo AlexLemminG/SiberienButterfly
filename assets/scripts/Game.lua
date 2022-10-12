@@ -148,13 +148,54 @@ function CreatePlayerGO()
 	return luaPlayerGO
 end
 
+function LoadNpcGO(savedState) : GameObject|nil
+	local type = savedState.type
+
+	if not type then
+		type = "Character"
+	end
+
+	local characterGO = nil
+	if type == "Character" then
+		characterGO = CreateNpcGO()
+	elseif type == "Sheep" then
+		characterGO = CreateSheepGO()
+	else
+		LogError("Unknown npc type%s", type)
+		return nil
+	end
+
+	local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
+	characterScript:LoadState(savedState)
+
+	return characterGO
+end
+
 function CreateNpcGO()
 	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	local character = Instantiate(characterPrefab)
 	local characterControllerScript = character:AddComponent("LuaComponent")
-	characterControllerScript.luaObj = { scriptName = "CharacterController", data = {}}
+	characterControllerScript.luaObj = { scriptName = "CharacterController" }
+	characterControllerScript.type = "Character"
 	character:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
+
+	SceneManager.GetCurrentScene():AddGameObject(character)
+	return character
+end
+
+function CreateSheepGO()
+	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
+
+	local character = Instantiate(characterPrefab)
+	character:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
+	local characterComponent = character:GetComponent("LuaComponent")
+	characterComponent.baseModelFile = "models/Sheep.blend"
+	characterComponent.maxSpeed = 1.0
+	characterComponent.type = "Sheep"
+	
+	local characterControllerScript = character:AddComponent("LuaComponent")
+	characterControllerScript.luaObj = { scriptName = "SheepCharacterController"}
 
 	SceneManager.GetCurrentScene():AddGameObject(character)
 	return character
@@ -187,6 +228,7 @@ function Game:OnEnable()
 	for i = 1, numNPC, 1 do
 		CreateNpcGO()
 	end
+	CreateSheepGO()
 end
 
 function Game.Cleanup()
@@ -229,11 +271,11 @@ function Game.LoadSave(save) : boolean
 			local characterGO = nil
 			if index == playerIndex then
 				characterGO = CreatePlayerGO()
+				local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
+				characterScript:LoadState(savedCharacter)
 			else
-				characterGO = CreateNpcGO()
+				characterGO = LoadNpcGO(savedCharacter)
 			end
-			local characterScript : Character = characterGO:GetComponent("LuaComponent") --TODO GetLuaComponent
-			characterScript:LoadState(savedCharacter)
 		end
 	else
 		LogWarning("No characters in save")
@@ -330,26 +372,45 @@ function Game:HandleAnimationFinished(cell, finishedAnimType)
 			cell.animT = 0.0
 			cell.animStopT = GameConsts.bushBerriesGrowthTime
 		end
+	elseif finishedAnimType == CellAnimType.GrassGrowing then
+		if cell.type == CellType.Ground then
+			cell.type = CellType.GroundWithGrass
+		end
 	end
 end
 
 function Game:AnimateCells(dt)
-	local items = World.items
 	local v = Vector2Int:new()
 	local cell = GridCell:new()
-	local iterator = items:GetAnimatedCellsIterator()
-	while iterator:GetNextCell(cell) do
-		cell.animT = cell.animT + dt
 
-		self:ApplyAnimation(items, cell)
-
-		if cell.animT >= cell.animStopT then
-			local animType = cell.animType
-			cell.animType = CellAnimType.None
-			self:HandleAnimationFinished(cell, animType)
-			self:ApplyAnimation(items, cell)
+	local grids = {World.items, World.ground}
+	for index, grid in ipairs(grids) do
+		local iterator = grid:GetAnimatedCellsIterator()
+		while iterator:GetNextCell(cell) do
+			cell.animT = cell.animT + dt
+	
+			self:ApplyAnimation(grid, cell)
+	
+			if cell.animT >= cell.animStopT then
+				local animType = cell.animType
+				cell.animType = CellAnimType.None
+				self:HandleAnimationFinished(cell, animType)
+				self:ApplyAnimation(grid, cell)
+			end
+			grid:SetCell(cell)
 		end
-		items:SetCell(cell)
+	end
+end
+
+function Game:FillGroundWithGrass(deltaTime : number)
+	local ground = World.ground
+	local cell = GridCell:new()
+	local iterator = ground:GetTypeWithAnimIterator(CellType.Ground, CellAnimType.None)
+	while iterator:GetNextCell(cell) do
+		cell.animType = CellAnimType.GrassGrowing
+		cell.animT = 0.0
+		cell.animStopT = GameConsts.grassGrowingDurationSeconds
+		ground:SetCell(cell)
 	end
 end
 
@@ -494,14 +555,42 @@ end
 function Game:MainLoop()
 	local dt = Time.deltaTime()
 
+	local timeScale = 1.0
+	local playerSleeps = World.playerCharacter and World.playerCharacter.isSleeping
+	local everyoneSleeps = true
+	for index, character in ipairs(World.characters) do
+		if not character.isSleeping then
+			everyoneSleeps = false
+			break
+		end
+	end
+	if playerSleeps then
+		if everyoneSleeps then
+			timeScale = 100.0
+		else
+			timeScale = 5.0
+		end
+	end
+	dt = dt * timeScale
+
 	self:AnimateCells(dt)
 
 	self:GrowNewTrees(dt)
 
+	self:FillGroundWithGrass(dt)
+
 	for index, character in ipairs(World.charactersIncludingDead) do
-		character.hunger = math.clamp(character.hunger + dt * GameConsts.hungerPerSecond, 0.0, 1.0)
+		local hungerSpeed = GameConsts.hungerPerSecond
+		local healthLossSpeed = GameConsts.healthLossFromHungerPerSecond
+		if character.isSleeping then
+			hungerSpeed = hungerSpeed * GameConsts.hungerInSleepMultipler
+			healthLossSpeed = healthLossSpeed * GameConsts.healthLossFromHungerInSleepMultiplier
+		end
+		character.hunger = math.clamp(character.hunger + dt * hungerSpeed, 0.0, 1.0)
 		if character.hunger == 1.0 then
-			character.health = math.clamp(character.health - dt * GameConsts.healthLossFromHungerPerSecond, 0.0, 1.0)
+			character.health = math.clamp(character.health - dt * healthLossSpeed, 0.0, 1.0)
+		else
+			character.health = math.clamp(character.health + dt * GameConsts.healthIncWithoutHungerPerSecond, 0.0, 1.0)
 		end
 	end
 	for i = #World.characters, 1, -1 do
@@ -720,7 +809,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 			end
 
 			optionItems["Back"] = nil
-			table.insert(options, "Back")
+			table.insert(options, 1, "Back")
 		elseif not self.secondOptionItem then
 			local added = {}
 			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, CellType.Any, CellType.Any)) do

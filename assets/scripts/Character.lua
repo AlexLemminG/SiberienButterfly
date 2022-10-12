@@ -4,12 +4,13 @@ local World = require("World")
 local Game = require("Game")
 local CellAnimType = require("CellAnimType")
 local Utils = require("Utils")
+local RandomNamesGenerator = require("RandomNamesGenerator")
 
 local Actions = require("Actions")
 local Component = require("Component")
 
 ---@class Character : Component
----@field characterController CharacterController|nil
+---@field characterController CharacterControllerBase|nil
 local Character = {
 	transform = nil,
 	runAnimation = nil,
@@ -30,7 +31,9 @@ local Character = {
 	name = "Name",
 	isDead = false,
 	isSleeping = false,
-	sleepingPos = nil
+	sleepingPos = nil,
+	baseModelFile = "models/Vintik.blend",
+	type = "Character"
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -60,6 +63,7 @@ function Character:SaveState() : any
 	local lookScalar = rotation:scalar()
 	state.rotation = { x=lookVector.x, y=lookVector.y, z=lookVector.z, w= lookScalar }
 	state.itemName = CellTypeInv[self.item]
+	state.type = self.type
 	if self.characterController then
 		state.characterController = self.characterController:SaveState()
 	end
@@ -89,6 +93,9 @@ function Character:LoadState(savedState)
 	self.rigidBody:SetTransform(transform)
 	self.transform:SetPosition(position)
 	self.transform:SetRotation(rotation)
+	if savedState.type and self.type ~= savedState.type then
+		LogError("Character type not assigned correctly")
+	end
 	if savedState.itemName then
 		local item = CellType[savedState.itemName]
 		if item then
@@ -115,11 +122,13 @@ function Character:LoadState(savedState)
 end
 
 function Character:OnEnable()
-	self.runAnimation = AssetDatabase:Load("models/Vintik.blend$Run")
-	self.standAnimation = AssetDatabase:Load("models/Vintik.blend$Stand")
-	self.runWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$RunWithItem")
-	self.standWithItemAnimation = AssetDatabase:Load("models/Vintik.blend$StandWithItem")
-	self.deathAnimation = AssetDatabase:Load("models/Vintik.blend$Death")
+	--TODO support different models for different characters
+	self.runAnimation = AssetDatabase:Load(self.baseModelFile.."$Run")
+	self.standAnimation = AssetDatabase:Load(self.baseModelFile.."$Stand")
+	self.runWithItemAnimation = AssetDatabase:Load(self.baseModelFile.."$RunWithItem")
+	self.standWithItemAnimation = AssetDatabase:Load(self.baseModelFile.."$StandWithItem")
+	self.deathAnimation = AssetDatabase:Load(self.baseModelFile.."$Death")
+	
 	self.animator = self:gameObject():GetComponent("Animator")
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
@@ -133,6 +142,9 @@ function Character:OnEnable()
 	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
 	parentedTransform.localMatrix = itemMatrix
 	local meshRenderer = self:gameObject():GetComponent("MeshRenderer")
+	print(self.baseModelFile, AssetDatabase:Load(self.baseModelFile).meshes:size())
+	meshRenderer:SetMesh(AssetDatabase:Load(self.baseModelFile).meshes[1])
+
 	local attachBoneIndex = meshRenderer.mesh:GetBoneIndex("ItemAttachPoint")
 	if attachBoneIndex ~= -1 then
 		parentedTransform:SetParentAsBone(meshRenderer, attachBoneIndex)
@@ -145,6 +157,8 @@ function Character:OnEnable()
 
 	self.rigidBody:SetEnabled(true)
 	self.rigidBody:SetAngularFactor(vector(0,0,0))
+
+	self.name = RandomNamesGenerator:GetNext()
 
 	table.insert(World.charactersIncludingDead, self)
 	if not self:IsDead() then
@@ -258,24 +272,12 @@ function Character:UpdateAnimation()
 	self.animator.speed = 2.0
 end
 
-
+--TODO move to controller and make different for different animals/characters
 function Character:GetActionOnCharacter(character : Character)
-	if not character then
+	if not character or not self.characterController then
 		return nil
 	end
-	--TODO only for player
-	local action = {}
-	action.isCharacter = true
-	action.selfCharacter = self
-	action.otherCharacter = character
-	function action:Execute()
-			if Game.currentDialog then
-				Game:EndDialog()
-			else
-				Game:BeginDialog(self.selfCharacter, character)
-			end
-		end
-	return action
+	return self.characterController:GetActionOnCharacter(character)
 end
 
 function Character:GetActionOnCellPos(intPos)
@@ -377,7 +379,12 @@ function Character:DrawName()
 	local pos3d = self:GetPosition() + vector(0,1.5,0)
 	local pos = camera:WorldPointToScreen(pos3d)
 
-	local deltaX, deltaY = imgui.CalcTextSize(self.name)
+	local commandStatus = ""
+	if self.characterController and not self.characterController.command then
+		commandStatus = " no command"
+	end
+	local textOut = self.name..(commandStatus)
+	local deltaX, deltaY = imgui.CalcTextSize(textOut)
 	pos.x = pos.x - deltaX / 2.0
 
 	imgui.SetNextWindowSize(deltaX * 2.0,deltaY * 2.0)
@@ -387,7 +394,7 @@ function Character:DrawName()
 	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs, winFlags.NoScrollbar)
 	imgui.PushID(tostring(self))
 	imgui.Begin(string.format("CharacterName##%s",tostring(self)), nil, flags)
-	imgui.TextUnformatted(self.name)
+	imgui.TextUnformatted(textOut)
 	imgui.End()
 	imgui.PopID()
 end

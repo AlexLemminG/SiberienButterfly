@@ -258,12 +258,14 @@ function Action_ExecuteRule(character, intPos, rule) : CharacterAction
 		if rule.newItemType ~= CellType.Any then
 			local cell = World.items:GetCell(intPos)
 			cell.type = rule.newItemType
+			cell.animType = CellAnimType.None
 			World.items:SetCell(cell)
 		end
 
 		if rule.newGroundType ~= CellType.Any then
 			local cell = World.ground:GetCell(intPos)
 			cell.type = rule.newGroundType
+			cell.animType = CellAnimType.None
 			World.ground:SetCell(cell)
 		end
 

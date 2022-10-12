@@ -7,6 +7,7 @@
 #include "SEngine/System.h"
 #include "SEngine/GameEvents.h"
 #include "SEngine/Vector.h"
+#include <functional>
 
 class Grid;
 enum class GridCellType : int {
@@ -134,11 +135,11 @@ class GridCell {
 
 
 struct GridCellIterator {
-    using CheckFunc = bool(const GridCell&);
+    using CheckFunc = std::function<bool(const GridCell&)>;
     GridCellIterator() {}
-    GridCellIterator(CheckFunc* checkFunc, Grid* grid) :checkFunc(checkFunc), grid(grid) {}
+    GridCellIterator(CheckFunc checkFunc, Grid* grid) :checkFunc(checkFunc), grid(grid) {}
 
-    CheckFunc* checkFunc = nullptr;
+    CheckFunc checkFunc;
     Vector2Int prevCell = Vector2Int(-1, 0);
     Grid* grid = nullptr;
     bool GetNextCell(GridCell& outCell);
@@ -186,6 +187,8 @@ public:
     eastl::vector<Matrix4> cellsLocalMatricesPrev;
 
     GridCellIterator GetAnimatedCellsIterator();
+    GridCellIterator GetTypeIterator(int cellType);
+    GridCellIterator GetTypeWithAnimIterator(int cellType, int animType);
 
     int sizeX = 20;
     int sizeY = 20;
@@ -202,6 +205,9 @@ public:
     int GetModificationsCount()const {
         return modificationsCount;
     }
+    int GetFullyClearedCount()const {
+        return fullyClearedCount;
+    }
     int GetTypeModificationsCount()const {
         return typeModificationsCount;
     }
@@ -217,6 +223,7 @@ public:
     eastl::vector<int> changedIndices;
 private:
     int modificationsCount = 0;
+    int fullyClearedCount = 0;
     int typeModificationsCount = 0;
 
     REFLECT_COMPONENT_BEGIN(Grid);
@@ -228,6 +235,8 @@ private:
     REFLECT_METHOD(SetCell);
     REFLECT_METHOD(SetSize);
     REFLECT_METHOD(GetAnimatedCellsIterator);
+    REFLECT_METHOD(GetTypeIterator);
+    REFLECT_METHOD(GetTypeWithAnimIterator);
     REFLECT_METHOD(FindNearestPosWithType);
     REFLECT_VAR(sizeX);
     REFLECT_VAR(sizeY);
@@ -313,6 +322,7 @@ class GridDrawer : public Component {
     eastl::vector<eastl::shared_ptr<GameObject>> gameObjects;
     
     int lastModificationsCount = -1;
+    int lastFullyClearedCount = -1;
     eastl::vector<int> instanceIndices;
 
     REFLECT_DECLARE(GridDrawer);
@@ -333,6 +343,7 @@ public:
 
 private:
     int lastModificationsCount = -1;
+    int lastFullyClearedCount = -1;
     eastl::shared_ptr<GameObject> chunkPrefab;
     eastl::vector<eastl::shared_ptr<GridChunkCollider>> chunks;
     
