@@ -142,7 +142,6 @@ function Character:OnEnable()
 	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
 	parentedTransform.localMatrix = itemMatrix
 	local meshRenderer = self:gameObject():GetComponent("MeshRenderer")
-	print(self.baseModelFile, AssetDatabase:Load(self.baseModelFile).meshes:size())
 	meshRenderer:SetMesh(AssetDatabase:Load(self.baseModelFile).meshes[1])
 
 	local attachBoneIndex = meshRenderer.mesh:GetBoneIndex("ItemAttachPoint")
@@ -191,7 +190,7 @@ function Length(v : vector)
 	return math.sqrt (v.x*v.x + v.y*v.y + v.z*v.z)
 end
 
-function Lerp(a,b,t) return a * (1-t) + b * t end
+function Lerp(a,b,t) return a * math.clamp(1-t,0,1) + b * math.clamp(t,0,1) end
 
 function Character:Update()
 	if self.isDead or self.isSleeping then

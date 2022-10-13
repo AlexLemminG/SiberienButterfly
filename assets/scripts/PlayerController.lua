@@ -11,7 +11,8 @@ local GameConsts = require("GameConsts")
 local PlayerController = {
 	rigidBody = nil,
 	transform = nil,
-	selectionGO = nil,
+	selectionSquareGO = nil,
+	selectionArrowGO = nil,
 	wasInDialogPrevFrame = false,
 	character = nil
 }
@@ -29,14 +30,18 @@ function PlayerController:OnEnable()
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
 
-	self.selectionGO = AssetDatabase:Load("prefabs/selection.asset")
-	assert(self.selectionGO ~= nil, "selectionGO not found")
-	self.selectionGO = Instantiate(self.selectionGO)
-	self.selectionGO.tag = "notselection"
+	local selectionSquarePrefab = AssetDatabase:Load("prefabs/selection.asset")
+	assert(selectionSquarePrefab ~= nil, "selectionGO not found")
+	self.selectionSquareGO = Instantiate(selectionSquarePrefab)
+	
+	local selectionArrowPrefab = AssetDatabase:Load("prefabs/selectionArrow.asset")
+	assert(selectionArrowPrefab ~= nil, "selectionArrowGO not found")
+	self.selectionArrowGO = Instantiate(selectionArrowPrefab)
 	
 	self.character = self:gameObject():GetComponent("LuaComponent") --TODO GetLuaComponent
 
-	self:gameObject():GetScene():AddGameObject(self.selectionGO)
+	self:gameObject():GetScene():AddGameObject(self.selectionSquareGO)
+	self:gameObject():GetScene():AddGameObject(self.selectionArrowGO)
 
 	self.character.maxSpeed += 0.5
 
@@ -54,7 +59,8 @@ function PlayerController:OnDisable()
 		LogError("Player character is not this player character")
 	end
 	World.playerCharacter = nil
-	self:gameObject():GetScene():RemoveGameObject(self.selectionGO)
+	self:gameObject():GetScene():RemoveGameObject(self.selectionSquareGO)
+	self:gameObject():GetScene():RemoveGameObject(self.selectionArrowGO)
 end
 
 function Length(v : vector)
@@ -69,9 +75,9 @@ function PlayerController:Update()
 
 	Game:DrawStats(self.character)
 	
-    if Game.dayTimePercent >= GameConsts.goToSleepImmediatelyTimePercent or Game.dayTimePercent < GameConsts.wakeUpDayTimePercent then
+    if Game.dayTime >= GameConsts.goToSleepImmediatelyDayTime or Game.dayTime < GameConsts.wakeUpDayTime then
 		self.character:SetIsSleeping(true)
-    elseif Game.dayTimePercent >= GameConsts.goToSleepDayTimePercent or Game.dayTimePercent <= GameConsts.wakeUpDayTimePercent then
+    elseif Game.dayTime >= GameConsts.goToSleepDayTime or Game.dayTime <= GameConsts.wakeUpDayTime then
 		-- time to go to bed mr. player
 	elseif self.character.isSleeping then
 		self.character:SetIsSleeping(false)
@@ -111,7 +117,6 @@ function PlayerController:Update()
 	self.character:SetVelocity(velocity)
 	
 	local grid = World.items
-	local selectionTrans = self.selectionGO:GetComponent("Transform")
 	
 	local cellPos = grid:GetClosestIntPos(self.transform:GetPosition())
 	local pos = grid:GetCellWorldCenter(cellPos)
@@ -134,10 +139,11 @@ function PlayerController:Update()
     end
 
 	local action = nil
+	local selectionArrowPos = pos - vector(0,10000,0)
 	if nearestCharacter then
 		action = nearestCharacter:GetActionOnCharacter(self.character)
-		if action then
-			Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
+		if action and (not action.CanExecute or action:CanExecute()) then
+			selectionArrowPos = nearestCharacter:GetPosition() + vector(0,1.5,0)
 		end
 		Game:DrawStats(nearestCharacter)
 	end
@@ -150,10 +156,12 @@ function PlayerController:Update()
 	if action == nil or action.isCharacter or not action:CanExecute() then
 		pos = pos - vector(0,10000,0) --TODO propper hide selection
 	end
+
+	local selectionTrans = self.selectionSquareGO:GetComponent("Transform")
 	selectionTrans:SetPosition(pos)
-	if action and action.isCharacter and nearestCharacter then
-        Dbg.DrawPoint(nearestCharacter:GetPosition() + vector(0,2.0,0), 0.25)
-	end
+	
+	local selectionTrans = self.selectionArrowGO:GetComponent("Transform")
+	selectionTrans:SetPosition(selectionArrowPos)
 
 	if self.character:IsInDialog() or self.wasInDialogPrevFrame then
 		action = nil

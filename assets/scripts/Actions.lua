@@ -557,6 +557,7 @@ function Actions:RegisterAllCombineRules()
 	end
 
 	self:RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None, CellType.Ground)
+	self:RegisterCombineRuleForGround(CellType.None, CellType.GroundWithEatenGrass, CellType.None, CellType.Ground)
 	self:RegisterCombineRuleForGround(CellType.None, CellType.Ground, CellType.None,	CellType.GroundPrepared)
 
 	-- plant wheat
@@ -611,6 +612,11 @@ function Actions:RegisterAllCombineRules()
 
 	self:RegisterCombineRuleForGround(CellType.Wood, CellType.Water, CellType.None,
 		CellType.WoodenBridge)
+		
+	--eat grass
+	--TODO make not available for humans
+	self:RegisterCombineRuleForGround(CellType.None, CellType.GroundWithGrass, CellType.None,
+		CellType.GroundWithEatenGrass, RuleCallback_Eat)
 
 
 	local isBedOccupied = function (intPos) : boolean

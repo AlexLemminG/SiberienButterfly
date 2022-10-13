@@ -10,9 +10,12 @@ local Component               = require("Component")
 local WorldQuery              = require("WorldQuery")
 local CellType                = require("CellType")
 local World                   = require("World")
+local DayTime                = require("DayTime")
 
 ---@class SheepCharacterController: CharacterControllerBase
 local SheepCharacterController = {
+    isFollowingPlayer = false, --TODO not only player --TODO save state
+    defaultMaxSpeed = 2.0
 }
 
 setmetatable(SheepCharacterController, CharacterControllerBase)
@@ -24,67 +27,75 @@ function SheepCharacterController:new(o)
     return o
 end
 
-function SheepCharacterController:Think()
-    self.immediateTargetPos = nil
-    self.desiredAction = nil
+function SheepCharacterController:OnEnable()
+    CharacterControllerBase.OnEnable(self)
 
-    --TODO
+    self.defaultMaxSpeed = self.character.maxSpeed
+end
+
+function SheepCharacterController:GetCommandsPriorityList()
     local commandsPriorityList = {}
 
-    if Game.dayTimePercent >= GameConsts.goToSleepImmediatelyTimePercent then
+
+    if DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepImmediatelyDayTime, GameConsts.wakeUpDayTime) then
         table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleepImmediately())
-    elseif Game.dayTimePercent >= GameConsts.goToSleepDayTimePercent or
-        Game.dayTimePercent <= GameConsts.wakeUpDayTimePercent then
+    elseif DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepDayTime, GameConsts.goToSleepImmediatelyDayTime) then
         table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleep())
     elseif self.character.isSleeping then
         table.insert(commandsPriorityList, CharacterCommandFactory.WakeUp())
         table.insert(commandsPriorityList, CharacterCommandFactory.WakeUpImmediately())
     end
-
-    if self.character.hunger > 0.7 then
-        --TODO eat until really full if possible
-        table.insert(commandsPriorityList, CharacterCommandFactory.EatSomething())
+    
+    if self.isFollowingPlayer then
+        table.insert(commandsPriorityList, CharacterCommandFactory.FollowCharacter(World.playerCharacter))
     end
 
-    if Game.dayTimePercent >= GameConsts.goToCampfireDayTimePercent then
+    if self.character.hunger > 0.1 then
+        --TODO eat until really full if possible
+        table.insert(commandsPriorityList, CharacterCommandFactory.EatGrass())
+    end
+
+    if Game.dayTime >= GameConsts.goToCampfireDayTimePercent then
         table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
     end
 
     table.insert(commandsPriorityList, CharacterCommandFactory.Wander())
 
-    local currentCommand = nil
-    for index, command in ipairs(commandsPriorityList) do
-        -- print("A", self.playerAssignedRule)
-        -- print(WorldQuery:FindNearestItem(self.playerAssignedRule.itemType, self.character:GetIntPos()))
-        if command.OnEnable then
-            command:OnEnable(self.character)
-        end
-        self.desiredAction = command:CalcNextAction(self.character)
-        if self.desiredAction then
-            currentCommand = command
-            break
-        end
-    end
+    return commandsPriorityList
+end
 
-    --TODO drop current item if not needed
+function SheepCharacterController:DrawRope()
+    local from = self.character:GetPosition() + vector(0,0.5,0)
+    local to = World.playerCharacter:GetPosition() + vector(0,0.3,0)
 
-    if self.desiredAction then
-        if self.desiredAction.intPos and (not self.currentPath or self.currentPath.to ~= self.desiredAction.intPos) then
-            local intPos = self:GetNearestWalkableIntPos()
-            self.currentPath = World.navigation:CalcPath(intPos, self.desiredAction.intPos)
-            if not self.currentPath.isComplete then
-                self.currentPath = nil
-                if currentCommand.OnFailed then
-                    currentCommand:OnFailed(self.character)
-                else
-                    LogWarning("Failed to find path (not handled)")
-                    --TODO no path, so need to abandon this action
-                end
-            else
-                self.currentPathPointIndex = 1
-            end
-        end
+    for i = 0, 20, 1 do
+        local pos = from + (to-from) * i / 20.0
+        Dbg.DrawPoint(pos, 0.02)
     end
+end
+
+function SheepCharacterController:Update()
+    --TODO not here
+    CharacterControllerBase.Update(self)
+
+    if self.isFollowingPlayer then
+        --self.character.maxSpeed = (World.playerCharacter.maxSpeed + self.defaultMaxSpeed) / 2.0 --TODO not like that
+        self:DrawRope()
+    else
+        self.character.maxSpeed = self.defaultMaxSpeed
+    end
+end
+
+function SheepCharacterController:GetActionOnCharacter(character : Character)
+	--TODO only for player
+	local action = {}
+	action.isCharacter = true
+	action.selfCharacter = character
+	action.otherCharacter = self.character
+	function action:Execute()
+        action.otherCharacter.characterController.isFollowingPlayer = not action.otherCharacter.characterController.isFollowingPlayer
+    end
+	return action
 end
 
 return SheepCharacterController

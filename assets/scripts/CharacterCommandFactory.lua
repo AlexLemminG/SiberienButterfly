@@ -60,6 +60,20 @@ function CharacterCommandFactory.EatSomething() : CharacterCommand
     return command
 end
 
+function CharacterCommandFactory.EatGrass() : CharacterCommand
+    local eatRules = {}
+    for key, value in pairs(Actions:GetAllCombineRules(CellType.None, CellType.None, CellType.GroundWithGrass)) do
+        if value.newGroundType == CellType.GroundWithEatenGrass then
+            table.insert(eatRules, value)
+        end
+    end
+    local command = CharacterCommandFactory.CreateFromMultipleRules(eatRules)
+    command.savedState = {
+        factoryFunctionName = "EatGrass"
+    }
+    return command
+end
+
 function CharacterCommandFactory.GoToPoint(pointX, pointY) : CharacterCommand
     local command = {}
     function command:CalcNextAction(character : Character) : CharacterAction|nil
@@ -116,7 +130,7 @@ function CharacterCommandFactory.Wander() : CharacterCommand
         local radius = 3
         local state = character.characterController.commandState.wander
         --TODO clamp to radius
-        if not state.pos or state.pos == pos then
+        if not state.pos or state.pos == pos or not World.navigation:PathExists(pos, state.pos) then
            state.pos = Vector2Int.new() 
            state.pos.x = math.random(pos.x - radius, pos.x + radius)
            state.pos.y = math.random(pos.y - radius, pos.y + radius)
@@ -132,6 +146,29 @@ function CharacterCommandFactory.Wander() : CharacterCommand
     end
     command.savedState = {
         factoryFunctionName = "Wander",
+    }
+    return command
+end
+
+function CharacterCommandFactory.FollowCharacter(character : Character) : CharacterCommand
+    local command = {}
+    command.characterToFollow = character
+    function command:CalcNextAction(character : Character) : CharacterAction|nil
+        if not self.characterToFollow then return nil end
+        local maxDistance = 0.5
+        local deltaDistance = (character:GetPosition() - self.characterToFollow:GetPosition())
+        
+        local maxDistanceSqr = maxDistance * maxDistance
+        local distanceSqr = deltaDistance.x * deltaDistance.x + deltaDistance.z * deltaDistance.z
+        if distanceSqr < maxDistanceSqr then return nil end
+
+        --TODO not exactly, but should work for now
+        local action = Actions.CreateDoNothingAtPosAction(character, self.characterToFollow:GetIntPos())
+        return action
+    end
+    command.savedState = {
+        factoryFunctionName = "FollowCharacter"
+        --TODO save character
     }
     return command
 end

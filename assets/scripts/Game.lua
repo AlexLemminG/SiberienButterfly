@@ -12,7 +12,7 @@ local Game = {
 	gridSizeX = 20,
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
-	dayTimePercent = 0.3,
+	dayTime = 0.3,
 	goodConditionsToSpawnCharacterDuration = 0.0,
 	avgHunger = 0.0,
 	avgHealth = 0.0,
@@ -35,7 +35,7 @@ function Game:GenerateWorldGrid()
 	probabilitiesItems[CellType.Wheat] = 1
 	probabilitiesItems[CellType.Tree] = 1
 	probabilitiesItems[CellType.Stone] = 1
-	probabilitiesItems[CellType.FlintStone] = 1
+	probabilitiesItems[CellType.FlintStone] = 0.1
 	probabilitiesItems[CellType.BushWithBerries] = 0.1
 	probabilitiesItems[CellType.None] = 10
 	-- probabilities[CellType.CampfireWithWoodFired] = 10
@@ -249,7 +249,7 @@ function Game.CreateSave()
 	for index, character in ipairs(World.charactersIncludingDead) do
 		table.insert(save.characters, character:SaveState())
 	end
-	save.dayTimePercent = Game.dayTimePercent
+	save.dayTime = Game.dayTime
 	save.playerIndex = Utils.ArrayIndexOf(World.charactersIncludingDead, World.playerCharacter)
 
 	return save
@@ -284,7 +284,7 @@ function Game.LoadSave(save) : boolean
 		LogWarning("Player is not created from save")
 	end
 
-	Game.dayTimePercent = save.dayTimePercent or Game.dayTimePercent
+	Game.dayTime = save.dayTimePercent or Game.dayTime
 	
 	return true
 end
@@ -373,7 +373,7 @@ function Game:HandleAnimationFinished(cell, finishedAnimType)
 			cell.animStopT = GameConsts.bushBerriesGrowthTime
 		end
 	elseif finishedAnimType == CellAnimType.GrassGrowing then
-		if cell.type == CellType.Ground then
+		if cell.type == CellType.Ground or cell.type == CellType.GroundWithEatenGrass then
 			cell.type = CellType.GroundWithGrass
 		end
 	end
@@ -387,7 +387,7 @@ function Game:AnimateCells(dt)
 	for index, grid in ipairs(grids) do
 		local iterator = grid:GetAnimatedCellsIterator()
 		while iterator:GetNextCell(cell) do
-			cell.animT = cell.animT + dt
+			cell.animT = math.min(cell.animT + dt, cell.animStopT)
 	
 			self:ApplyAnimation(grid, cell)
 	
@@ -410,6 +410,14 @@ function Game:FillGroundWithGrass(deltaTime : number)
 		cell.animType = CellAnimType.GrassGrowing
 		cell.animT = 0.0
 		cell.animStopT = GameConsts.grassGrowingDurationSeconds
+		ground:SetCell(cell)
+	end
+	
+	iterator = ground:GetTypeWithAnimIterator(CellType.GroundWithEatenGrass, CellAnimType.None)
+	while iterator:GetNextCell(cell) do
+		cell.animType = CellAnimType.GrassGrowing
+		cell.animT = 0.0
+		cell.animStopT = GameConsts.eatenGrassGrowingDurationSeconds
 		ground:SetCell(cell)
 	end
 end
@@ -475,9 +483,9 @@ function Game.DbgDrawPath(path)
 end
 
 function Game:UpdateDayTime(dt : float)
-	self.dayTimePercent = self.dayTimePercent + dt / GameConsts.dayDurationSeconds
-	if self.dayTimePercent > 1.0 then
-		self.dayTimePercent = self.dayTimePercent - 1.0
+	self.dayTime = self.dayTime + dt / GameConsts.dayDurationSeconds
+	if self.dayTime > 1.0 then
+		self.dayTime = self.dayTime - 1.0
 	end
 
 	function LerpHarmonicsCoeffs(a, b, t)
@@ -496,34 +504,34 @@ function Game:UpdateDayTime(dt : float)
 	local morningHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$morning")
 	local eveningHarmonics = AssetDatabase:Load("SphericalHarmonics/env.asset$evening")
 	local newCoeffs = {}
-	LerpHarmonicsCoeffs(dayHarmonics.coeffs, nightHarmonics.coeffs, self.dayTimePercent)
+	LerpHarmonicsCoeffs(dayHarmonics.coeffs, nightHarmonics.coeffs, self.dayTime)
 	local morningTime = 6/24
 	local dayTime = 12/24
 	local eveningTime = 18/24
 	local nightTime = 21/24
 	local nightTime2 = 3/24
-	if self.dayTimePercent >= morningTime and self.dayTimePercent <= dayTime then
-		local t = Mathf.InverseLerp(morningTime, dayTime, self.dayTimePercent)
+	if self.dayTime >= morningTime and self.dayTime <= dayTime then
+		local t = Mathf.InverseLerp(morningTime, dayTime, self.dayTime)
 		newCoeffs = LerpHarmonicsCoeffs(morningHarmonics.coeffs, dayHarmonics.coeffs, t)
 
-	elseif self.dayTimePercent >= dayTime and self.dayTimePercent <= eveningTime then
-		local t = Mathf.InverseLerp(dayTime, eveningTime, self.dayTimePercent)
+	elseif self.dayTime >= dayTime and self.dayTime <= eveningTime then
+		local t = Mathf.InverseLerp(dayTime, eveningTime, self.dayTime)
 		newCoeffs = LerpHarmonicsCoeffs(dayHarmonics.coeffs, eveningHarmonics.coeffs, t)
 
-	elseif self.dayTimePercent >= eveningTime and self.dayTimePercent <= nightTime then
-		local t = Mathf.InverseLerp(eveningTime, nightTime, self.dayTimePercent)
+	elseif self.dayTime >= eveningTime and self.dayTime <= nightTime then
+		local t = Mathf.InverseLerp(eveningTime, nightTime, self.dayTime)
 		newCoeffs = LerpHarmonicsCoeffs(eveningHarmonics.coeffs, nightHarmonics.coeffs, t)
 
-	elseif self.dayTimePercent >= nightTime2 and self.dayTimePercent <= morningTime then
-		local t = Mathf.InverseLerp(nightTime2, morningTime, self.dayTimePercent)
+	elseif self.dayTime >= nightTime2 and self.dayTime <= morningTime then
+		local t = Mathf.InverseLerp(nightTime2, morningTime, self.dayTime)
 		newCoeffs = LerpHarmonicsCoeffs(night2Harmonics.coeffs, morningHarmonics.coeffs, t)
 		
-	elseif self.dayTimePercent >= nightTime or self.dayTimePercent <= nightTime2 then
+	elseif self.dayTime >= nightTime or self.dayTime <= nightTime2 then
 		local t = 0
-		if self.dayTimePercent >= nightTime then
-			t = Mathf.InverseLerp(nightTime, 1 + nightTime2, self.dayTimePercent)
+		if self.dayTime >= nightTime then
+			t = Mathf.InverseLerp(nightTime, 1 + nightTime2, self.dayTime)
 		else
-			t = Mathf.InverseLerp(nightTime-1, nightTime2, self.dayTimePercent)
+			t = Mathf.InverseLerp(nightTime-1, nightTime2, self.dayTime)
 		end
 		newCoeffs = LerpHarmonicsCoeffs(nightHarmonics.coeffs, night2Harmonics.coeffs, t)
 
@@ -556,7 +564,7 @@ function Game:MainLoop()
 	local dt = Time.deltaTime()
 
 	local timeScale = 1.0
-	local playerSleeps = World.playerCharacter and World.playerCharacter.isSleeping
+	local playerSleeps = World.playerCharacter and (World.playerCharacter.isSleeping or World.playerCharacter.isDead)
 	local everyoneSleeps = true
 	for index, character in ipairs(World.characters) do
 		if not character.isSleeping then
@@ -564,6 +572,7 @@ function Game:MainLoop()
 			break
 		end
 	end
+	--TODO Time.setTimeScale ?
 	if playerSleeps then
 		if everyoneSleeps then
 			timeScale = 100.0
@@ -671,8 +680,8 @@ function Game:DrawWorldStats()
 		text = text..string.format("Avg Hunger: %.3f\nAvg Health: %.3f\nNew Npc: %.1f%s\n", self.avgHunger, self.avgHealth, self.newNpcPercent * 100.0, "%")
 	end
 	
-	local hour = math.floor(self.dayTimePercent * 24)
-	local minute = math.floor((self.dayTimePercent*24 - hour) * 60)
+	local hour = math.floor(self.dayTime * 24)
+	local minute = math.floor((self.dayTime*24 - hour) * 60)
 	if hour < 10 then hour = "0"..hour end
 	if minute < 10 then minute = "0"..minute end
 	text = text.."Time: "..hour..":"..minute.."\n"
@@ -762,14 +771,39 @@ function Game:DrawHealthAndHungerUI(character : Character)
 
 	imgui.End()
 end
+
+function DrawPauseMenu()
+	local windowWidth = 200
+	local windowHeight = 100
+	imgui.SetNextWindowSize(windowWidth,windowHeight)
+	local screenSize = Graphics:GetScreenSize()
+	imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0, imgui.constant.Cond.Always, 0.5,0.5)
+	imgui.SetNextWindowBgAlpha(0.8)
+	local winFlags = imgui.constant.WindowFlags
+	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs)
+
+	imgui.Begin("Dialog", true, flags)
+	local text = "PAUSE"
+	local sizeX, sizeY = imgui.CalcTextSize(text)
+	imgui.SetCursorPosX((windowWidth - sizeX) * 0.5)
+	imgui.SetCursorPosY((windowHeight - sizeY) * 0.5)
+	imgui.TextUnformatted(text)
+
+	imgui.End()
+end
+
 function Game:DrawUI()
 	if World.playerCharacter then
 		self:DrawHealthAndHungerUI(World.playerCharacter)
 	end
-	if self.currentDialog then
-		self.currentDialog:Draw()
-	end
 	self:DrawWorldStats()
+	if self.isPause then
+		DrawPauseMenu()
+	else
+		if self.currentDialog then
+			self.currentDialog:Draw()
+		end
+	end
 end
 
 function Game:BeginDialog(characterA : Character, characterB : Character)
@@ -935,7 +969,9 @@ end
 function Game:Update()
 	local input = Input
 	if input:GetKeyDown("Escape") then
-		--self.isPause = not self.isPause
+		if not (self.currentDialog and not self.isPause) then
+			self.isPause = not self.isPause
+		end
 	end
 
 	self:DrawUI()
@@ -954,8 +990,10 @@ function Game:Update()
 
 	--TODO pause rest of the game as well (component Update methods)
 	if self.isPause then
-
+		Time.setTimeScale(0.0)
 		return
+	else
+		Time.setTimeScale(1.0)
 	end
 
 	for i = 1, 1, 1 do
@@ -965,10 +1003,10 @@ end
 
 function Game:GetAmbientTemperature() : number
 	--TODO consts
-	if self.dayTimePercent > 0.8 then
+	if self.dayTime > 0.8 then
 		return 0.0
 	end
-	if self.dayTimePercent < 0.3 then
+	if self.dayTime < 0.3 then
 		return 0.0
 	end
 	return 1.0

@@ -43,6 +43,7 @@ REFLECT_DEFINE_END();
 REFLECT_DEFINE_BEGIN(NavigationGrid);
 REFLECT_METHOD(IsWalkable);
 REFLECT_METHOD(CalcPath);
+REFLECT_METHOD(PathExists);
 REFLECT_VAR(sourceGrids);
 REFLECT_DEFINE_END();
 
@@ -61,6 +62,23 @@ void GridSystem::Update() {
     navigation->Update();
 }
 
+bool NavigationGrid::PathExists(Vector2Int from, Vector2Int to) const {
+    if (sizeX == 0) {
+        return false;
+    }
+    //TODO some common method
+    if (from.x < 0 || from.x >= sizeX || from.y < 0 || from.y >= sizeY ||
+        to.x < 0 || to.x >= sizeX || to.y < 0 || to.y >= sizeY) {
+        return false;
+    }
+    if (!IsWalkable(from.x, from.y) || !IsWalkable(to.x, to.y)) {
+        return false;
+    }
+    int indexFrom = islandIndex[from.x * sizeX + from.y];
+    int indexTo = islandIndex[to.x * sizeX + to.y];
+
+    return indexFrom == indexTo;
+}
 
 GridPath NavigationGrid::CalcPath(Vector2Int from, Vector2Int to) const {
     GridPath path;
@@ -200,6 +218,53 @@ GridPath NavigationGrid::CalcPath(Vector2Int from, Vector2Int to) const {
     return path;
 }
 
+void NavigationGrid::UpdateIslands() {
+    //TODO just use ints instead of x,y
+    this->islandIndex.clear();
+    this->islandIndex.resize(sizeX * sizeY, 0);
+    int nextFreeIndex = 1;
+
+    auto floodFill = [&](int islandIndex, int x, int y) {
+        eastl::vector<Vector2Int> toVisit;
+
+        auto visit = [&](Vector2Int pos) {
+            if (pos.x < 0 || pos.x >= sizeX || pos.y < 0 || pos.y >= sizeY){
+                return;
+            }
+
+            int index = pos.x * sizeY + pos.y;
+            if (this->islandIndex[index] == 0 && this->walkableCells[index]) {
+                this->islandIndex[index] = islandIndex;
+                toVisit.push_back(pos);
+            }
+        };
+        visit(Vector2Int(x, y));
+        while (toVisit.size() > 0) {
+            Vector2Int pos = toVisit.back();
+            toVisit.pop_back();
+
+            visit(pos + Vector2Int(0, 1));
+            visit(pos + Vector2Int(0, -1));
+            visit(pos + Vector2Int(-1, 0));
+            visit(pos + Vector2Int(1, 0));
+
+            visit(pos + Vector2Int(-1, -1));
+            visit(pos + Vector2Int(-1, 1));
+            visit(pos + Vector2Int(1, -1));
+            visit(pos + Vector2Int(1, 1));
+        }
+    };
+
+    for (int x = 0; x < sizeX; x++) {
+        for (int y = 0; y < sizeY; y++) {
+            int index = x * sizeY + y;
+            if (walkableCells[index] && islandIndex[index] == 0) {
+                floodFill(nextFreeIndex++, x, y);
+            }
+        }
+    }
+}
+
 void NavigationGrid::Update() {
     //TODO separate init method
     sourceGrids = GridSystem::Get()->grids;
@@ -215,27 +280,40 @@ void NavigationGrid::Update() {
             ASSERT(newSizeY == grid->sizeY);
         }
     }
+    
     if (newSizeX != sizeX || newSizeY != sizeY) {
         this->sizeX = newSizeX;
         this->sizeY = newSizeY;
         this->walkableCells.clear();
         this->walkableCells.resize(sizeX * sizeY);
+        this->islandIndex.clear();
+        this->islandIndex.resize(sizeX * sizeY);
 
         for (int x = 0; x < sizeX; x++) {
             for (int y = 0; y < sizeY; y++) {
                 this->walkableCells[x * sizeY + y] = CalcIsWalkable(x, y);
             }
         }
+        UpdateIslands();
         return;
     }
 
-
+    bool hasChanges = false;
     for (auto g : sourceGrids) {
         for (auto i : g->changedIndices) {
             int x = i / sizeY;
             int y = i % sizeX;
+            bool wasWalkable = this->walkableCells[i];
             this->walkableCells[i] = CalcIsWalkable(x, y);
+            if (!hasChanges && this->walkableCells[i] != wasWalkable) {
+                hasChanges = true;
+            }
         }
+    }
+
+    if (hasChanges) {
+        //TODO way to not fully update them with each update
+        UpdateIslands();
     }
 }
 

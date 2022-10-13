@@ -257,11 +257,15 @@ public:
     bool IsWalkable(int x, int y) const;
     void Update();
 
+    bool PathExists(Vector2Int from, Vector2Int to) const;
     GridPath CalcPath(Vector2Int from, Vector2Int to) const;
+
+    void UpdateIslands();
 private:
     bool CalcIsWalkable(int x, int y) const;
     int sizeX;
     int sizeY;
+    eastl::vector<int> islandIndex;
     eastl::vector<bool> walkableCells; //TODO more packed then bool vector
     eastl::vector<eastl::shared_ptr<Grid>> sourceGrids;
 
