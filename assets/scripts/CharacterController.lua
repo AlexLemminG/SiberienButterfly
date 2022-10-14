@@ -1,4 +1,3 @@
-local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
 local Game                    = require "Game"
 local GameConsts              = require "GameConsts"
@@ -6,12 +5,21 @@ local Actions                 = require "Actions"
 local CharacterControllerBase = require "CharacterControllerBase"
 local Component               = require("Component")
 local DayTime                = require("DayTime")
+local BehaviourTree          = require("BehaviourTree")
+local BehaviourTree_Builder  = require("BehaviourTree_Builder")
+local BehaviourTree_NodesFactory = require("BehaviourTree_NodesFactory")
+local BehaviourTree_Node         = require("BehaviourTree_Node")
+local BehaviourTree_NodeFunctions= require("BehaviourTree_NodeFunctions")
+local CharacterControllerBehaviourTree = require("CharacterControllerBehaviourTree")
+
 
 --TODO use mini fsm instead if command
 --save them to state with current desired action
 
 ---@class CharacterController: CharacterControllerBase
 local CharacterController = {
+    commandNode = nil,
+    commandAdded = false
 }
 setmetatable(CharacterController, CharacterControllerBase)
 CharacterController.__index = CharacterController
@@ -26,37 +34,9 @@ function CharacterController:new(o)
     return o
 end
 
-function CharacterController:GetCommandsPriorityList()
-    local commandsPriorityList = {}
-
-    if DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepImmediatelyDayTime, GameConsts.wakeUpDayTime) then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleepImmediately())
-    elseif DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepDayTime, GameConsts.goToSleepImmediatelyDayTime) then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleep())
-    elseif self.character.isSleeping then
-        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUp())
-        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUpImmediately())
-    end
-
-    if self.character.hunger > 0.7 then
-        --TODO eat until really full if possible
-        table.insert(commandsPriorityList, CharacterCommandFactory.EatSomething())
-    end
-
-    if Game.dayTime >= GameConsts.goToCampfireDayTimePercent then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
-    end
-    --table.insert(commandsPriorityList, CharacterCommandFactory.GoToPoint(1,13))
-
-    if self.command then
-        table.insert(commandsPriorityList, self.command)
-    end
-
-    table.insert(commandsPriorityList, CharacterCommandFactory.DropItem())
-
-    table.insert(commandsPriorityList, CharacterCommandFactory.Wander())
-
-    return commandsPriorityList
+function CharacterController:CreateBehaviourTree() : BehaviourTree|nil
+    local tree = CharacterControllerBehaviourTree.Create(self)
+    return tree
 end
 
 function CharacterController:GetActionOnCharacter(character : Character)
@@ -73,6 +53,39 @@ function CharacterController:GetActionOnCharacter(character : Character)
 			end
 		end
 	return action
+end
+
+function CharacterController:Think()
+    if self.behaviourTree then
+        if self.commandNode and (not self.command or not self.commandAdded) then
+            self.behaviourTree:RemoveNode(self.commandNode)
+            self.commandNode = nil
+            self.commandAdded = false
+        end
+        if self.command and not self.commandAdded then
+            self.commandAdded = true
+            self.commandNode = BehaviourTree_NodesFactory.Func(
+                function (character, blackboard) 
+                    if not character.characterController.command then
+                        return BehaviourTree_Node.FAILED
+                    end
+                    for index, rule in ipairs(character.characterController.command.rules) do
+                        local action = WorldQuery:FindNearestActionFromRule(character, rule)
+                        if action then
+                            local res = BehaviourTree_NodeFunctions.ExecAction(action)
+                            if res ~= BehaviourTree_Node.FAILED then
+                                return res
+                            end
+                        end
+                    end
+                    return BehaviourTree_Node.FAILED
+                end
+            , "CommandFromPlayer")
+            self.behaviourTree:AddNode(self.commandNode, "Command_")
+        end
+    end
+    
+    CharacterControllerBase.Think(self)
 end
 
 return CharacterController

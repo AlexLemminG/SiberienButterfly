@@ -228,7 +228,7 @@ void NavigationGrid::UpdateIslands() {
         eastl::vector<Vector2Int> toVisit;
 
         auto visit = [&](Vector2Int pos) {
-            if (pos.x < 0 || pos.x >= sizeX || pos.y < 0 || pos.y >= sizeY){
+            if (pos.x < 0 || pos.x >= sizeX || pos.y < 0 || pos.y >= sizeY) {
                 return;
             }
 

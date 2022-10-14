@@ -17,6 +17,8 @@ local GameConsts = {
     goodConditionsToSpawnCharacterDuration = DayTime.dayDurationInSeconds / 20,
     grassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 3,
     eatenGrassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 10,
+    healthLossFromHungerWhenFreezingMultiplier = 2.0,
+    hungerWhenFreezingMultiplier = 2.0,
 
     goToSleepDayTime = DayTime.FromHoursAndMinutes(22, 00),
     wakeUpDayTime = DayTime.FromHoursAndMinutes(6, 00),

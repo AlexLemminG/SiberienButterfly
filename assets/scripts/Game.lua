@@ -9,23 +9,23 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 20,
-	gridSizeY = 20,
+	gridSizeX = 40,
+	gridSizeY = 40,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
 	goodConditionsToSpawnCharacterDuration = 0.0,
 	avgHunger = 0.0,
 	avgHealth = 0.0,
 	newNpcPercent = 0.0,
-	isPause = false
+	isPause = false,
+	
+	dbgTimeScaleI = 0,
+	dbgTimeScale = 1.0,
 }
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
 local Actions = require("Actions")
-local CharacterCommandFactory = require("CharacterCommandFactory")
-
-
 
 function Game:GenerateWorldGrid()
 	World.items:SetSize(self.gridSizeX, self.gridSizeY)
@@ -595,6 +595,10 @@ function Game:MainLoop()
 			hungerSpeed = hungerSpeed * GameConsts.hungerInSleepMultipler
 			healthLossSpeed = healthLossSpeed * GameConsts.healthLossFromHungerInSleepMultiplier
 		end
+		if character:IsFreezing() then
+			hungerSpeed = hungerSpeed * GameConsts.hungerWhenFreezingMultiplier
+			healthLossSpeed = healthLossSpeed * GameConsts.healthLossFromHungerWhenFreezingMultiplier
+		end
 		character.hunger = math.clamp(character.hunger + dt * hungerSpeed, 0.0, 1.0)
 		if character.hunger == 1.0 then
 			character.health = math.clamp(character.health - dt * healthLossSpeed, 0.0, 1.0)
@@ -667,7 +671,7 @@ function Game:DrawWorldStats()
 	local screenSize = Graphics:GetScreenSize()
 
 	imgui.SetNextWindowSize(300,250)
-	imgui.SetNextWindowPos(30, 250, imgui.constant.Cond.Always, 0.0,0.5)
+	imgui.SetNextWindowPos(30, 350, imgui.constant.Cond.Always, 0.0,0.5)
 	imgui.SetNextWindowBgAlpha(0.0)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
@@ -720,16 +724,23 @@ local function GetUISprite(x, y)
 	return sprite
 end
 
-function Game:DrawHealthAndHungerUI(character : Character)
+function Game:DrawHealthAndHungerUI(character : Character, onRightSideOfScreen : boolean)
 	local scale = 5.0
 	imgui.SetNextWindowBgAlpha(0.0)
 	local screenSize = Graphics:GetScreenSize()
-	imgui.SetNextWindowSize(400,250)
-	imgui.SetNextWindowPos(20,20, imgui.constant.Cond.Always, 0.0,0.0)
+	imgui.SetNextWindowSize(250,350)
+	local windowPosX = 20
+	local windowAlignX = 0
+	if onRightSideOfScreen then
+		--TODO more simmetrical pos for onRightSizeOfScreen
+		windowAlignX = 1.0
+		windowPosX = screenSize.x - windowPosX
+	end
+	imgui.SetNextWindowPos(windowPosX,20, imgui.constant.Cond.Always, windowAlignX, 0.0)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
 
-	imgui.Begin("HealthAndHungerUI", nil, flags)
+	imgui.Begin("HealthAndHungerUI"..tostring(onRightSideOfScreen), nil, flags)
 	--imgui.Dummy(0,-100)
 	imgui.SetCursorPosY(imgui.GetCursorPosY() - 15 * scale)
 	local CalcSpriteOffset = function(value, maxCount, currentCount)
@@ -744,6 +755,7 @@ function Game:DrawHealthAndHungerUI(character : Character)
 	end
 
 	local heartsCountMax = 3
+	--TODO mirror sprites and order for onRightSizeOfScreen
 	for i = 1, heartsCountMax, 1 do
 		if i ~= 1 then imgui.SameLine(0,0) imgui.Dummy(-3 * scale ,0) imgui.SameLine(0,0) end
 		local offset = CalcSpriteOffset(character.health, heartsCountMax, i)
@@ -768,6 +780,11 @@ function Game:DrawHealthAndHungerUI(character : Character)
 		imgui.Image(sprite:ToImguiId(), sprite:GetWidth() * scale, sprite:GetHeight() * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
 	end
 	
+	imgui.SetCursorPosY(imgui.GetCursorPosY() - 15 * scale)
+	if character:IsFreezing() then
+		local sprite = GetUISprite(18, 7)
+		imgui.Image(sprite:ToImguiId(), sprite:GetWidth() * scale, sprite:GetHeight() * scale, sprite.uvMin.x, sprite.uvMin.y, sprite.uvMax.x, sprite.uvMax.y)
+	end
 
 	imgui.End()
 end
@@ -794,7 +811,7 @@ end
 
 function Game:DrawUI()
 	if World.playerCharacter then
-		self:DrawHealthAndHungerUI(World.playerCharacter)
+		self:DrawHealthAndHungerUI(World.playerCharacter, false)
 	end
 	self:DrawWorldStats()
 	if self.isPause then
@@ -946,7 +963,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 						if not rules or #rules == 0 then
 							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], CellTypeInv[selectedItem] ))
 						else
-							self.characterB.characterController.command = CharacterCommandFactory.CreateFromMultipleRules(rules)
+							self.characterB.characterController:SetCommandFromRules(rules)
 						end
 						Game:EndDialog()
 					else
@@ -988,12 +1005,23 @@ function Game:Update()
 		local loaded = ButterflyGame:LoadFromDisk("Save")
 	end
 
+	if input:GetKeyDown("PageDown") then 
+		self.dbgTimeScaleI = self.dbgTimeScaleI - 1
+		self.dbgTimeScale = math.exp(self.dbgTimeScaleI * 0.4)
+		print("TimeScale: ", self.dbgTimeScale)
+	end
+	if input:GetKeyDown("PageUp") then 
+		self.dbgTimeScaleI = self.dbgTimeScaleI + 1
+		self.dbgTimeScale = math.exp(self.dbgTimeScaleI * 0.4)
+		print("TimeScale: ", self.dbgTimeScale)
+	end
+
 	--TODO pause rest of the game as well (component Update methods)
 	if self.isPause then
 		Time.setTimeScale(0.0)
 		return
 	else
-		Time.setTimeScale(1.0)
+		Time.setTimeScale(self.dbgTimeScale)
 	end
 
 	for i = 1, 1, 1 do

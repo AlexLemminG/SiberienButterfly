@@ -1,4 +1,3 @@
-local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
 local Game                   = require "Game"
 local GameConsts                   = require "GameConsts"
@@ -6,6 +5,7 @@ local Actions                   = require "Actions"
 local WorldQuery = require("WorldQuery")
 local CellType = require("CellType")
 local World = require("World")
+local BehaviourTree = require("BehaviourTree")
 
 --TODO use mini fsm instead if command
 --save them to state with current desired action
@@ -13,14 +13,17 @@ local World = require("World")
 ---@class CharacterControllerBase
 ---@field command CharacterCommand|nil
 ---@field character Character|nil
+---@field behaviourTree BehaviourTree|nil
 local CharacterControllerBase = {
     character = nil,
     immediateTargetPos = nil,
     desiredAction = nil,
     command = nil,
     currentPath = nil,
+    isRunning = false,
     currentPathPointIndex = 0,
-    commandState = {}
+    commandState = {},
+    behaviourTree = nil
 }
 local Component = require("Component")
 setmetatable(CharacterControllerBase, Component)
@@ -34,9 +37,12 @@ function CharacterControllerBase:new(o)
 end
 
 function CharacterControllerBase:SaveState() : any
-    local state = {
-        command = CharacterCommandFactory:SaveToState(self.command)
-    }
+    local state = {}
+    if self.command then
+        state.command = {
+            rules = self.command.rules
+        }
+    end
     return state
 end
 
@@ -44,7 +50,28 @@ function CharacterControllerBase:LoadState(savedState)
     if not savedState then
         return
     end
-    self.command = CharacterCommandFactory:LoadFromState(savedState.command)
+    --TODO ensure loaded rules are still valid
+    if savedState.command then
+        local rules = {}
+        for index, rule in ipairs(savedState.command.rules) do
+            local realRule = Actions:GetCombineRuleFromSavable(rule)
+            if realRule then
+                table.insert(rules, realRule)
+            else
+                --TODO error
+            end
+        end
+        self:SetCommandFromRules(rules)
+    end
+end
+
+---@param rules : CombineRule[]
+function CharacterControllerBase:SetCommandFromRules(rules) 
+    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+    
+    self.command = {
+        rules = rules
+    }
 end
 
 function CharacterControllerBase:OnEnable()
@@ -91,50 +118,22 @@ function CharacterControllerBase:GetNearestWalkableIntPos()
     return minIntPos
 end
 
-function CharacterControllerBase:GetCommandsPriorityList()
-    return {}
+function CharacterControllerBase:CreateBehaviourTree() : BehaviourTree|nil
+    return nil
 end
 
 function CharacterControllerBase:Think()
     self.immediateTargetPos = nil
     self.desiredAction = nil
 
-    local commandsPriorityList = self:GetCommandsPriorityList()
 
-    local currentCommand = nil
-    local currentNavigationPos = self:GetNearestWalkableIntPos()
-    for index, command in ipairs(commandsPriorityList) do
-        -- print("A", self.playerAssignedRule)
-        -- print(WorldQuery:FindNearestItem(self.playerAssignedRule.itemType, self.character:GetIntPos()))
-        if command.OnEnable then
-            command:OnEnable(self.character)
-        end
-        local action = command:CalcNextAction(self.character)
-        if action then
-            if (action.intPos == nil or currentNavigationPos ~= nil and World.navigation:PathExists(action.intPos, currentNavigationPos)) then
-                self.desiredAction = action
-                currentCommand = command
-                break
-            end
-        end
+    --TODO do not check on every Think
+    if not self.behaviourTree then
+        self.behaviourTree = self:CreateBehaviourTree()
     end
-
-    if self.desiredAction then
-        if self.desiredAction.intPos and (not self.currentPath or self.currentPath.to ~= self.desiredAction.intPos) then
-            local intPos = self:GetNearestWalkableIntPos()
-            self.currentPath = World.navigation:CalcPath(intPos, self.desiredAction.intPos)
-            if not self.currentPath.isComplete then
-                self.currentPath = nil
-                if currentCommand.OnFailed then
-                    currentCommand:OnFailed(self.character)
-                else
-                    LogWarning("Failed to find path (not handled)")
-                    --TODO no path, so need to abandon this action
-                end
-            else
-                self.currentPathPointIndex = 1
-            end
-        end
+    if self.behaviourTree then
+        self.behaviourTree:Update()
+        return
     end
 end
 
@@ -175,16 +174,25 @@ end
 
 function CharacterControllerBase:Act()
     self:UpdatePathFollowing()
-    --Game.DbgDrawPath(self.currentPath)
+    Game.DbgDrawPath(self.currentPath)
     if self.desiredAction and self.character:CanExecuteAction(self.desiredAction) then
         if self.character:GetIntPos() == self.desiredAction.intPos or self.desiredAction.intPos == nil then
             self.character:ExecuteAction(self.desiredAction)
         end
     end
     if self.immediateTargetPos then
-        local dir = self.immediateTargetPos - self.character.transform:GetPosition()
-        dir = dir * 30.0
-        self.character:SetVelocity(dir)
+        local velocity = self.immediateTargetPos - self.character.transform:GetPosition()
+        velocity = velocity * 30.0
+        local l = length(velocity)
+        local maxSpeed = self.character.maxSpeed
+        if not self.isRunning then
+            maxSpeed = maxSpeed * self.character.walkingMaxSpeedMultiplier
+        end
+        if l > maxSpeed then
+            velocity = velocity * maxSpeed / l
+        end
+        
+        self.character:SetVelocity(velocity)
     else
         self.character:SetVelocity(vector(0, 0, 0))
     end

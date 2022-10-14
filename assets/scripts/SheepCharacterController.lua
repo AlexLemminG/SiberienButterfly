@@ -1,6 +1,5 @@
 local Component               = require("Component")
 local CharacterControllerBase = require("CharacterControllerBase")
-local CharacterCommandFactory = require "CharacterCommandFactory"
 local Utils                   = require "Utils"
 local Game                    = require "Game"
 local GameConsts              = require "GameConsts"
@@ -11,6 +10,8 @@ local WorldQuery              = require("WorldQuery")
 local CellType                = require("CellType")
 local World                   = require("World")
 local DayTime                = require("DayTime")
+local BehaviourTree_Builder = require("BehaviourTree_Builder")
+local CharacterControllerBehaviourTree = require("CharacterControllerBehaviourTree")
 
 ---@class SheepCharacterController: CharacterControllerBase
 local SheepCharacterController = {
@@ -33,35 +34,10 @@ function SheepCharacterController:OnEnable()
     self.defaultMaxSpeed = self.character.maxSpeed
 end
 
-function SheepCharacterController:GetCommandsPriorityList()
-    local commandsPriorityList = {}
-
-
-    if DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepImmediatelyDayTime, GameConsts.wakeUpDayTime) then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleepImmediately())
-    elseif DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepDayTime, GameConsts.goToSleepImmediatelyDayTime) then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToSleep())
-    elseif self.character.isSleeping then
-        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUp())
-        table.insert(commandsPriorityList, CharacterCommandFactory.WakeUpImmediately())
-    end
-    
-    if self.isFollowingPlayer then
-        table.insert(commandsPriorityList, CharacterCommandFactory.FollowCharacter(World.playerCharacter))
-    end
-
-    if self.character.hunger > 0.1 then
-        --TODO eat until really full if possible
-        table.insert(commandsPriorityList, CharacterCommandFactory.EatGrass())
-    end
-
-    if Game.dayTime >= GameConsts.goToCampfireDayTimePercent then
-        table.insert(commandsPriorityList, CharacterCommandFactory.GoToCampfire())
-    end
-
-    table.insert(commandsPriorityList, CharacterCommandFactory.Wander())
-
-    return commandsPriorityList
+function SheepCharacterController:CreateBehaviourTree()
+    local tree = CharacterControllerBehaviourTree.Create(self)
+    tree.blackboard.canEatGrass = true
+    return tree
 end
 
 function SheepCharacterController:DrawRope()
@@ -81,8 +57,18 @@ function SheepCharacterController:Update()
     if self.isFollowingPlayer then
         --self.character.maxSpeed = (World.playerCharacter.maxSpeed + self.defaultMaxSpeed) / 2.0 --TODO not like that
         self:DrawRope()
+        if self.behaviourTree then
+            self.behaviourTree.blackboard.leashedToPos = World.playerCharacter:GetPosition()
+            self.behaviourTree.blackboard.isLeashed = true
+            self.behaviourTree.blackboard.leashLength = 0.5
+
+        end
     else
         self.character.maxSpeed = self.defaultMaxSpeed
+        if self.behaviourTree then
+            self.behaviourTree.blackboard.leashedToPos = nil
+            self.behaviourTree.blackboard.isLeashed = false
+        end
     end
 end
 

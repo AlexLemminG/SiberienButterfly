@@ -33,7 +33,8 @@ local Character = {
 	isSleeping = false,
 	sleepingPos = nil,
 	baseModelFile = "models/Vintik.blend",
-	type = "Character"
+	type = "Character",
+	walkingMaxSpeedMultiplier = 0.5
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -255,7 +256,9 @@ end
 
 function Character:UpdateAnimation()
 	local animation = self.runAnimation
+	local animSpeed = 1.0
 	if self.prevSpeed > 0.1 then
+		animSpeed = 2.0 * self.prevSpeed / self.maxSpeed
 		animation = self.runAnimation
 		if self.item ~= CellType.None then
 			animation = self.runWithItemAnimation
@@ -268,7 +271,7 @@ function Character:UpdateAnimation()
 	end
 	self.animator:SetAnimation(animation)
 
-	self.animator.speed = 2.0
+	self.animator.speed = animSpeed
 end
 
 --TODO move to controller and make different for different animals/characters
@@ -413,6 +416,10 @@ end
 function Character:GetWarmthImmediate() : number
 	local temperature = Game:GetTemperatureAt(self:GetIntPos())
 	return temperature
+end
+
+function Character:IsFreezing() : boolean
+	return self:GetWarmthImmediate() < 0.5
 end
 
 return Character

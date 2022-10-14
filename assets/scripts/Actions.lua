@@ -356,6 +356,28 @@ function Actions:RegisterCombineRuleForGround(charType, groundType, newCharType,
 		, callback)
 end
 
+function Actions:GetCombineRuleFromSavable(savedRule) : CombineRule|nil
+
+	--TODO get one specific rule from Actions
+	local allRules = Actions:GetAllCombineRules_NoAnyChecks(nil, savedRule.charType, savedRule.itemType, savedRule.groundType)
+	if not allRules then
+		error("Failed to find specified rule")
+		return nil
+	end
+	for index2, rule in ipairs(allRules) do
+		--TODO extra checks (there are multiple allRules for a reason)
+		if rule.newCharType == savedRule.newCharType and rule.newItemType == savedRule.newItemType and rule.newGroundType == savedRule.newGroundType then
+			return rule
+		end
+	end
+	
+	return nil
+end
+
+function Actions:SavableFromCombineRule(rule : CombineRule)
+	return rule
+end
+
 function Actions:GetAllCombineRules_NoAnyChecks(character : Character|nil, charType : integer, itemType : integer, groundType : integer)
 	local charRules = self.combineRules[charType]
 	if charRules == nil then

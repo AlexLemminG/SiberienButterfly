@@ -86,7 +86,8 @@
         "SceneManager",
         "ButterflyGame",
         "Vector3",
-        "imgui"
+        "imgui",
+        "LogWarning"
     ],
     "robloxLsp.diagnostics.globals": [
         "AssetDatabase"

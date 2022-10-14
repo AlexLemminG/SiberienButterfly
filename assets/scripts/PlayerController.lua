@@ -110,10 +110,20 @@ function PlayerController:Update()
 	velocity = vector(-velocity.z, velocity.y, velocity.x)
 	velocity = velocity * self.character.maxSpeed
 
+	--TODO should be handled by Character class
 	if self.character.item ~= CellType.None then
 		velocity = velocity * 0.8
 	end
-	--TODO should be handled by Character class
+
+	if input:GetKey("Left Shift") then
+		local l = Length(velocity)
+		--TODO maxWalkingSpeed
+		local walkingMaxSpeed = self.character.maxSpeed * self.character.walkingMaxSpeedMultiplier
+		if l > walkingMaxSpeed then
+			velocity = velocity * (walkingMaxSpeed / l)
+		end
+	end
+
 	self.character:SetVelocity(velocity)
 	
 	local grid = World.items
@@ -146,6 +156,7 @@ function PlayerController:Update()
 			selectionArrowPos = nearestCharacter:GetPosition() + vector(0,1.5,0)
 		end
 		Game:DrawStats(nearestCharacter)
+		Game:DrawHealthAndHungerUI(nearestCharacter, true)
 	end
 
 	
