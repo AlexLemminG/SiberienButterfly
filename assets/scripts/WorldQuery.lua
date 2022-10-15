@@ -50,7 +50,7 @@ function WorldQuery:FindNearestItemWithGround(cellTypeItem : integer, cellTypeGr
 end
 
 function WorldQuery:FindNearestItem(cellType : integer, originPos : Vector2Int, radius) : Vector2Int|nil
-    local queryRadius = radius or 10
+    local queryRadius = radius or 20
     local closestPos = Vector2Int:new()
     local grid = World.items
     if grid:FindNearestPosWithType(closestPos, originPos, queryRadius, cellType) then

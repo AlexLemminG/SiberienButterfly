@@ -137,10 +137,12 @@ class GridCell {
 struct GridCellIterator {
     using CheckFunc = std::function<bool(const GridCell&)>;
     GridCellIterator() {}
-    GridCellIterator(CheckFunc checkFunc, Grid* grid) :checkFunc(checkFunc), grid(grid) {}
+    GridCellIterator(CheckFunc checkFunc, Grid* grid);
 
     CheckFunc checkFunc;
-    Vector2Int prevCell = Vector2Int(-1, 0);
+    //Vector2Int prevCell = Vector2Int(-1, 0);
+    int nextCellIdx = -1;
+    int totalSize = 0;
     Grid* grid = nullptr;
     bool GetNextCell(GridCell& outCell);
     REFLECT_BEGIN(GridCellIterator);

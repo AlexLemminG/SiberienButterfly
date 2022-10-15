@@ -355,26 +355,16 @@ bool NavigationGrid::IsWalkable(int x, int y) const {
     return false;
 }
 
+GridCellIterator::GridCellIterator(CheckFunc checkFunc, Grid* grid) :checkFunc(checkFunc), grid(grid), totalSize(grid->sizeX* grid->sizeY) {}
+
 bool GridCellIterator::GetNextCell(GridCell& outCell) {
     ASSERT(grid);
     ASSERT(checkFunc);
-    GridCell cell;
-    for (int x = prevCell.x + 1; x < grid->sizeX; x++) {
-        cell = grid->GetCellFast(Vector2Int(x, prevCell.y));
+    for (; nextCellIdx < totalSize;) {
+        const GridCell& cell = grid->cells[nextCellIdx++];
         if (checkFunc(cell)) {
             outCell = cell;
-            prevCell = Vector2Int(x, prevCell.y);
             return true;
-        }
-    }
-    for (int y = prevCell.y + 1; y < grid->sizeY; y++) {
-        for (int x = 0; x < grid->sizeX; x++) {
-            cell = grid->GetCellFast(Vector2Int(x, y));
-            if (checkFunc(cell)) {
-                outCell = cell;
-                prevCell = Vector2Int(x, y);
-                return true;
-            }
         }
     }
     return false;

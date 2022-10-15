@@ -15,8 +15,8 @@ local GameConsts = {
     bushBerriesGrowthTime = DayTime.dayDurationInSeconds / 20,
     dayDurationSeconds = DayTime.dayDurationInSeconds,
     goodConditionsToSpawnCharacterDuration = DayTime.dayDurationInSeconds / 20,
-    grassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 3,
-    eatenGrassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 10,
+    grassGrowingDurationSeconds = DayTime.dayDurationInSeconds * 1,
+    eatenGrassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 3,
     healthLossFromHungerWhenFreezingMultiplier = 2.0,
     hungerWhenFreezingMultiplier = 2.0,
 

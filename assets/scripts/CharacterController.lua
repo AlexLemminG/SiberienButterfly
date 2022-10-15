@@ -78,6 +78,47 @@ function CharacterController:Think()
                             end
                         end
                     end
+                    for index, rule in ipairs(character.characterController.command.rules) do
+                        if rule.charType ~= character.item then
+                           if character.item ~= CellType.None then
+                                local dropRule = Actions:GetDropRule(character.item)
+                                if not dropRule then
+                                    return BehaviourTree_Node.FAILED
+                                end
+                                local action = WorldQuery:FindNearestActionFromRule(character, dropRule)
+                                if not action then
+                                    return BehaviourTree_Node.FAILED
+                                end
+                                local dropResult = BehaviourTree_NodeFunctions.ExecAction(action)
+                                if dropResult ~= BehaviourTree_Node.SUCCESS then
+                                    return dropResult
+                                end
+                            end
+
+                            local pickRule = Actions:GetPickupRule(rule.charType)
+                            if not pickRule then
+                                continue
+                            end
+                            local pickAction = WorldQuery:FindNearestActionFromRule(character, pickRule)
+                            if not pickAction then
+                                continue
+                            end
+                            local pickResult = BehaviourTree_NodeFunctions.ExecAction(pickAction)
+                            if pickResult == BehaviourTree_Node.FAILED then
+                                continue
+                            end
+                            if pickResult == BehaviourTree_Node.RUNNING then
+                                return BehaviourTree_Node.RUNNING
+                            end
+                        end
+                        local action = WorldQuery:FindNearestActionFromRule(character, rule)
+                        if action then
+                            local res = BehaviourTree_NodeFunctions.ExecAction(action)
+                            if res ~= BehaviourTree_Node.FAILED then
+                                return res
+                            end
+                        end
+                    end
                     return BehaviourTree_Node.FAILED
                 end
             , "CommandFromPlayer")

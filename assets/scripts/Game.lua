@@ -284,7 +284,7 @@ function Game.LoadSave(save) : boolean
 		LogWarning("Player is not created from save")
 	end
 
-	Game.dayTime = save.dayTimePercent or Game.dayTime
+	Game.dayTime = save.dayTime
 	
 	return true
 end
@@ -297,7 +297,9 @@ end
 function Game:ApplyAnimation(grid, cell)
 	local animType = cell.animType
 
-	if animType == CellAnimType.WheatGrowing or animType == CellAnimType.TreeSproutGrowing then
+	if animType == CellAnimType.WheatGrowing or animType == CellAnimType.TreeSproutGrowing or 
+		not(animType == CellAnimType.GotHit or animType == CellAnimType.ItemAppearFromGround or animType == CellAnimType.ItemAppearFromGroundWithoutXZScale or animType == CellAnimType.ItemAppear or animType == CellAnimType.ItemAppearWithoutXZScale)
+	then
 		return
 	end
 
@@ -395,6 +397,7 @@ function Game:AnimateCells(dt)
 				local animType = cell.animType
 				cell.animType = CellAnimType.None
 				self:HandleAnimationFinished(cell, animType)
+				--TODO force set matrix here
 				self:ApplyAnimation(grid, cell)
 			end
 			grid:SetCell(cell)
@@ -760,8 +763,15 @@ function Game:DrawHealthAndHungerUI(character : Character, onRightSideOfScreen :
 		if i ~= 1 then imgui.SameLine(0,0) imgui.Dummy(-3 * scale ,0) imgui.SameLine(0,0) end
 		local offset = CalcSpriteOffset(character.health, heartsCountMax, i)
 		if character.hunger == 1.0 then
+			local healthLostSpeed = 1.0 
+			if character:IsFreezing() then
+				healthLostSpeed = healthLostSpeed * GameConsts.healthLossFromHungerWhenFreezingMultiplier
+			end
+			if character.isSleeping then
+				healthLostSpeed = healthLostSpeed * GameConsts.healthLossFromHungerInSleepMultiplier
+			end
 			local isFirstNonZeroHeart = offset > 0 and (i == heartsCountMax or CalcSpriteOffset(character.health, heartsCountMax, i+1) == 0)
-			if isFirstNonZeroHeart and math.fmod(Time.time(), 1.0) > 0.5 then
+			if isFirstNonZeroHeart and math.fmod(Time.time() * healthLostSpeed, 1.0) > 0.5 then
 				if offset > 0 then 
 					offset = offset - 1
 				end

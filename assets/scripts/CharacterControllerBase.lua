@@ -174,7 +174,7 @@ end
 
 function CharacterControllerBase:Act()
     self:UpdatePathFollowing()
-    Game.DbgDrawPath(self.currentPath)
+    -- Game.DbgDrawPath(self.currentPath)
     if self.desiredAction and self.character:CanExecuteAction(self.desiredAction) then
         if self.character:GetIntPos() == self.desiredAction.intPos or self.desiredAction.intPos == nil then
             self.character:ExecuteAction(self.desiredAction)
