@@ -64,62 +64,80 @@ function CharacterController:Think()
         end
         if self.command and not self.commandAdded then
             self.commandAdded = true
+
             self.commandNode = BehaviourTree_NodesFactory.Func(
                 function (character, blackboard) 
-                    if not character.characterController.command then
-                        return BehaviourTree_Node.FAILED
-                    end
+                    local nearestAction = nil
+                    local nearestActionDistance = math.huge
+                    local characterIntPos = character:GetIntPos()
                     for index, rule in ipairs(character.characterController.command.rules) do
                         local action = WorldQuery:FindNearestActionFromRule(character, rule)
                         if action then
-                            local res = BehaviourTree_NodeFunctions.ExecAction(action)
-                            if res ~= BehaviourTree_Node.FAILED then
-                                return res
+                            if not action.intPos then
+                                nearestAction = action
+                                nearestActionDistance = 0.0
+                                break
+                            end
+                            local distance = length(vector(action.intPos.x - characterIntPos.x, 0, action.intPos.y - characterIntPos.y))
+                            if distance < nearestActionDistance then
+                                nearestActionDistance = distance
+                                nearestAction = action
                             end
                         end
                     end
+                    if nearestAction then
+                        local res = BehaviourTree_NodeFunctions.ExecAction(nearestAction)
+                        if res ~= BehaviourTree_Node.FAILED then
+                            return res
+                        end
+                    end
+                    --TODO not always ?
+                    if character.item ~= CellType.None then
+                        local dropRule = Actions:GetDropRule(character.item)
+                        if not dropRule then
+                            return BehaviourTree_Node.FAILED
+                        end
+                        local action = WorldQuery:FindNearestActionFromRule(character, dropRule)
+                        if not action then
+                            return BehaviourTree_Node.FAILED
+                        end
+                        local dropResult = BehaviourTree_NodeFunctions.ExecAction(action)
+                        if dropResult ~= BehaviourTree_Node.SUCCESS then
+                            return dropResult
+                        end
+                    end
+
                     for index, rule in ipairs(character.characterController.command.rules) do
                         if rule.charType ~= character.item then
-                           if character.item ~= CellType.None then
-                                local dropRule = Actions:GetDropRule(character.item)
-                                if not dropRule then
-                                    return BehaviourTree_Node.FAILED
-                                end
-                                local action = WorldQuery:FindNearestActionFromRule(character, dropRule)
-                                if not action then
-                                    return BehaviourTree_Node.FAILED
-                                end
-                                local dropResult = BehaviourTree_NodeFunctions.ExecAction(action)
-                                if dropResult ~= BehaviourTree_Node.SUCCESS then
-                                    return dropResult
-                                end
-                            end
-
                             local pickRule = Actions:GetPickupRule(rule.charType)
                             if not pickRule then
                                 continue
                             end
+                            local pickActionPos = WorldQuery:FindNearestActionPosFromRule(pickRule, characterIntPos)
+                            if not pickActionPos then
+                                continue
+                            end
+                            local nextActionPos = WorldQuery:FindNearestActionPosFromRule(rule, pickActionPos)
+                            if not nextActionPos then
+                                continue
+                            end
                             local pickAction = WorldQuery:FindNearestActionFromRule(character, pickRule)
                             if not pickAction then
+                                --TODO error
                                 continue
                             end
-                            local pickResult = BehaviourTree_NodeFunctions.ExecAction(pickAction)
-                            if pickResult == BehaviourTree_Node.FAILED then
-                                continue
-                            end
-                            if pickResult == BehaviourTree_Node.RUNNING then
-                                return BehaviourTree_Node.RUNNING
-                            end
-                        end
-                        local action = WorldQuery:FindNearestActionFromRule(character, rule)
-                        if action then
-                            local res = BehaviourTree_NodeFunctions.ExecAction(action)
-                            if res ~= BehaviourTree_Node.FAILED then
-                                return res
+                            local distance = length(vector(pickAction.intPos.x - characterIntPos.x, 0, pickAction.intPos.y - characterIntPos.y))
+                            distance = distance + length(vector(pickAction.intPos.x - nextActionPos.x, 0, pickAction.intPos.y - nextActionPos.y))
+                            if distance < nearestActionDistance then
+                                nearestAction = pickAction
+                                nearestActionDistance = distance
                             end
                         end
                     end
-                    return BehaviourTree_Node.FAILED
+                    if not nearestAction then
+                        return BehaviourTree_Node.FAILED
+                    end
+                    return BehaviourTree_NodeFunctions.ExecAction(nearestAction)
                 end
             , "CommandFromPlayer")
             self.behaviourTree:AddNode(self.commandNode, "Command_")

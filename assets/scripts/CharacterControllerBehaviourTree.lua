@@ -42,7 +42,7 @@ function CharacterControllerBehaviourTree.Create(characterController : Character
 
     --TODO get rid of lots of factory.Func
     
-    builder.Begin(characterController)
+    builder.BeginTree(characterController)
     builder.PushSelectorNode(factory.Fallback("root"))
         builder.PushSelectorNode(factory.Sequence("SleepImmediately?"))
             builder.PushNode(factory.Condition(function () return DayTime.IsBetween(Game.dayTime, GameConsts.goToSleepImmediatelyDayTime, GameConsts.wakeUpDayTime) end))
@@ -145,6 +145,9 @@ function CharacterControllerBehaviourTree.Create(characterController : Character
         builder.PushNode(factory.Func(
             function (character, blackboard) 
                 local pos = character.characterController:GetNearestWalkableIntPos()
+                if not pos then
+                    return BehaviourTree_Node.FAILED
+                end
         
                 local radius = 3
                 local wanderPos = blackboard.wanderPos
@@ -174,7 +177,7 @@ function CharacterControllerBehaviourTree.Create(characterController : Character
 
     builder.PopSelectorNode()
 
-    local tree = builder.End()
+    local tree = builder.EndTree()
 
     return tree
 end

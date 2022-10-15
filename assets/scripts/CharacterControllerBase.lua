@@ -86,7 +86,7 @@ end
 
 function CharacterControllerBase:Update()
     local needToThink = Utils.ArrayIndexOf(World.characters, self.character) == (Time.frameCount() % #World.characters) + 1
-    if needToThink then
+    if needToThink or true then
         self:Think()
     end
     self:Act()

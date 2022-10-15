@@ -141,7 +141,7 @@ struct GridCellIterator {
 
     CheckFunc checkFunc;
     //Vector2Int prevCell = Vector2Int(-1, 0);
-    int nextCellIdx = -1;
+    int nextCellIdx = 0;
     int totalSize = 0;
     Grid* grid = nullptr;
     bool GetNextCell(GridCell& outCell);

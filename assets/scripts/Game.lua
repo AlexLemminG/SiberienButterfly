@@ -567,7 +567,7 @@ function Game:MainLoop()
 	local dt = Time.deltaTime()
 
 	local timeScale = 1.0
-	local playerSleeps = World.playerCharacter and (World.playerCharacter.isSleeping or World.playerCharacter.isDead)
+	local playerSleeps = World.playerCharacter and (World.playerCharacter.isSleeping)
 	local everyoneSleeps = true
 	for index, character in ipairs(World.characters) do
 		if not character.isSleeping then
@@ -809,7 +809,7 @@ function DrawPauseMenu()
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs)
 
-	imgui.Begin("Dialog", true, flags)
+	imgui.Begin("PauseMenu", true, flags)
 	local text = "PAUSE"
 	local sizeX, sizeY = imgui.CalcTextSize(text)
 	imgui.SetCursorPosX((windowWidth - sizeX) * 0.5)
@@ -852,7 +852,6 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
 		hiddenItems[i] = true
 	end
-	
 
 	function self.currentDialog:Draw()
 		local options = { }
@@ -882,7 +881,7 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 			end
 
 			optionItems["Back"] = nil
-			table.insert(options, "Back")
+			table.insert(options, 1, "Back")
 		else
 			local added = {}
 			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, CellType.Any)) do
@@ -894,7 +893,16 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 			end
 
 			optionItems["Back"] = nil
-			table.insert(options, "Back")
+			table.insert(options, 1, "Back")
+		end
+
+		table.sort(options, function (a,b) return a < b end)
+
+		if Utils.ArrayRemove(options, "None") then
+			table.insert(options, 1, "None")
+		end
+		if Utils.ArrayRemove(options, "Back") then
+			table.insert(options, 1, "Back")
 		end
 
 		self.selectedOptionIndex = math.clamp(self.selectedOptionIndex, 1, #options)

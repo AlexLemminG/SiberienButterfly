@@ -42,9 +42,19 @@ function BehaviourTree:AddNode(node, parentNodeName)
     node.character = self.character
     node.blackboard = self.blackboard
 
-    if node.name then
-        self.namedNodes[node.name] = node --WARN overriding
+    function FillCharacterAndBlackboard(node)
+        node.character = self.character
+        node.blackboard = self.blackboard
+        if node.children then
+            for index, childNode in ipairs(node.children) do
+                FillCharacterAndBlackboard(childNode)
+            end
+        end
     end
+
+    self:FillNamedNodes(node)
+    FillCharacterAndBlackboard(node)
+
     node.parentNode = parentNode
 
     table.insert(parentNode.children, node)
@@ -63,6 +73,17 @@ function BehaviourTree:RemoveNode(node)
     
     Utils.ArrayRemove(parentNode.children, node)
 
+end
+
+function BehaviourTree:FillNamedNodes(fromNode)
+    if fromNode.name then
+        self.namedNodes[fromNode.name] = fromNode
+    end
+    if fromNode.children then
+        for index, childNode in ipairs(fromNode.children) do
+            self:FillNamedNodes(childNode)
+        end
+    end
 end
 
 return BehaviourTree

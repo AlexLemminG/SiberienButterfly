@@ -8,7 +8,8 @@ local BehaviorTree_Node = {
     FAILED = 0,
 
     character = nil, 
-    blackboard = nil
+    blackboard = nil,
+    name = nil
 }
 
 

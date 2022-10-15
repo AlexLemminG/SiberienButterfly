@@ -4,6 +4,7 @@ local Actions = require("Actions")
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 
+--TODO use navigation PathExists everywhere
 
 function WorldQuery:FindNearestActionFromRule(character : Character, combineRule : CombineRule)
     if not combineRule or not character or not Actions:IsSubtype(character.item, combineRule.charType) or (character and combineRule.preCondition and not combineRule.preCondition(character)) then 
