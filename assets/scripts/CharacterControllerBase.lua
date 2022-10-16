@@ -10,6 +10,8 @@ local BehaviourTree = require("BehaviourTree")
 --TODO use mini fsm instead if command
 --save them to state with current desired action
 
+--TODO use strings instead of ints for cellTypes in saves (or use something like blender dna)
+
 ---@class CharacterControllerBase
 ---@field command CharacterCommand|nil
 ---@field character Character|nil
@@ -36,13 +38,39 @@ function CharacterControllerBase:new(o)
     return o
 end
 
+function SaveCommand(command) 
+    local savedCommand = {}
+    
+    savedCommand.type = command.type
+    savedCommand.rules = command.rules
+    savedCommand.bringTarget = command.bringTarget
+
+    return savedCommand
+end
+
+function LoadCommand(savedCommand) 
+    local command = {}
+    
+    command.type = savedCommand.type
+    local rules = {}
+    for index, rule in ipairs(savedCommand.rules) do
+        local realRule = Actions:GetCombineRuleFromSavable(rule)
+        if realRule then
+            table.insert(rules, realRule)
+        else
+            --TODO error
+        end
+    end
+    command.rules = rules
+    command.bringTarget = savedCommand.bringTarget
+
+    return command
+end
+
 function CharacterControllerBase:SaveState() : any
     local state = {}
     if self.command then
-        state.command = {
-            type = self.command.type,
-            rules = self.command.rules,
-        }
+        state.command = SaveCommand(self.command)
     end
     return state
 end
@@ -53,16 +81,8 @@ function CharacterControllerBase:LoadState(savedState)
     end
     --TODO ensure loaded rules are still valid
     if savedState.command then
-        local rules = {}
-        for index, rule in ipairs(savedState.command.rules) do
-            local realRule = Actions:GetCombineRuleFromSavable(rule)
-            if realRule then
-                table.insert(rules, realRule)
-            else
-                --TODO error
-            end
-        end
-        self:SetCommandFromRules(rules, savedState.command.type)
+        self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+        self.command = LoadCommand(savedState.command)
     end
 end
 
@@ -73,7 +93,7 @@ function CharacterControllerBase:SetCommandFromRules(rules)
     self.command = {
         --TODO named const
         type = "Combine",
-        rules = rules
+        rules = rules,
     }
 end
 

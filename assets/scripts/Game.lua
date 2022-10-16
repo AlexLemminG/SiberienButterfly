@@ -116,6 +116,7 @@ function Game:GenerateWorldGrid()
 		local x = 10
 		while CellTypeInv[itemIdx] do
 			itemIdx = itemIdx + 1
+			if not Actions:IsFlag(itemIdx) then continue end
 			y = y + 1
 			if y >= 15 then
 				y = 5
