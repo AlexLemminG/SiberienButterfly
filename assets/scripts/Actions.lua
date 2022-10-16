@@ -135,6 +135,7 @@ function Actions:GetAllIsSubtype(cellTypeParent : integer)
 end
 
 function Actions:RegisterPickableItems()
+	--TODO move to CellTypeDesc.lua
 	local pickableItems = self.pickableItems
 
 	for i = 1, GameConsts.maxWheatStackSize, 1 do
@@ -152,6 +153,9 @@ function Actions:RegisterPickableItems()
 	pickableItems[CellType.StoveWithWood] = true
 	pickableItems[CellType.Wool] = true
 	pickableItems[CellType.Bed] = true
+	for flag = self:FlagFirst(), self:FlagLast(), 1 do
+		pickableItems[flag] = true
+	end
 end
 
 function Actions:IsPickable(itemType)
@@ -716,6 +720,20 @@ function Actions:RuleToAction(character : Character, intPos, rule)
 		return nil
 	end
 	return Action_ExecuteRule(character, intPos, rule)
+end
+
+--TODO not here
+function Actions:IsFlag(cellType : integer) : boolean
+	return cellType >= CellType.FlagRed and cellType <= CellType.FlagGreen
+end
+
+--TODO not here
+function Actions:FlagFirst() : integer
+	return CellType.FlagRed
+end
+--TODO not here
+function Actions:FlagLast() : integer
+	return CellType.FlagGreen
 end
 
 return Actions

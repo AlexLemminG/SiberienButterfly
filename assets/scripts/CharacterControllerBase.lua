@@ -40,7 +40,8 @@ function CharacterControllerBase:SaveState() : any
     local state = {}
     if self.command then
         state.command = {
-            rules = self.command.rules
+            type = self.command.type,
+            rules = self.command.rules,
         }
     end
     return state
@@ -61,7 +62,7 @@ function CharacterControllerBase:LoadState(savedState)
                 --TODO error
             end
         end
-        self:SetCommandFromRules(rules)
+        self:SetCommandFromRules(rules, savedState.command.type)
     end
 end
 
@@ -70,6 +71,28 @@ function CharacterControllerBase:SetCommandFromRules(rules)
     self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
     
     self.command = {
+        --TODO named const
+        type = "Combine",
+        rules = rules
+    }
+end
+
+---@param rules : CombineRule[]
+function CharacterControllerBase:SetBringCommand(bringWhatCellType, bringToCellType) 
+    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+    
+    local types = Actions:GetAllIsSubtype(bringWhatCellType)
+    local rules = {}
+    for index, cellType in ipairs(types) do
+        local dropRule = Actions:GetDropRule(cellType)
+        if dropRule then
+            table.insert(rules, dropRule)
+        end
+    end
+    self.command = {
+        --TODO named const
+        type = "Bring",
+        bringTarget = bringToCellType,
         rules = rules
     }
 end

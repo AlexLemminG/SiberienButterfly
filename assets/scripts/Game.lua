@@ -109,7 +109,7 @@ function Game:GenerateWorldGrid()
 		end
 
 
-	local generateAllItems = false
+	local generateAllItems = true
 	if generateAllItems then
 		local itemIdx = 1
 		local y = 5
@@ -879,6 +879,15 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 					optionItems[CellTypeInv[rule.itemType]] = rule.itemType
 				end
 			end
+			if Actions:IsPickable(self.firstOptionItem) then
+				for flagType = Actions:FlagFirst(), Actions:FlagLast(), 1 do
+					if not added[flagType] and not hiddenItems[flagType] then
+						added[flagType] = true
+						table.insert(options, CellTypeInv[flagType])
+						optionItems[CellTypeInv[flagType]] = flagType
+					end
+				end
+			end
 
 			optionItems["Back"] = nil
 			table.insert(options, 1, "Back")
@@ -968,6 +977,11 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
 						self.selectedOptionIndex = 1
 						self.secondOptionItem = selectedItem
+
+						if Actions:IsFlag(self.secondOptionItem) then
+							self.characterB.characterController:SetBringCommand(self.firstOptionItem, self.secondOptionItem)
+							Game:EndDialog()
+						end
 					else
 						self.firstOptionItem = nil
 						self.selectedOptionIndex = self.selectedOptionIndices[#self.selectedOptionIndices]

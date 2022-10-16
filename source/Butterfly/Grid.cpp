@@ -12,6 +12,7 @@
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
 #include <EASTL/priority_queue.h>
+#include "SEngine/Dbg.h"
 
 REFLECT_DEFINE(GridSystem);
 REFLECT_DEFINE(GridSettings);
@@ -954,12 +955,16 @@ void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
 }
 
 template<class CheckFunc>
-static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, CheckFunc checkFunc)
+static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, CheckFunc checkFunc)
 {
     OPTICK_EVENT();
-    if (checkFunc(originPos)) {
+    minRadius = Mathf::Max(0, minRadius);
+    if (minRadius == 0 && checkFunc(originPos)) {
         outPos = originPos;
         return true;
+    }
+    if (maxRadius < minRadius) {
+        return false;
     }
 
     //PERF try quadtree in emergency situation
@@ -968,6 +973,46 @@ static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& or
     Vector2Int current_pos = originPos;
     int current_radius = 1;
     int t = 1;
+
+    //TODO check that it works
+    int deltaStartRadius = Mathf::Max(0, minRadius-1);
+    current_radius += deltaStartRadius;
+    t += (minRadius - 1) * 2;
+    current_pos.x -= deltaStartRadius;
+    current_pos.y += deltaStartRadius;
+
+    if (minRadius > 0 && current_radius <= maxRadius) {
+        current_pos.y -= t;
+        if (checkFunc(current_pos)) {
+            outPos = current_pos;
+            return true;
+        }
+        for (int i = 0; i < t; i++) {
+            current_pos.x += 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        t++;
+        for (int i = 0; i < t; i++) {
+            current_pos.y += 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        for (int i = 0; i < t; i++) {
+            current_pos.x -= 1;
+            if (checkFunc(current_pos)) {
+                outPos = current_pos;
+                return true;
+            }
+        }
+        t++;
+        current_radius++;
+    }
+
     while (current_radius <= maxRadius) {
         for (int i = 0; i < t; i++) {
             current_pos.y -= 1;
@@ -1001,30 +1046,45 @@ static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& or
         t++;
         current_radius++;
     }
+    //finish line
+    for (int i = 0; i < t-1; i++) {
+        current_pos.y -= 1;
+        if (checkFunc(current_pos)) {
+            outPos = current_pos;
+            return true;
+        }
+    }
+
     return false;
 }
 
 bool GridSystem::FindNearestWalkable(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius) const
 {
-    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [this](const Vector2Int& pos) {
+    return FindNearestPosWithPredecate(outPos, originPos, 0, maxRadius, [this](const Vector2Int& pos) {
         return navigation->IsWalkable(pos.x, pos.y);
         });
 }
 
-bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const
+bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType) const
 {
     auto* itemsGrid = this->GetGrid("ItemsGrid").get();
     auto* groundGrid = this->GetGrid("GroundGrid").get();
 
     ASSERT(itemsGrid && groundGrid);
 
-    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [itemsGrid, groundGrid, itemType, groundType, this](const Vector2Int& pos) {
+    return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [itemsGrid, groundGrid, itemType, groundType, this](const Vector2Int& pos) {
         return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType;
         });
 }
 
-bool Grid::FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType) const {
-    return FindNearestPosWithPredecate(outPos, originPos, maxRadius, [this, itemType](const Vector2Int& pos) {return GetCell(pos).type == itemType; });
+bool Grid::FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType) const {
+    return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [this, itemType](const Vector2Int& pos) {return GetCell(pos).type == itemType; });
+}
+
+
+bool Grid::DbgDrawRad(const Vector2Int& originPos, int minRadius, int maxRadius) const {
+    Vector2Int outPos;
+    return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [this](const Vector2Int& pos) {Dbg::Draw(Sphere(GetCellWorldCenter(pos), 0.1f)); return false; });
 }
 
 void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)

@@ -70,15 +70,44 @@ function CharacterController:Think()
                     local nearestAction = nil
                     local nearestActionDistance = math.huge
                     local characterIntPos = character:GetIntPos()
+                    local pickSearchExcludeRadius = 0
+                    local searchForActionTargetPosNearestTo = characterIntPos
+                    if character.characterController.command.type == "Bring" then
+                        local bringTarget = character.characterController.command.bringTarget
+                        if not bringTarget then
+                            --TODO error
+                            return BehaviourTree_Node.FAILED
+                        end
+                        local intPosBringTarget = nil
+                        if type(bringTarget) =="number" then
+                            intPosBringTarget = WorldQuery:FindNearestItem(bringTarget, characterIntPos)
+                            if not intPosBringTarget then
+                                return BehaviourTree_Node.FAILED
+                            end
+                        elseif type(bringTarget) == "userdata" then
+                            intPosBringTarget = bringTarget --Assuming IntPos
+                        end
+                        --TOOD not always
+                        local intPosBringTargetNeares = WorldQuery:FindNearestItemWithGround(CellType.None, CellType.Any, intPosBringTarget)
+                        if not intPosBringTargetNeares then
+                            return BehaviourTree_Node.FAILED
+                        end
+                        --TODO not characterIntPos
+                        pickSearchExcludeRadius = math.max(math.abs(intPosBringTarget.x - intPosBringTargetNeares.x), math.abs(intPosBringTarget.y - intPosBringTargetNeares.y)) + 1
+                        --TODO less hacky
+                        --looking for nearest pos around target
+                        searchForActionTargetPosNearestTo = intPosBringTarget
+                    end
                     for index, rule in ipairs(character.characterController.command.rules) do
-                        local action = WorldQuery:FindNearestActionFromRule(character, rule)
+                        --TODO among poses with same distance from searchForActionTargetPosNearestTo, choose one that is closer to character
+                        local action = WorldQuery:FindNearestActionFromRule(character, rule, searchForActionTargetPosNearestTo)
                         if action then
                             if not action.intPos then
                                 nearestAction = action
                                 nearestActionDistance = 0.0
                                 break
                             end
-                            local distance = length(vector(action.intPos.x - characterIntPos.x, 0, action.intPos.y - characterIntPos.y))
+                            local distance = length(vector(action.intPos.x - searchForActionTargetPosNearestTo.x, 0, action.intPos.y - searchForActionTargetPosNearestTo.y))
                             if distance < nearestActionDistance then
                                 nearestActionDistance = distance
                                 nearestAction = action
@@ -113,15 +142,17 @@ function CharacterController:Think()
                             if not pickRule then
                                 continue
                             end
-                            local pickActionPos = WorldQuery:FindNearestActionPosFromRule(pickRule, characterIntPos)
+                            -- World.items:DbgDrawRad(searchForActionTargetPosNearestTo, pickSearchExcludeRadius, pickSearchExcludeRadius+1)
+                            --TODO exclude around searchForActionTargetPosNearestTo but still search nearest to character
+                            local pickActionPos = WorldQuery:FindNearestActionPosFromRule(pickRule, searchForActionTargetPosNearestTo, pickSearchExcludeRadius)
                             if not pickActionPos then
                                 continue
                             end
-                            local nextActionPos = WorldQuery:FindNearestActionPosFromRule(rule, pickActionPos)
+                            local nextActionPos = WorldQuery:FindNearestActionPosFromRule(rule, searchForActionTargetPosNearestTo)
                             if not nextActionPos then
                                 continue
                             end
-                            local pickAction = WorldQuery:FindNearestActionFromRule(character, pickRule)
+                            local pickAction = Actions:RuleToAction(character, pickActionPos, pickRule)
                             if not pickAction then
                                 --TODO error
                                 continue

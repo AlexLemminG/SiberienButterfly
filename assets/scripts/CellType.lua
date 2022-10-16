@@ -53,6 +53,10 @@ local CellType = {
     BedOccupied = 50,
     Wool = 51,
     GroundWithEatenGrass = 52,
+    FlagRed = 53,
+    FlagBlue = 54,
+    FlagGreen = 55,
+    --empty for future flags --TODO *flag emoji*
 }
 
 return CellType

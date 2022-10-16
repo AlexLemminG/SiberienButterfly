@@ -172,6 +172,7 @@ public:
     void SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix);
 
     Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
+    bool DbgDrawRad(const Vector2Int& originPos, int minRadius, int maxRadius) const;
     Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
     Vector3 GetCellWorldCenterFast(const Vector2Int& cellPos) const {
         return GetCellWorldCenter(GetCellFast(cellPos));
@@ -213,7 +214,8 @@ public:
     int GetTypeModificationsCount()const {
         return typeModificationsCount;
     }
-    bool FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType) const;
+    //TODO flip min/max order
+    bool FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType) const;
 
     static void SerializeGrid(SerializationContext& context, const Grid& grid);
     static void DeserializeGrid(const SerializationContext& context, Grid& grid);
@@ -240,6 +242,7 @@ private:
     REFLECT_METHOD(GetTypeIterator);
     REFLECT_METHOD(GetTypeWithAnimIterator);
     REFLECT_METHOD(FindNearestPosWithType);
+    REFLECT_METHOD(DbgDrawRad);
     REFLECT_VAR(sizeX);
     REFLECT_VAR(sizeY);
     REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
@@ -298,7 +301,7 @@ class GridSystem : public GameSystem<GridSystem> {
     GameEventHandle onAfterLuaReloaded;
     GameEventHandle onAfterAssetDatabaseReloaded;
 
-    bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius, int itemType, int groundType) const;
+    bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType) const;
     bool FindNearestWalkable(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius) const;
 
     REFLECT_BEGIN(GridSystem);
