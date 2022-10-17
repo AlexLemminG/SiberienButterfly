@@ -86,21 +86,18 @@ function CharacterControllerBase:LoadState(savedState)
     end
 end
 
+--TODO Create... functions to different file
 ---@param rules : CombineRule[]
-function CharacterControllerBase:SetCommandFromRules(rules) 
-    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
-    
-    self.command = {
+function CharacterControllerBase.CreateCommandFromRules(rules)
+    local command = {
         --TODO named const
         type = "Combine",
         rules = rules,
     }
+    return command
 end
 
----@param rules : CombineRule[]
-function CharacterControllerBase:SetBringCommand(bringWhatCellType, bringToCellType) 
-    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
-    
+function CharacterControllerBase.CreateBringCommand(bringWhatCellType, bringToCellType)
     local types = Actions:GetAllIsSubtype(bringWhatCellType)
     local rules = {}
     for index, cellType in ipairs(types) do
@@ -109,12 +106,30 @@ function CharacterControllerBase:SetBringCommand(bringWhatCellType, bringToCellT
             table.insert(rules, dropRule)
         end
     end
-    self.command = {
+    local command = {
         --TODO named const
         type = "Bring",
         bringTarget = bringToCellType,
         rules = rules
     }
+    return command
+end
+
+function CharacterControllerBase:SetCommand(command)
+    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+    self.command = command
+end
+
+---@param rules : CombineRule[]
+function CharacterControllerBase:SetCommandFromRules(rules) 
+    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+    self.command = CharacterControllerBase.CreateCommandFromRules(rules)
+end
+
+---@param rules : CombineRule[]
+function CharacterControllerBase:SetBringCommand(bringWhatCellType, bringToCellType) 
+    self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
+    self.command = CharacterControllerBase.CreateBringCommand(bringWhatCellType, bringToCellType)
 end
 
 function CharacterControllerBase:OnEnable()

@@ -3,6 +3,7 @@ local GameConsts = require("GameConsts")
 local Utils      = require("Utils")
 local CellAnimations = require("CellAnimations")
 local WorldQuery     = require("WorldQuery")
+
 local Game = {
 	scene = nil,
 	playerGO = nil,
@@ -840,10 +841,9 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		characterB = characterB,
 		selectedOptionIndex = 1,
 
-		selectedOptionIndices = {},
+		optionsStack = {},
 
-		firstOptionItem = nil,
-		secondOptionItem = nil
+		data = nil,
 	}
 
 	local hiddenItems = {}
@@ -853,71 +853,107 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
 		hiddenItems[i] = true
 	end
+	
+	local CommandType = {
+		Prepare = "Prepare",
+		Bring = "Bring",
+		Put = "Put",
+		Pack = "Pack"
+	}
+	local function GetCommandType(rule : CombineRule)
+		if rule.charType == rule.newCharType and rule.itemType == rule.newItemType then
+			return CommandType.Prepare
+		end
+		if Actions:IsSubtype(rule.charType, CellType.WheatCollected_AnyNotFull) and Actions:IsSubtype(rule.itemType, CellType.WheatCollected_AnyNotFull) then
+			return CommandType.Pack
+		end
+		if rule.itemType == CellType.None and rule.newItemType == rule.charType and rule.newGroundType == rule.groundType then
+			return CommandType.Bring
+		end
+		return CommandType.Put
+	end
+
+	--TODO naming
+	local allCommands = {}
+
+	function GetOrCreate(option, name) 
+		if not option.children then
+			option.children = {}
+		end
+		for i, v in option.children do
+			if v.name == name then
+				return v
+			end
+		end
+		local result = option.children[name]
+		if not result then
+			result = {}
+			result.name = name
+			table.insert(option.children, result)
+		end
+		return result
+	end
+	
+	local CharacterControllerBase = require("CharacterControllerBase")
+	for cellTypeName, cellType in pairs(CellType) do
+		if hiddenItems[cellType] then
+			continue
+		end
+		for index, rule in ipairs(Actions:GetAllCombineRules(cellType, CellType.Any, CellType.Any)) do
+			local commandType = GetCommandType(rule)
+			if commandType == CommandType.Bring then
+				continue
+			end
+			local sub = GetOrCreate(allCommands, commandType)
+			sub = GetOrCreate(sub, CellTypeInv[cellType])
+			sub = GetOrCreate(sub, CellTypeInv[rule.itemType])
+			sub = GetOrCreate(sub, CellTypeInv[rule.groundType])
+			local rules = Actions:GetAllCombineRules(cellType, rule.itemType, rule.groundType)
+			sub.command = CharacterControllerBase.CreateCommandFromRules(rules)
+		end
+		
+		if Actions:IsPickable(cellType) then
+			for flagType = Actions:FlagFirst(), Actions:FlagLast(), 1 do
+				local sub = GetOrCreate(allCommands, CommandType.Bring)
+				sub = GetOrCreate(sub, CellTypeInv[cellType])
+				sub = GetOrCreate(sub, CellTypeInv[flagType])
+				sub.command = CharacterControllerBase.CreateBringCommand(cellType, flagType)
+			end
+		end
+	end
+
+	function Postprocess(commands)
+		if not commands.children then
+				return
+		end
+		for i,v in commands.children do
+			Postprocess(v)
+		end
+		table.sort(commands.children, function(a,b) return a.name < b.name end)
+		
+		--TODO less hardcode
+		if #commands.children == 1 and commands.children[1].name == "Any" or commands.children[1].name == "None" then
+			commands.command = commands.children[1].command
+			commands.children = commands.children[1].children
+		end	
+
+	end
+
+	Postprocess(allCommands)
+
+	self.currentDialog.data = allCommands
 
 	function self.currentDialog:Draw()
-		local options = { }
-		local optionItems = {}
-		if not self.firstOptionItem then
-			for cellTypeName, cellType in pairs(CellType) do
-				if hiddenItems[cellType] then
-					continue
-				end
-				for index, rule in ipairs(Actions:GetAllCombineRules(cellType, CellType.Any, CellType.Any)) do
-					table.insert(options, CellTypeInv[cellType])
-					optionItems[CellTypeInv[cellType]] = cellType
-					break
-				end
-			end
 
-			optionItems["Back"] = nil
-			table.insert(options, 1, "Back")
-		elseif not self.secondOptionItem then
-			local added = {}
-			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, CellType.Any, CellType.Any)) do
-				if not added[rule.itemType] and not hiddenItems[rule.itemType] then
-					added[rule.itemType] = true
-					table.insert(options, CellTypeInv[rule.itemType])
-					optionItems[CellTypeInv[rule.itemType]] = rule.itemType
-				end
-			end
-			if Actions:IsPickable(self.firstOptionItem) then
-				for flagType = Actions:FlagFirst(), Actions:FlagLast(), 1 do
-					if not added[flagType] and not hiddenItems[flagType] then
-						added[flagType] = true
-						table.insert(options, CellTypeInv[flagType])
-						optionItems[CellTypeInv[flagType]] = flagType
-					end
-				end
-			end
-
-			optionItems["Back"] = nil
-			table.insert(options, 1, "Back")
-		else
-			local added = {}
-			for index, rule in ipairs(Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, CellType.Any)) do
-				if not added[rule.groundType] and not hiddenItems[rule.groundType] then
-					added[rule.groundType] = true
-					table.insert(options, CellTypeInv[rule.groundType])
-					optionItems[CellTypeInv[rule.groundType]] = rule.groundType
-				end
-			end
-
-			optionItems["Back"] = nil
-			table.insert(options, 1, "Back")
+		local depth = 0
+		local currentOptions = self.data.children
+		for index, value in ipairs(self.optionsStack) do
+			currentOptions = currentOptions[value].children
 		end
+		
+		self.selectedOptionIndex = math.clamp(self.selectedOptionIndex, 1, #currentOptions)
 
-		table.sort(options, function (a,b) return a < b end)
-
-		if Utils.ArrayRemove(options, "None") then
-			table.insert(options, 1, "None")
-		end
-		if Utils.ArrayRemove(options, "Back") then
-			table.insert(options, 1, "Back")
-		end
-
-		self.selectedOptionIndex = math.clamp(self.selectedOptionIndex, 1, #options)
-
-		local selectedOption = options[self.selectedOptionIndex] --TODO nil check
+		local selectedOption = currentOptions[self.selectedOptionIndex] --TODO nil check
 
 		local screenSize = Graphics:GetScreenSize()
 		imgui.SetNextWindowSize(400,250)
@@ -928,22 +964,17 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 
 		imgui.Begin("Dialog", nil, flags)
 		imgui.TextUnformatted("DIALOG:")
-		--print(self.characterA.GetHumanName, self.characterB.GetHumanName)
-		local text = ""
 		imgui.TextUnformatted(self.characterA:GetHumanName() .. " talks to " .. self.characterB:GetHumanName())
-		for index, value in ipairs({self.firstOptionItem, self.secondOptionItem}) do
-			if value then
-				text = text.." "..CellTypeInv[value]
-			end
-		end
+		
+		local text = ""
 		imgui.TextUnformatted(text)
 		
-		for index, option in ipairs(options) do
-			local optionText = option
+		for index, option in ipairs(currentOptions) do
+			local optionText = option.name
 			if index == self.selectedOptionIndex then
-				optionText = "[*] "..option
+				optionText = "[*] "..optionText
 			else
-				optionText = "[ ] "..option
+				optionText = "[ ] "..optionText
 			end
 			imgui.TextUnformatted(optionText)
 		end
@@ -964,48 +995,22 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 			end
 			if acceptPressed then
 				print("Selected ", selectedOption)
-				local selectedItem = optionItems[selectedOption]
-				if not self.firstOptionItem then
-					if selectedItem then
-						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
-						self.selectedOptionIndex = 1
-						self.firstOptionItem = selectedItem
-					else
-						Game:EndDialog()
-					end
-				elseif not self.secondOptionItem then
-					if selectedItem then
-						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
-						self.selectedOptionIndex = 1
-						self.secondOptionItem = selectedItem
 
-						if Actions:IsFlag(self.secondOptionItem) then
-							self.characterB.characterController:SetBringCommand(self.firstOptionItem, self.secondOptionItem)
-							Game:EndDialog()
-						end
+				if selectedOption == "Back" then
+					if #self.optionsStack == 0 then
+						Game:EndDialog()
 					else
-						self.firstOptionItem = nil
-						self.selectedOptionIndex = self.selectedOptionIndices[#self.selectedOptionIndices]
-						table.remove(self.selectedOptionIndices, #self.selectedOptionIndices)
+						self.selectedOptionIndex = self.optionsStack[#self.optionsStack]
+						table.remove(self.optionsStack, #self.optionsStack)
 					end
 				else
-					if selectedItem then
-						table.insert(self.selectedOptionIndices, self.selectedOptionIndex)
-						self.selectedOptionIndex = 1
-						local rules = Actions:GetAllCombineRules(self.firstOptionItem, self.secondOptionItem, selectedItem)
-						if not rules or #rules == 0 then
-							LogError(string.format("could not find combine rule for %s %s %s", CellTypeInv[self.firstOptionItem], CellTypeInv[self.secondOptionItem], CellTypeInv[selectedItem] ))
-						else
-							self.characterB.characterController:SetCommandFromRules(rules)
-						end
+					table.insert(self.optionsStack, self.selectedOptionIndex)
+					self.selectedOptionIndex = 1
+					if selectedOption.command then
+						self.characterB.characterController:SetCommand(selectedOption.command)
 						Game:EndDialog()
-					else
-						self.secondOptionItem = nil
-						self.selectedOptionIndex = self.selectedOptionIndices[#self.selectedOptionIndices]
-						table.remove(self.selectedOptionIndices, #self.selectedOptionIndices)
 					end
 				end
-
 			end
 		end
 		self.updateInput = true
