@@ -12,6 +12,12 @@ Scene:
           tag: GroundGrid
         GridDrawer: {}
         RigidBody: {}
+    - prefab: prefabs\grid.asset
+      overrides:
+        GameObject:
+          tag: MarkingsGrid
+        GridDrawer: {}
+        RigidBody: {}
     - prefab: prefabs\column.asset
       overrides:
         Transform:

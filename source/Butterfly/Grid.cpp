@@ -850,7 +850,10 @@ void GridSystem::LoadCellTypes() {
         }
     }
 
+    this->cellTypeAny = -1;
+
     for (auto c : contextCellType.GetChildrenNames()) {
+
         GridCellDescLua luaDesc;
         auto descContext = contextCellTypeDesc.Child(c);
         if (descContext.IsDefined()) {
@@ -861,6 +864,11 @@ void GridSystem::LoadCellTypes() {
 
         int i = 0;
         contextCellType.Child(c) >> i;
+
+        if (c == "Any") {
+            ASSERT(this->cellTypeAny == -1);
+            this->cellTypeAny = i;
+        }
 
         //no mesh for util
         eastl::string meshName = c;
@@ -902,6 +910,8 @@ void GridSystem::LoadCellTypes() {
         this->settings->cellDescs.emplace(desc.type, desc);
     }
     lua_pop(L, 2);
+
+    ASSERT(this->cellTypeAny != -1);
 }
 
 
@@ -1065,16 +1075,56 @@ bool GridSystem::FindNearestWalkable(Vector2Int& outPos, const Vector2Int& origi
         });
 }
 
-bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType) const
+bool GridSystem::FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType, int markingType) const
 {
     auto* itemsGrid = this->GetGrid("ItemsGrid").get();
     auto* groundGrid = this->GetGrid("GroundGrid").get();
+    auto* markingsGrid = this->GetGrid("MarkingsGrid").get();
 
-    ASSERT(itemsGrid && groundGrid);
-
-    return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [itemsGrid, groundGrid, itemType, groundType, this](const Vector2Int& pos) {
-        return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType;
-        });
+    ASSERT(itemsGrid && groundGrid && markingsGrid);
+    if (groundType == cellTypeAny && markingType == cellTypeAny && itemType == cellTypeAny) {
+        //TODO warning or assert
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [itemsGrid, itemType, this](const Vector2Int& pos) {
+            return true;
+            });
+    }
+    else if (groundType != cellTypeAny && markingType != cellTypeAny && itemType != cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType && markingsGrid->GetCell(pos).type == markingType;
+            });
+    }
+    else if (groundType == cellTypeAny && markingType != cellTypeAny && itemType != cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return itemsGrid->GetCell(pos).type == itemType && markingsGrid->GetCell(pos).type == markingType;
+            });
+    }
+    else if (groundType != cellTypeAny && markingType == cellTypeAny && itemType != cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return itemsGrid->GetCell(pos).type == itemType && groundGrid->GetCell(pos).type == groundType;
+            });
+    }
+    else if (groundType != cellTypeAny && markingType != cellTypeAny && itemType == cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return groundGrid->GetCell(pos).type == groundType && markingsGrid->GetCell(pos).type == markingType;
+            });
+    }
+    else if (groundType == cellTypeAny && markingType == cellTypeAny && itemType != cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return itemsGrid->GetCell(pos).type == itemType;
+            });
+    }
+    else if (groundType == cellTypeAny && markingType != cellTypeAny && itemType == cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return markingsGrid->GetCell(pos).type == markingType;
+            });
+    }
+    else if (groundType != cellTypeAny && markingType == cellTypeAny && itemType == cellTypeAny) {
+        return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [&](const Vector2Int& pos) {
+            return groundGrid->GetCell(pos).type == groundType;
+            });
+    }
+    ASSERT(false);
+    return false;
 }
 
 bool Grid::FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType) const {

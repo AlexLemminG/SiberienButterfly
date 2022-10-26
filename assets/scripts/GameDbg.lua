@@ -18,6 +18,7 @@ function GameDbg:Update()
     local CharacterControllerBase = require("CharacterControllerBase")
     local Actions                 = require("Actions")
     local CellType                = require("CellType")
+    local Game                    = require("Game")
 
     if not self.commandsToAssign then
         self.commandsToAssign = {}
@@ -30,6 +31,12 @@ function GameDbg:Update()
         table.insert(commandsToAssign,
             CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.None, CellType.None,
                 CellType.Ground)))
+        CharacterControllerBase.AddMarkingToCommand(commandsToAssign[#commandsToAssign], CellType.MarkingRed)
+        
+        table.insert(commandsToAssign,
+            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.None, CellType.None, 
+            CellType.GroundWithGrass)))
+        CharacterControllerBase.AddMarkingToCommand(commandsToAssign[#commandsToAssign], CellType.MarkingRed)
                     
         table.insert(commandsToAssign,
             CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.WheatCollected_Any, CellType.None,
@@ -37,18 +44,6 @@ function GameDbg:Update()
                 
         table.insert(commandsToAssign,
             CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.WheatCollected_AnyNotFull, CellType.WheatCollected_AnyNotFull,
-                CellType.Any)))
-
-        table.insert(commandsToAssign,
-            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.None, CellType.Tree,
-                CellType.Any)))
-
-        table.insert(commandsToAssign,
-            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.Wood, CellType.Stove,
-                CellType.Any)))
-                
-        table.insert(commandsToAssign,
-            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.FlintStone, CellType.StoveWithWood,
                 CellType.Any)))
                 
         table.insert(commandsToAssign,
@@ -58,6 +53,23 @@ function GameDbg:Update()
         table.insert(commandsToAssign,
             CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.Flour, CellType.StoveWithWoodFired,
                 CellType.Any)))
+                
+
+        table.insert(commandsToAssign,
+        CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.None, CellType.Tree,
+            CellType.Any)))
+
+        table.insert(commandsToAssign,
+            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.Wood, CellType.Stove,
+                CellType.Any)))
+                
+        table.insert(commandsToAssign,
+        CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.FlintStone, CellType.StoveWithWood,
+            CellType.Any)))
+        
+        table.insert(commandsToAssign,
+        CharacterControllerBase.CreateBringCommand(CellType.Stone, CellType.FlagRed))
+        CharacterControllerBase.AddMarkingToCommand(commandsToAssign[#commandsToAssign], CellType.MarkingRed)
     end
 
     --TODO make player immortal
@@ -77,6 +89,10 @@ function GameDbg:Update()
         else
             iNextCommand += 1
         end
+    end
+
+    if Input:GetKeyDown("N") then
+        Game.CreateNpcGO()
     end
 end
 

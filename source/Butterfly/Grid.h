@@ -301,8 +301,10 @@ class GridSystem : public GameSystem<GridSystem> {
     GameEventHandle onAfterLuaReloaded;
     GameEventHandle onAfterAssetDatabaseReloaded;
 
-    bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType) const;
+    bool FindNearestPosWithTypes(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType, int groundType, int markingType) const;
     bool FindNearestWalkable(Vector2Int& outPos, const Vector2Int& originPos, int maxRadius) const;
+
+    int cellTypeAny = 0;
 
     REFLECT_BEGIN(GridSystem);
     REFLECT_METHOD(GetGrid);

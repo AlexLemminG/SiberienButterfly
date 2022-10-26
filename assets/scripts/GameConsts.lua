@@ -6,24 +6,25 @@ local GameConsts = {
 
     hungerPerSecond = (1.0) / DayTime.dayDurationInSeconds,
     hungerInSleepMultipler = 0.1,
-    healthLossFromHungerPerSecond = (10 / 3) / DayTime.dayDurationInSeconds,
+    healthLossFromHungerPerSecond = (1 / 3) / DayTime.dayDurationInSeconds,
     healthLossFromHungerInSleepMultiplier = 0.1,
-    healthIncWithoutHungerPerSecond = (10 / 6) / DayTime.dayDurationInSeconds,
+    healthIncWithoutHungerPerSecond = (1 / 6) / DayTime.dayDurationInSeconds,
     newTreeApearProbabilityPerCellPerMinute = 0.1, --TODO Is it really probability?
     treeSproutToTreeGrowthTime = 60.0,
-    wheatGrowthTimeTotal = DayTime.dayDurationInSeconds / 10,
+    wheatGrowthTimeTotal = DayTime.dayDurationInSeconds / 2.0,
     bushBerriesGrowthTime = DayTime.dayDurationInSeconds * 10,
     dayDurationSeconds = DayTime.dayDurationInSeconds,
-    goodConditionsToSpawnCharacterDuration = DayTime.dayDurationInSeconds / 20,
+    goodConditionsToSpawnCharacterDuration = DayTime.dayDurationInSeconds / 5,
     grassGrowingDurationSeconds = DayTime.dayDurationInSeconds * 1,
     eatenGrassGrowingDurationSeconds = DayTime.dayDurationInSeconds / 3,
     healthLossFromHungerWhenFreezingMultiplier = 2.0,
     hungerWhenFreezingMultiplier = 2.0,
+    hungerLossFromFood = 0.333,
 
     goToSleepDayTime = DayTime.FromHoursAndMinutes(22, 00),
     wakeUpDayTime = DayTime.FromHoursAndMinutes(6, 00),
     goToSleepImmediatelyDayTime = DayTime.FromHoursAndMinutes(23, 00),
-    goToCampfireDayTimePercent = DayTime.FromHoursAndMinutes(18, 00)
+    goToCampfireDayTimePercent = DayTime.FromHoursAndMinutes(20, 00)
 }
 
 GameConsts.wheatGrowthTime0 = GameConsts.wheatGrowthTimeTotal / 2

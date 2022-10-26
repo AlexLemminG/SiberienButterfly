@@ -110,25 +110,13 @@ function PlayerController:Update()
 	velocity = vector(-velocity.z, velocity.y, velocity.x)
 	velocity = velocity * self.character.maxSpeed
 
-	--TODO should be handled by Character class
-	if self.character.item ~= CellType.None then
-		velocity = velocity * 0.8
-	end
-
-	if input:GetKey("Left Shift") then
-		local l = Length(velocity)
-		--TODO maxWalkingSpeed
-		local walkingMaxSpeed = self.character.maxSpeed * self.character.walkingMaxSpeedMultiplier
-		if l > walkingMaxSpeed then
-			velocity = velocity * (walkingMaxSpeed / l)
-		end
-	end
+	self.character.isRunning = not input:GetKey("Left Shift")
 
 	self.character:SetVelocity(velocity)
 	
 	local grid = World.items
-	local cellPos = Grid.GetClosestIntPos(self.transform:GetPosition())
-	local pos = grid:GetCellWorldCenter(cellPos)
+	local intPos = self.character:GetIntPos()
+	local pos = grid:GetCellWorldCenter(intPos)
 
 	-- local zeroPos = Vector2Int.new()
 	-- zeroPos.x = 10
@@ -161,7 +149,7 @@ function PlayerController:Update()
 	
 	if not action then
 		--TODO sleep on bed vs pick bed action differentiation
-		action = self.character:GetActionOnCellPos(cellPos)
+		action = self.character:GetActionOnCellPos(intPos)
 	end
 	if action == nil or action.isCharacter or not action:CanExecute() then
 		pos = pos - vector(0,10000,0) --TODO propper hide selection
@@ -181,11 +169,23 @@ function PlayerController:Update()
 		self.character:ExecuteAction(action)
 	end
 
-	local cellTypeText = CellTypeInv[grid:GetCell(cellPos).type]
+	local cellTypeText = CellTypeInv[grid:GetCell(intPos).type]
 	if cellTypeText then
 		Dbg.Text(string.format("%s", cellTypeText))
 	else
-		Dbg.Text(string.format("%d", grid:GetCell(cellPos).type))
+		Dbg.Text(string.format("%d", grid:GetCell(intPos).type))
+	end
+
+	--TODO less hacky
+	if Input:GetKeyDown("M") then
+		local markings = World.markings
+		local mark = markings:GetCell(intPos)
+		if mark.type == CellType.None then
+			mark.type = CellType.MarkingRed
+		else
+			mark.type = CellType.None
+		end
+		markings:SetCell(mark)
 	end
 end
 

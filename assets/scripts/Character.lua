@@ -34,7 +34,9 @@ local Character = {
 	sleepingPos = nil,
 	baseModelFile = "models/Vintik.blend",
 	type = "Character",
-	walkingMaxSpeedMultiplier = 0.5
+	walkingMaxSpeedMultiplier = 0.666,
+	haveItemMaxSpeedMultiplier = 0.8,
+	isRunning = false
 }
 local Component = require("Component")
 setmetatable(Character, Component)
@@ -207,8 +209,18 @@ function Character:UpdateMovement()
 		desiredVelocity = vector(0,0,0)
 	end
 	local desiredVelocityLength = length(desiredVelocity)
-	if desiredVelocityLength > self.maxSpeed then
-		desiredVelocity = desiredVelocity * (self.maxSpeed / desiredVelocityLength)
+	local currentMaxSpeed = self.maxSpeed
+	
+	if self.item ~= CellType.None then
+		--TODO to consts
+		currentMaxSpeed = currentMaxSpeed * self.haveItemMaxSpeedMultiplier
+	end
+	if not self.isRunning then
+		currentMaxSpeed = currentMaxSpeed * self.walkingMaxSpeedMultiplier
+	end
+
+	if desiredVelocityLength > currentMaxSpeed then
+		desiredVelocity = desiredVelocity * (currentMaxSpeed / desiredVelocityLength)
 	end
 
 	local desiredVelocityXZ = vector(desiredVelocity.x, 0.0, desiredVelocity.z)

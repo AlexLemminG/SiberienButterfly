@@ -22,7 +22,6 @@ local CharacterControllerBase = {
     desiredAction = nil,
     command = nil,
     currentPath = nil,
-    isRunning = false,
     currentPathPointIndex = 0,
     commandState = {},
     behaviourTree = nil,
@@ -45,6 +44,7 @@ function SaveCommand(command)
     savedCommand.type = command.type
     savedCommand.rules = command.rules
     savedCommand.bringTarget = command.bringTarget
+    savedCommand.marking = command.marking
 
     return savedCommand
 end
@@ -64,6 +64,7 @@ function LoadCommand(savedCommand)
     end
     command.rules = rules
     command.bringTarget = savedCommand.bringTarget
+    command.marking = savedCommand.marking
 
     return command
 end
@@ -96,6 +97,10 @@ function CharacterControllerBase.CreateCommandFromRules(rules)
         rules = rules,
     }
     return command
+end
+
+function CharacterControllerBase.AddMarkingToCommand(command, marking)
+    command.marking = marking
 end
 
 function CharacterControllerBase.CreateBringCommand(bringWhatCellType, bringToCellType)
@@ -252,9 +257,7 @@ function CharacterControllerBase:Act()
         velocity = velocity * 30.0
         local l = length(velocity)
         local maxSpeed = self.character.maxSpeed
-        if not self.isRunning then
-            maxSpeed = maxSpeed * self.character.walkingMaxSpeedMultiplier
-        end
+        
         if l > maxSpeed then
             velocity = velocity * maxSpeed / l
         end

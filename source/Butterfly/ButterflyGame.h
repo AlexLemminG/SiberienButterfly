@@ -12,11 +12,13 @@ public:
 	SerializationContext luaData{};
 	Grid groundGrid;
 	Grid itemsGrid;
+	Grid markingsGrid;
 
 	REFLECT_BEGIN(SaveData);
 	REFLECT_VAR(isValid);
 	REFLECT_VAR(itemsGrid);
 	REFLECT_VAR(groundGrid);
+	REFLECT_VAR(markingsGrid);
 	REFLECT_VAR(i);
 	REFLECT_VAR(luaData);
 	REFLECT_END();

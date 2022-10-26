@@ -469,7 +469,7 @@ end
 
 function RuleCallback_Eat(character, intPos, checkOnly : boolean)
 	if checkOnly then return true end
-	character.hunger = character.hunger - 0.25
+	character.hunger = character.hunger - GameConsts.hungerLossFromFood
 	RuleCallback_ItemAppear(character, intPos)
 	return true
 end
@@ -503,7 +503,7 @@ function Actions:RegisterAllCombineRules()
 		local rule = self:RegisterCombineRule(charType, itemType, newCharType,
 			newItemType, RuleCallback_Eat)
 		rule.isEat = true --TODO not like that (use tags or something)
-		rule.preCondition = function(character) return character.hunger > 0.25 end
+		rule.preCondition = function(character) return character.hunger > GameConsts.hungerLossFromFood end
 	end
 	-- eat bread
 	for i = 1, GameConsts.maxBreadStackSize, 1 do

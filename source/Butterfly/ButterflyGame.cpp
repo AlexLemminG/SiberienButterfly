@@ -37,6 +37,7 @@ bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 	//TODO no hardcode
 	save->itemsGrid = *GridSystem::Get()->GetGrid("ItemsGrid");
 	save->groundGrid = *GridSystem::Get()->GetGrid("GroundGrid");
+	save->markingsGrid = *GridSystem::Get()->GetGrid("MarkingsGrid");
 	lua_State* L = LuaSystem::Get()->L;
 
 	LuaSystem::Get()->PushModule("Game");
@@ -88,6 +89,7 @@ bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 	//TODO not hardcode
 	GridSystem::Get()->GetGrid("ItemsGrid")->LoadFrom(save->itemsGrid);
 	GridSystem::Get()->GetGrid("GroundGrid")->LoadFrom(save->groundGrid);
+	GridSystem::Get()->GetGrid("MarkingsGrid")->LoadFrom(save->markingsGrid);
 
 	lua_State* L = LuaSystem::Get()->L;
 

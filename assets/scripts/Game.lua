@@ -3,6 +3,7 @@ local GameConsts = require("GameConsts")
 local Utils      = require("Utils")
 local CellAnimations = require("CellAnimations")
 local WorldQuery     = require("WorldQuery")
+local DayTime        = require("DayTime")
 
 local Game = {
 	scene = nil,
@@ -14,6 +15,7 @@ local Game = {
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
+	dayCount = 1,
 	goodConditionsToSpawnCharacterDuration = 0.0,
 	avgHunger = 0.0,
 	avgHealth = 0.0,
@@ -32,6 +34,7 @@ local GameDbg = require("GameDbg")
 function Game:GenerateWorldGrid()
 	World.items:SetSize(self.gridSizeX, self.gridSizeY)
 	World.ground:SetSize(self.gridSizeX, self.gridSizeY)
+	World.markings:SetSize(self.gridSizeX, self.gridSizeY)
 	
 	local probabilitiesItems = {}
 	probabilitiesItems[CellType.Wheat] = 1
@@ -90,27 +93,36 @@ function Game:GenerateWorldGrid()
 			cell.z = height
 			cell.type = GetWeightedRandom(probabilitiesGround, probabilitiesGroundSum)
 			World.ground:SetCell(cell)
+
+			cell = World.markings:GetCell(cellPos)
+			cell.z = height
+			cell.type = CellType.None
+			World.markings:SetCell(cell)
 		end
 	end
 
-		for x = 3, 4, 1 do
-			for y = 0, self.gridSizeY-1, 1 do
-				cellPos.x = x
-				cellPos.y = y
-				local cell = World.items:GetCell(cellPos)
-				cell.type = CellType.None
-				cell.z = 0.0
-				World.items:SetCell(cell)
-	
-				cell = World.ground:GetCell(cellPos)
-				cell.type = CellType.Water
-				cell.z = 0.0
-	
-				World.ground:SetCell(cell)
-			end
+	-- river
+	for x = 3, 4, 1 do
+		for y = 0, self.gridSizeY-1, 1 do
+			cellPos.x = x
+			cellPos.y = y
+			local cell = World.items:GetCell(cellPos)
+			cell.type = CellType.None
+			cell.z = 0.0
+			World.items:SetCell(cell)
+
+			cell = World.ground:GetCell(cellPos)
+			cell.type = CellType.Water
+			cell.z = 0.0
+			World.ground:SetCell(cell)
+			
+			cell = World.markings:GetCell(cellPos)
+			cell.z = 0.0
+			World.markings:SetCell(cell)
 		end
+	end
 
-
+	
 	local generateAllItems = true
 	if generateAllItems then
 		local itemIdx = 1
@@ -160,7 +172,7 @@ function LoadNpcGO(savedState) : GameObject|nil
 
 	local characterGO = nil
 	if type == "Character" then
-		characterGO = CreateNpcGO()
+		characterGO = Game.CreateNpcGO()
 	elseif type == "Sheep" then
 		characterGO = CreateSheepGO()
 	else
@@ -174,7 +186,7 @@ function LoadNpcGO(savedState) : GameObject|nil
 	return characterGO
 end
 
-function CreateNpcGO()
+function Game.CreateNpcGO()
 	local characterPrefab = AssetDatabase:Load("prefabs/character.asset")
 
 	local character = Instantiate(characterPrefab)
@@ -229,7 +241,7 @@ function Game:OnEnable()
 
 	local numNPC = 1
 	for i = 1, numNPC, 1 do
-		CreateNpcGO()
+		self.CreateNpcGO()
 	end
 	CreateSheepGO()
 end
@@ -253,6 +265,7 @@ function Game.CreateSave()
 		table.insert(save.characters, character:SaveState())
 	end
 	save.dayTime = Game.dayTime
+	save.dayCount = Game.dayCount
 	save.playerIndex = Utils.ArrayIndexOf(World.charactersIncludingDead, World.playerCharacter)
 
 	return save
@@ -288,6 +301,7 @@ function Game.LoadSave(save) : boolean
 	end
 
 	Game.dayTime = save.dayTime
+	Game.dayCount = save.dayCount or 1
 	
 	return true
 end
@@ -492,6 +506,7 @@ function Game:UpdateDayTime(dt : float)
 	self.dayTime = self.dayTime + dt / GameConsts.dayDurationSeconds
 	if self.dayTime > 1.0 then
 		self.dayTime = self.dayTime - 1.0
+		self.dayCount = self.dayCount + 1
 	end
 
 	function LerpHarmonicsCoeffs(a, b, t)
@@ -566,7 +581,18 @@ function Game:UpdateDayTime(dt : float)
 	-- imgui.End()
 end
 
+function CalcHumansFromWheatCell()
+	local wheatFromCell = 2
+	local wheatFromCellAfterReplanting = 1
+	local hungerPerWheatCellPerDay = wheatFromCellAfterReplanting / GameConsts.wheatGrowthTimeTotal * GameConsts.dayDurationSeconds
+	hungerPerWheatCellPerDay *= GameConsts.hungerLossFromFood
+	local hungerPerDay = GameConsts.hungerPerSecond * GameConsts.dayDurationSeconds
+
+	return hungerPerWheatCellPerDay / hungerPerDay
+end
+
 function Game:MainLoop()
+	-- print(CalcHumansFromWheatCell())
 	local dt = Time.fixedDeltaTime()
 
 	local timeScale = 1.0
@@ -595,7 +621,7 @@ function Game:MainLoop()
 
 	self:GrowNewTrees(dt)
 
-	--self:FillGroundWithGrass(dt)
+	self:FillGroundWithGrass(dt)
 
 	for index, character in ipairs(World.charactersIncludingDead) do
 		if character.characterController then
@@ -650,7 +676,7 @@ function Game:MainLoop()
 	self.newNpcPercent = self.goodConditionsToSpawnCharacterDuration / GameConsts.goodConditionsToSpawnCharacterDuration
 	if self.goodConditionsToSpawnCharacterDuration > GameConsts.goodConditionsToSpawnCharacterDuration then
 		self.goodConditionsToSpawnCharacterDuration = 0.0
-		CreateNpcGO()
+		self.CreateNpcGO()
 	end
 end
 
@@ -700,6 +726,7 @@ function Game:DrawWorldStats()
 	local minute = math.floor((self.dayTime*24 - hour) * 60)
 	if hour < 10 then hour = "0"..hour end
 	if minute < 10 then minute = "0"..minute end
+	text = text.."Day: "..self.dayCount.."\n"
 	text = text.."Time: "..hour..":"..minute.."\n"
 
 	local playerPos = nil
@@ -1079,10 +1106,10 @@ end
 
 function Game:GetAmbientTemperature() : number
 	--TODO consts
-	if self.dayTime > 0.8 then
+	if self.dayTime > DayTime.FromHoursAndMinutes(22,00) then
 		return 0.0
 	end
-	if self.dayTime < 0.3 then
+	if self.dayTime < DayTime.FromHoursAndMinutes(6,30) then
 		return 0.0
 	end
 	return 1.0
@@ -1097,6 +1124,7 @@ function Game:GetTemperatureAt(intPos : Vector2Int) : number
 		--TODO not 1.0
 		temperature = temperature + 1.0
 	end
+	
 	--TODO cell temp
 	return temperature
 end
