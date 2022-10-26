@@ -88,7 +88,8 @@
         "Vector3",
         "imgui",
         "LogWarning",
-        "length"
+        "length",
+        "Grid"
     ],
     "robloxLsp.diagnostics.globals": [
         "AssetDatabase"

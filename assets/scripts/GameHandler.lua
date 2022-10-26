@@ -13,6 +13,10 @@ function GameHandler:new(o)
     return o
 end
 
+function GameHandler:FixedUpdate()
+    Game:FixedUpdate()
+end
+
 function GameHandler:Update()
     Game:Update()
 end

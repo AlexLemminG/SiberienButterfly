@@ -50,9 +50,9 @@ function SheepCharacterController:DrawRope()
     end
 end
 
-function SheepCharacterController:Update()
+function SheepCharacterController:FixedUpdate()
     --TODO not here
-    CharacterControllerBase.Update(self)
+    CharacterControllerBase.FixedUpdate(self)
 
     if self.isFollowingPlayer then
         --self.character.maxSpeed = (World.playerCharacter.maxSpeed + self.defaultMaxSpeed) / 2.0 --TODO not like that

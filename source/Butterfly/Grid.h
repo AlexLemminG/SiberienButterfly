@@ -171,7 +171,7 @@ public:
     void SetCell(const GridCell& cell);
     void SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix);
 
-    Vector2Int GetClosestIntPos(const Vector3& worldPos) const;
+    static Vector2Int GetClosestIntPos(const Vector3& worldPos);
     bool DbgDrawRad(const Vector2Int& originPos, int minRadius, int maxRadius) const;
     Vector3 GetCellWorldCenter(const Vector2Int& cell) const;
     Vector3 GetCellWorldCenterFast(const Vector2Int& cellPos) const {

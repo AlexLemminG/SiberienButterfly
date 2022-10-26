@@ -186,43 +186,27 @@ function Character:OnDisable()
 	self:gameObject():GetScene():RemoveGameObject(self.itemGO)
 end
 
---TODO global func or vector.func
-function Length(v : vector)
-	return math.sqrt (v.x*v.x + v.y*v.y + v.z*v.z)
-end
-
 function Lerp(a,b,t) return a * math.clamp(1-t,0,1) + b * math.clamp(t,0,1) end
 
-function Character:Update()
+function Character:FixedUpdate()
 	if self.isDead or self.isSleeping then
 		return
 	end
 	self:UpdateMovement()
+end
+
+function Character:Update()
 	self:UpdateAnimation()
-
-	-- setting Y coord to ground character
-	local trans = self.rigidBody:GetTransform()
-	local pos = Mathf.GetPos(trans)
-	local grid = World.items
-	local cellPos = grid:GetClosestIntPos(pos)
-	local dt = Time.deltaTime() -- TODO Time:deltaTime somehow ?
-	pos = vector(pos.x, Lerp(pos.y, grid:GetCellWorldCenter(cellPos).y, dt * 20.0), pos.z)
-	Mathf.SetPos(trans, pos)
-	self.rigidBody:SetTransform(trans)
-	
-	local velocity = self.rigidBody:GetLinearVelocity()
-	velocity = vector(velocity.x, 0.0, velocity.z)
-	self.rigidBody:SetLinearVelocity(velocity)
-
 	self:DrawName()
 end
 
 function Character:UpdateMovement()
+	local dt = Time.fixedDeltaTime()
 	local desiredVelocity = self.desiredVelocity
 	if self:IsInDialog() then
 		desiredVelocity = vector(0,0,0)
 	end
-	local desiredVelocityLength = Length(desiredVelocity)
+	local desiredVelocityLength = length(desiredVelocity)
 	if desiredVelocityLength > self.maxSpeed then
 		desiredVelocity = desiredVelocity * (self.maxSpeed / desiredVelocityLength)
 	end
@@ -231,9 +215,16 @@ function Character:UpdateMovement()
 	local trans = self.rigidBody:GetTransform()
 	local realVelocity = self.rigidBody:GetLinearVelocity()
 	local realVelocityXZ = vector(realVelocity.x, 0.0, realVelocity.z)
-	if Length(realVelocityXZ) > 0.1 then
+	if length(realVelocityXZ) > 0.1 then
 		Mathf.SetRot(trans, Quaternion.LookAt(realVelocityXZ, vector(0,1,0)))
 	end
+
+	-- setting Y coord to ground character
+	local pos = Mathf.GetPos(trans)
+	local cellPos = Grid.GetClosestIntPos(pos)
+	pos = vector(pos.x, Lerp(pos.y, World.items:GetCellWorldCenter(cellPos).y, dt * 20.0), pos.z)
+	Mathf.SetPos(trans, pos)
+	
 	self.rigidBody:SetTransform(trans)
 	--print("q=", Quaternion.LookAt(vector(0,0,1), vector(0,1,0)):scalar())
 
@@ -247,7 +238,7 @@ function Character:UpdateMovement()
 
 	self.rigidBody:SetAngularVelocity(vector(0,0,0))
 
-	self.prevSpeed = Length(newVelocity)
+	self.prevSpeed = length(newVelocity)
 end
 
 function Character:SetVelocity(velocity : vector)
@@ -269,6 +260,12 @@ function Character:UpdateAnimation()
 			animation = self.standWithItemAnimation
 		end
 	end
+	
+	if self.isSleeping or self.isDead then
+		animation = self.deathAnimation
+		animSpeed = 1.0
+	end
+
 	self.animator:SetAnimation(animation)
 
 	self.animator.speed = animSpeed
@@ -293,11 +290,11 @@ function Character:GetActionOnCellPos(intPos)
 end
 
 function Character:GetIntPos() : Vector2Int
-	return World.items:GetClosestIntPos(self:GetPosition())
+	return Grid.GetClosestIntPos(self.rigidBody:GetPosition())
 end
 
 function Character:GetPosition() : Vector3
-	return self.transform:GetPosition()
+	return self.rigidBody:GetPosition()
 end
 
 function Character:GetPosition2D() : Vector2

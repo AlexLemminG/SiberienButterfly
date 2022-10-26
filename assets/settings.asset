@@ -36,8 +36,12 @@ ShadowSettings:
   numSplits: 1
   resolution: 1024
   hardShadows: true
-TimeSettings: {}
+TimeSettings:
+  fixedDeltaTime: 0.033333335
 RenderSettings:
   backend: 2
   debug: true
   vsync: true
+LuaSettings:
+  optimize: false
+  debug: true

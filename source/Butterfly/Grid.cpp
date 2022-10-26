@@ -910,7 +910,7 @@ Vector3 Grid::GetCellWorldCenter(const Vector2Int& pos) const {
     return Vector3{ float(cell.pos.x), cell.z, float(cell.pos.y) };
 }
 
-Vector2Int Grid::GetClosestIntPos(const Vector3& worldPos) const {
+Vector2Int Grid::GetClosestIntPos(const Vector3& worldPos) {
     return Vector2Int{ Mathf::RoundToInt(worldPos.x), Mathf::RoundToInt(worldPos.z) };
 }
 

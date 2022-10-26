@@ -10,8 +10,8 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 40,
-	gridSizeY = 40,
+	gridSizeX = 20,
+	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
 	goodConditionsToSpawnCharacterDuration = 0.0,
@@ -27,6 +27,7 @@ local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
 local CellAnimType = require("CellAnimType")
 local Actions = require("Actions")
+local GameDbg = require("GameDbg")
 
 function Game:GenerateWorldGrid()
 	World.items:SetSize(self.gridSizeX, self.gridSizeY)
@@ -566,10 +567,11 @@ function Game:UpdateDayTime(dt : float)
 end
 
 function Game:MainLoop()
-	local dt = Time.deltaTime()
+	local dt = Time.fixedDeltaTime()
 
 	local timeScale = 1.0
 	local playerSleeps = World.playerCharacter and (World.playerCharacter.isSleeping)
+	local playerIsDead = World.playerCharacter and (World.playerCharacter.isDead)
 	local everyoneSleeps = true
 	for index, character in ipairs(World.characters) do
 		if not character.isSleeping then
@@ -578,11 +580,13 @@ function Game:MainLoop()
 		end
 	end
 	--TODO Time.setTimeScale ?
-	if playerSleeps then
+	if playerSleeps or playerIsDead then
 		if everyoneSleeps then
 			timeScale = 100.0
 		else
-			timeScale = 5.0
+			if not playerIsDead then
+				timeScale = 5.0
+			end
 		end
 	end
 	dt = dt * timeScale
@@ -591,9 +595,12 @@ function Game:MainLoop()
 
 	self:GrowNewTrees(dt)
 
-	self:FillGroundWithGrass(dt)
+	--self:FillGroundWithGrass(dt)
 
 	for index, character in ipairs(World.charactersIncludingDead) do
+		if character.characterController then
+			character.characterController.updateOrderIndex = index
+		end
 		local hungerSpeed = GameConsts.hungerPerSecond
 		local healthLossSpeed = GameConsts.healthLossFromHungerPerSecond
 		if character.isSleeping then
@@ -707,6 +714,7 @@ function Game:DrawWorldStats()
 	text = text..string.format("playerPos: %.1f %.1f\n", playerPos.x, playerPos.z)
 	
 	text = text..string.format("isWalkable: %s\n", tostring(World.navigation:IsWalkable(playerIntPos.x, playerIntPos.y)))
+	text = text..string.format("dbgMode: %s\n", tostring(GameDbg.isOn))
 
 	imgui.TextUnformatted(text)
 	imgui.End()
@@ -1022,6 +1030,8 @@ function Game:EndDialog() --TODO pass DialogHandle and end one particular dialog
 end
 
 function Game:Update()
+	GameDbg:Update()
+
 	local input = Input
 	if input:GetKeyDown("Escape") then
 		if not (self.currentDialog and not self.isPause) then
@@ -1061,10 +1071,10 @@ function Game:Update()
 	else
 		Time.setTimeScale(self.dbgTimeScale)
 	end
+end
 
-	for i = 1, 1, 1 do
-		self:MainLoop()
-	end
+function Game:FixedUpdate()
+	self:MainLoop()
 end
 
 function Game:GetAmbientTemperature() : number

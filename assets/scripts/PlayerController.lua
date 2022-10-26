@@ -1,5 +1,5 @@
 local CellType = require("CellType")
-local Grid = require("Grid")
+-- local Grid = require("Grid")
 local World = require("World")
 local WorldQuery = require("WorldQuery")
 local Game       = require("Game")
@@ -127,8 +127,7 @@ function PlayerController:Update()
 	self.character:SetVelocity(velocity)
 	
 	local grid = World.items
-	
-	local cellPos = grid:GetClosestIntPos(self.transform:GetPosition())
+	local cellPos = Grid.GetClosestIntPos(self.transform:GetPosition())
 	local pos = grid:GetCellWorldCenter(cellPos)
 
 	-- local zeroPos = Vector2Int.new()

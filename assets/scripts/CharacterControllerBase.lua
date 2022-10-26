@@ -25,7 +25,8 @@ local CharacterControllerBase = {
     isRunning = false,
     currentPathPointIndex = 0,
     commandState = {},
-    behaviourTree = nil
+    behaviourTree = nil,
+    updateOrderIndex = 0
 }
 local Component = require("Component")
 setmetatable(CharacterControllerBase, Component)
@@ -115,6 +116,10 @@ function CharacterControllerBase.CreateBringCommand(bringWhatCellType, bringToCe
     return command
 end
 
+function CharacterControllerBase:GetCommand()
+    return self.command
+end
+
 function CharacterControllerBase:SetCommand(command)
     self.commandAdded = false --TODO more accurate (this is CharacterController variable actualy)
     self.command = command
@@ -142,9 +147,10 @@ function CharacterControllerBase:GetActionOnCharacter(character : Character)
     return nil
 end
 
-function CharacterControllerBase:Update()
-    local needToThink = Utils.ArrayIndexOf(World.characters, self.character) == (Time.frameCount() % #World.characters) + 1
-    if needToThink or true then
+function CharacterControllerBase:FixedUpdate()
+    local thinkEveryNFrames = 10
+    local needToThink = (self.updateOrderIndex + Time.fixedFrameCount()) % thinkEveryNFrames == 0
+    if needToThink then
         self:Think()
     end
     self:Act()
@@ -162,7 +168,7 @@ function CharacterControllerBase:GetNearestWalkableIntPos()
     for dx = -1, 1, 1 do
         for dy = -1, 1, 1 do
             pos = originalPos + vector(dx * 0.5, 0, dy*0.5)
-            intPos = World.items:GetClosestIntPos(pos)
+            intPos = Grid.GetClosestIntPos(pos)
             if navigation:IsWalkable(intPos.x, intPos.y) then
                 local distance = dx * dx + dy*dy
                 if distance < minDistance then
@@ -200,10 +206,12 @@ function CharacterControllerBase:UpdatePathFollowing()
         return
     end
     local characterIntPos = self.character:GetIntPos()
+    local targetPoint = self.currentPath.points[self.currentPathPointIndex]
 
-    if characterIntPos == self.currentPath.points[self.currentPathPointIndex] then
+    if characterIntPos == targetPoint then
         if self.currentPath.points:size() > self.currentPathPointIndex then
             self.currentPathPointIndex = self.currentPathPointIndex + 1
+            targetPoint = self.currentPath.points[self.currentPathPointIndex]
         else
             --TODO some event?
             self.currentPath = nil
@@ -211,19 +219,18 @@ function CharacterControllerBase:UpdatePathFollowing()
         end
     end
 
-    if not World.navigation:PathExists(self.currentPath.points[self.currentPathPointIndex], self.currentPath.to) then
+    if not World.navigation:PathExists(targetPoint, self.currentPath.to) then
         --TODO some event?
         self.currentPath = nil
         return
     end
 
-    local intPos = self.currentPath.points[self.currentPathPointIndex]
-    self.immediateTargetPos = World.items:GetCellWorldCenter(intPos)
-    if World.items:GetCell(intPos).type ~= CellType.None or World.items:GetCell(characterIntPos).type ~= CellType.None then
+    self.immediateTargetPos = World.items:GetCellWorldCenter(targetPoint)
+    if World.items:GetCell(targetPoint).type ~= CellType.None or World.items:GetCell(characterIntPos).type ~= CellType.None then
         if self.currentPath.points:size() > self.currentPathPointIndex then
             --assuming not walkable through center
             local nextIntPos = self.currentPath.points[self.currentPathPointIndex+1]
-            local delta = nextIntPos - intPos
+            local delta = nextIntPos - targetPoint
             local offset = vector(-delta.y * 0.3, 0.0, delta.x * 0.3)
             self.immediateTargetPos = self.immediateTargetPos + offset
         end
@@ -239,7 +246,9 @@ function CharacterControllerBase:Act()
         end
     end
     if self.immediateTargetPos then
-        local velocity = self.immediateTargetPos - self.character.transform:GetPosition()
+        local trans = self.character.rigidBody:GetTransform()
+        local pos = Mathf.GetPos(trans)
+        local velocity = self.immediateTargetPos - pos
         velocity = velocity * 30.0
         local l = length(velocity)
         local maxSpeed = self.character.maxSpeed
