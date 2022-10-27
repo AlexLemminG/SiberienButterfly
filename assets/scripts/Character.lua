@@ -68,7 +68,7 @@ function Character:SaveState() : any
 	state.itemName = CellTypeInv[self.item]
 	state.type = self.type
 	if self.characterController then
-		state.characterController = self.characterController:SaveState()
+		state.characterController = self.characterController:SaveState({})
 	end
 	return state
 end
@@ -124,14 +124,31 @@ function Character:LoadState(savedState)
 	end
 end
 
-function Character:OnEnable()
-	--TODO support different models for different characters
+function Character:SetBaseModel(modelFile, meshIndex)
+	self.baseModelFile = modelFile
+	
 	self.runAnimation = AssetDatabase:Load(self.baseModelFile.."$Run")
 	self.standAnimation = AssetDatabase:Load(self.baseModelFile.."$Stand")
 	self.runWithItemAnimation = AssetDatabase:Load(self.baseModelFile.."$RunWithItem")
 	self.standWithItemAnimation = AssetDatabase:Load(self.baseModelFile.."$StandWithItem")
 	self.deathAnimation = AssetDatabase:Load(self.baseModelFile.."$Death")
 	
+	local meshRenderer = self:gameObject():GetComponent("MeshRenderer")
+	meshRenderer:SetMesh(AssetDatabase:Load(self.baseModelFile).meshes[meshIndex])
+	
+	local parentedTransform = self.itemGO:GetComponent("ParentedTransform")
+	local itemMatrix = parentedTransform.localMatrix
+	local characterScaleInv = 1.0 / self.transform:GetScale().x
+	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
+	parentedTransform.localMatrix = itemMatrix
+
+	local attachBoneIndex = meshRenderer.mesh:GetBoneIndex("ItemAttachPoint")
+	if attachBoneIndex ~= -1 then
+		parentedTransform:SetParentAsBone(meshRenderer, attachBoneIndex)
+	end
+end
+
+function Character:OnEnable()
 	self.animator = self:gameObject():GetComponent("Animator")
 	self.rigidBody = self:gameObject():GetComponent("RigidBody")
 	self.transform = self:gameObject():GetComponent("Transform")
@@ -139,18 +156,7 @@ function Character:OnEnable()
 	local itemPrefab = AssetDatabase:Load("prefabs/carriedItem.asset")
 	self.itemGO = Instantiate(itemPrefab)
 	self:gameObject():GetScene():AddGameObject(self.itemGO)
-	local parentedTransform = self.itemGO:GetComponent("ParentedTransform")
-	local itemMatrix = parentedTransform.localMatrix
-	local characterScaleInv = 1.0 / self.transform:GetScale().x
-	Mathf.SetScale(itemMatrix, vector(characterScaleInv,characterScaleInv,characterScaleInv)) -- TODO based on character scale inv
-	parentedTransform.localMatrix = itemMatrix
-	local meshRenderer = self:gameObject():GetComponent("MeshRenderer")
-	meshRenderer:SetMesh(AssetDatabase:Load(self.baseModelFile).meshes[1])
-
-	local attachBoneIndex = meshRenderer.mesh:GetBoneIndex("ItemAttachPoint")
-	if attachBoneIndex ~= -1 then
-		parentedTransform:SetParentAsBone(meshRenderer, attachBoneIndex)
-	end
+	self:SetBaseModel(self.baseModelFile, 1)
 
 	if not self.item then
 		self.item = CellType.None

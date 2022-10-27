@@ -96,8 +96,8 @@ extraCollisions = {
 } } )
 
 local bedCollider = BoxCollision(vector(0.4,0.5,0.8))
-SetCellInfo(CellType.Bed, { collision = bedCollider } )
-SetCellInfo(CellType.BedOccupied, { collision = bedCollider, meshName = "Bed" } )
+SetCellInfo(CellType.Bed, { collision = bedCollider, isWalkable = false } )
+SetCellInfo(CellType.BedOccupied, { collision = bedCollider, meshName = "Bed", isWalkable = false } )
 
 
 -- for key, value in pairs(CellTypeDesc) do    

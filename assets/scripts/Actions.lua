@@ -153,6 +153,7 @@ function Actions:RegisterPickableItems()
 	pickableItems[CellType.StoveWithWood] = true
 	pickableItems[CellType.Wool] = true
 	pickableItems[CellType.Bed] = true
+	pickableItems[CellType.Scissors] = true
 	for flag = self:FlagFirst(), self:FlagLast(), 1 do
 		pickableItems[flag] = true
 	end
@@ -635,6 +636,9 @@ function Actions:RegisterAllCombineRules()
 	self:RegisterCombineRule(CellType.Flour, CellType.StoveWithWoodFired, CellType.Bread_6, CellType.Stove)
 	self:RegisterCombineRule(CellType.None, CellType.TreeSprout, CellType.None, CellType.None)
 	self:RegisterCombineRule(CellType.Wool, CellType.Wood, CellType.None, CellType.Bed)
+
+	self:RegisterCombineRule(CellType.None, CellType.Bush, CellType.None, CellType.None)
+
 
 	self:RegisterCombineRuleForGround(CellType.Wood, CellType.Water, CellType.None,
 		CellType.WoodenBridge)

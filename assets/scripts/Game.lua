@@ -15,6 +15,7 @@ local Game = {
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
+	dayDeltaTime = 0.0,
 	dayCount = 1,
 	goodConditionsToSpawnCharacterDuration = 0.0,
 	avgHunger = 0.0,
@@ -128,9 +129,9 @@ function Game:GenerateWorldGrid()
 		local itemIdx = 1
 		local y = 5
 		local x = 10
-		while CellTypeInv[itemIdx] do
-			itemIdx = itemIdx + 1
-			if not Actions:IsFlag(itemIdx) then continue end
+		for name, itemIdx in pairs(CellType) do
+			-- itemIdx = itemIdx + 1
+			if (not Actions:IsFlag(itemIdx)) and itemIdx ~= CellType.Scissors then continue end
 			y = y + 1
 			if y >= 15 then
 				y = 5
@@ -486,6 +487,9 @@ function Game:GrowNewTrees(deltaTime : number)
 		
 		local itemsCell = World.items:GetCell(cellPos)
 		itemsCell.type = CellType.TreeSprout
+		if math.random() > 0.5 then
+			itemsCell.type = CellType.WheatPlanted_0
+		end
 		CellAnimations.SetAppearFromGround(itemsCell)
 		World.items:SetCell(itemsCell)
 	end
@@ -503,7 +507,8 @@ function Game.DbgDrawPath(path)
 end
 
 function Game:UpdateDayTime(dt : float)
-	self.dayTime = self.dayTime + dt / GameConsts.dayDurationSeconds
+	self.dayDeltaTime = dt / GameConsts.dayDurationSeconds
+	self.dayTime = self.dayTime + self.dayDeltaTime
 	if self.dayTime > 1.0 then
 		self.dayTime = self.dayTime - 1.0
 		self.dayCount = self.dayCount + 1
@@ -623,6 +628,7 @@ function Game:MainLoop()
 
 	self:FillGroundWithGrass(dt)
 
+	--TODO dead not needed usually
 	for index, character in ipairs(World.charactersIncludingDead) do
 		if character.characterController then
 			character.characterController.updateOrderIndex = index

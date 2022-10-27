@@ -59,6 +59,7 @@ local CellType = {
     --empty for future flags --TODO *flag emoji*
     MarkingRed = 62,
     --empty for future markings --TODO *markings emoji?*
+    Scissors = 73
 }
 
 return CellType

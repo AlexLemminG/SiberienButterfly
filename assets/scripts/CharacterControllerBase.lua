@@ -69,12 +69,11 @@ function LoadCommand(savedCommand)
     return command
 end
 
-function CharacterControllerBase:SaveState() : any
-    local state = {}
+function CharacterControllerBase:SaveState(savedState)
     if self.command then
-        state.command = SaveCommand(self.command)
+        savedState.command = SaveCommand(self.command)
     end
-    return state
+    return savedState
 end
 
 function CharacterControllerBase:LoadState(savedState)

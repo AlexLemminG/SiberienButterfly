@@ -14,7 +14,8 @@ local PlayerController = {
 	selectionSquareGO = nil,
 	selectionArrowGO = nil,
 	wasInDialogPrevFrame = false,
-	character = nil
+	character = nil,
+	isInSettingsMarkingMode = false
 }
 local Component = require("Component")
 setmetatable(PlayerController, Component)
@@ -177,10 +178,13 @@ function PlayerController:Update()
 	end
 
 	--TODO less hacky
-	if Input:GetKeyDown("M") then
+	if Input:GetKey("M") then
 		local markings = World.markings
 		local mark = markings:GetCell(intPos)
-		if mark.type == CellType.None then
+		if Input:GetKeyDown("M") then
+			self.isInSettingsMarkingMode = mark.type == CellType.None
+		end
+		if self.isInSettingsMarkingMode then
 			mark.type = CellType.MarkingRed
 		else
 			mark.type = CellType.None

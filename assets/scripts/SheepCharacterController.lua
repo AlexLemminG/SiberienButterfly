@@ -16,7 +16,9 @@ local CharacterControllerBehaviourTree = require("CharacterControllerBehaviourTr
 ---@class SheepCharacterController: CharacterControllerBase
 local SheepCharacterController = {
     isFollowingPlayer = false, --TODO not only player --TODO save state
-    defaultMaxSpeed = 2.0
+    defaultMaxSpeed = 2.0,
+    woolGrowPercent = 1.0,
+    isShaved = false --TODO save state --TODO action for characters to execute from dialog --TODO should be in character class
 }
 
 setmetatable(SheepCharacterController, CharacterControllerBase)
@@ -26,6 +28,20 @@ function SheepCharacterController:new(o)
     o = Component:new(o)
     setmetatable(o, self)
     return o
+end
+
+function SheepCharacterController:SaveState(savedState)
+    CharacterControllerBase:SaveState(savedState)
+    savedState.isShaved = self.isShaved
+    savedState.woolGrowPercent = self.woolGrowPercent
+    return savedState
+end
+
+function SheepCharacterController:LoadState(savedState)
+    CharacterControllerBase:LoadState(savedState)
+    self.isShaved = not savedState.isShaved
+    self:SetShaved(savedState.isShaved)
+    self.woolGrowPercent = savedState.woolGrowPercent
 end
 
 function SheepCharacterController:OnEnable()
@@ -54,9 +70,16 @@ function SheepCharacterController:FixedUpdate()
     --TODO not here
     CharacterControllerBase.FixedUpdate(self)
 
+    if self.isShaved then
+        --TODO possible deltaTime vs fixedDeltaTime mixup
+        self.woolGrowPercent = math.min(1.0, self.woolGrowPercent + GameConsts.woolGrowPerSecond * Game.dayDeltaTime * GameConsts.dayDurationSeconds)
+        if self.woolGrowPercent == 1.0 then
+            self:SetShaved(false)
+        end
+    end
+
     if self.isFollowingPlayer then
         --self.character.maxSpeed = (World.playerCharacter.maxSpeed + self.defaultMaxSpeed) / 2.0 --TODO not like that
-        self:DrawRope()
         if self.behaviourTree then
             self.behaviourTree.blackboard.leashedToPos = World.playerCharacter:GetPosition()
             self.behaviourTree.blackboard.isLeashed = true
@@ -71,6 +94,24 @@ function SheepCharacterController:FixedUpdate()
         end
     end
 end
+function SheepCharacterController:Update()
+    if CharacterControllerBase.Update then 
+        CharacterControllerBase.Update(self)
+    end
+    
+    if self.isFollowingPlayer then
+        self:DrawRope()
+    end
+end
+
+function SheepCharacterController:SetShaved(isShaved : boolean)
+    self.isShaved = isShaved
+    local meshIndex = if isShaved then 2 else 1
+    self.character:SetBaseModel(self.character.baseModelFile, meshIndex)
+    if isShaved then
+        self.woolGrowPercent = 0.0
+    end
+end
 
 function SheepCharacterController:GetActionOnCharacter(character : Character)
 	--TODO only for player
@@ -79,6 +120,17 @@ function SheepCharacterController:GetActionOnCharacter(character : Character)
 	action.selfCharacter = character
 	action.otherCharacter = self.character
 	function action:Execute()
+        if character.item == CellType.Scissors and not self.otherCharacter.characterController.isShaved then
+            local dropPos = WorldQuery:FindNearestItemWithGround(CellType.None, CellType.Any, self.otherCharacter:GetIntPos())
+            if dropPos then
+                self.otherCharacter.characterController:SetShaved(true)
+                --TODO some method like CreateObjectAt
+                local cell = World.items:GetCell(dropPos)
+                cell.type = CellType.Wool
+                World.items:SetCell(cell)
+                return
+            end
+        end
         action.otherCharacter.characterController.isFollowingPlayer = not action.otherCharacter.characterController.isFollowingPlayer
     end
 	return action
