@@ -1,5 +1,5 @@
 local DayTime = {
-    dayDurationInSeconds = 600
+    dayDurationInSeconds = 200
 }
 
 --time is measured in percent of the day from [0;1) [00:00, 24:00)
