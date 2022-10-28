@@ -6,6 +6,7 @@ local WorldQuery = require("WorldQuery")
 local CellType = require("CellType")
 local World = require("World")
 local BehaviourTree = require("BehaviourTree")
+local CellTypeUtils = require("CellTypeUtils")
 
 --TODO use mini fsm instead if command
 --save them to state with current desired action
@@ -102,13 +103,21 @@ function CharacterControllerBase.AddMarkingToCommand(command, marking)
     command.marking = marking
 end
 
-function CharacterControllerBase.CreateBringCommand(bringWhatCellType, bringToCellType)
-    local types = Actions:GetAllIsSubtype(bringWhatCellType)
+function CharacterControllerBase.CreateBringCommand(bringWhatCellTypes : integer|table, bringToCellType)
     local rules = {}
-    for index, cellType in ipairs(types) do
-        local dropRule = Actions:GetDropRule(cellType)
-        if dropRule then
-            table.insert(rules, dropRule)
+    --TODO remove doubles
+    --TODO allow combining on drop for stuff like wheat and bread
+    local _bringWhatCellTypes = bringWhatCellTypes
+    if type(bringWhatCellTypes) ~= "table" then
+        _bringWhatCellTypes = {bringWhatCellTypes}
+    end
+    for i, bringWhatCellType in _bringWhatCellTypes do
+        local types = CellTypeUtils.GetAllIsSubtype(bringWhatCellType)
+        for index, cellType in ipairs(types) do
+            local dropRule = Actions:GetDropRule(cellType)
+            if dropRule then
+                table.insert(rules, dropRule)
+            end
         end
     end
     local command = {

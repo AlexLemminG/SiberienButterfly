@@ -3,12 +3,13 @@ local World = require("World")
 local Actions = require("Actions")
 local CellType = require("CellType")
 local CellTypeInv = require("CellTypeInv")
+local CellTypeUtils = require("CellTypeUtils")
 
 --TODO use navigation PathExists everywhere
 
 function WorldQuery:FindNearestActionFromRule(character : Character, combineRule : CombineRule, intPosRelative, markingRestriction)
     local intPos = intPosRelative or character:GetIntPos()
-    if not combineRule or not character or not Actions:IsSubtype(character.item, combineRule.charType) or (character and combineRule.preCondition and not combineRule.preCondition(character)) then 
+    if not combineRule or not character or not CellTypeUtils.IsSubtype(character.item, combineRule.charType) or (character and combineRule.preCondition and not combineRule.preCondition(character)) then 
         return nil
     end
     local closestPos = self:FindNearestItemWithGround(combineRule.itemType, combineRule.groundType, intPos, nil, nil, markingRestriction)

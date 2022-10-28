@@ -4,6 +4,7 @@ local Utils      = require("Utils")
 local CellAnimations = require("CellAnimations")
 local WorldQuery     = require("WorldQuery")
 local DayTime        = require("DayTime")
+local CellTypeUtils  = require("CellTypeUtils")
 
 local Game = {
 	scene = nil,
@@ -131,7 +132,7 @@ function Game:GenerateWorldGrid()
 		local x = 10
 		for name, itemIdx in pairs(CellType) do
 			-- itemIdx = itemIdx + 1
-			if (not Actions:IsFlag(itemIdx)) and itemIdx ~= CellType.Scissors then continue end
+			if (not CellTypeUtils.IsFlag(itemIdx)) and itemIdx ~= CellType.Scissors then continue end
 			y = y + 1
 			if y >= 15 then
 				y = 5
@@ -886,14 +887,6 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 
 		data = nil,
 	}
-
-	local hiddenItems = {}
-	-- for i = CellType.Bread_1, CellType.Bread_1 + GameConsts.maxBreadStackSize - 1, 1 do
-	-- 	hiddenItems[i] = true
-	-- end
-	-- for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
-	-- 	hiddenItems[i] = true
-	-- end
 	
 	local CommandType = {
 		Prepare = "Prepare",
@@ -901,26 +894,6 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		Put = "Put",
 		Pack = "Pack"
 	}
-	local function GetCommandType(rule : CombineRule)
-		local dialog = rule:GetDialog()
-		if dialog then
-			if #dialog == 0 then
-				return ""--TODO error
-			else
-				return dialog[1]
-			end
-		end
-		if rule.charType == rule.newCharType and rule.itemType == rule.newItemType then
-			return CommandType.Prepare
-		end
-		if Actions:IsSubtype(rule.charType, CellType.WheatCollected_AnyNotFull) and Actions:IsSubtype(rule.itemType, CellType.WheatCollected_AnyNotFull) then
-			return CommandType.Pack
-		end
-		if rule.itemType == CellType.None and rule.newItemType == rule.charType and rule.newGroundType == rule.groundType then
-			return CommandType.Bring
-		end
-		return CommandType.Put
-	end
 
 	--TODO naming
 	local allCommands = {}
@@ -967,16 +940,33 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	RulesToCommand(allCommands)
 	
 	for i, cellType in pairs(CellType) do
-		if Actions:IsPickable(cellType) then
-			for flagType = Actions:FlagFirst(), Actions:FlagLast(), 1 do
+		if CellTypeUtils.IsPickable(cellType) then
+			for flagType = CellTypeUtils.FlagFirst(), CellTypeUtils.FlagLast(), 1 do
 				local sub = GetOrCreate(allCommands, CommandType.Bring)
-				sub = GetOrCreate(sub, CellTypeInv[cellType])
+				sub = GetOrCreate(sub, CellTypeUtils.GetHumanReadableName(cellType))
 				sub = GetOrCreate(sub, "To")
-				sub = GetOrCreate(sub, CellTypeInv[flagType])
-				sub.command = CharacterControllerBase.CreateBringCommand(cellType, flagType)
+				sub = GetOrCreate(sub, CellTypeUtils.GetHumanReadableName(flagType))
+				if not sub.bringCellTypes then sub.bringCellTypes = {} end
+				table.insert(sub.bringCellTypes, cellType)
+				sub.flagType = flagType
 			end
 		end
 	end
+	function BringCellTypesToCommand(option) 
+		if option.children then
+			for i, child in ipairs(option.children) do
+				BringCellTypesToCommand(child)
+			end
+		end
+		if option.bringCellTypes then
+			if option.command then
+				LogError("Already has command")
+			end
+			option.command = CharacterControllerBase.CreateBringCommand(option.bringCellTypes, option.flagType)
+			option.bringCellTypes = nil
+		end
+	end
+	BringCellTypesToCommand(allCommands)
 
 	function Postprocess(commands)
 		if not commands.children then

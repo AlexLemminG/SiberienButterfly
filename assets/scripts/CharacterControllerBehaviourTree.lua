@@ -11,6 +11,7 @@ local Actions                 = require "Actions"
 local Game                    = require "Game"
 local WorldQuery              = require "WorldQuery"
 local World                   = require "World"
+local CellTypeUtils           = require "CellTypeUtils"
 
 local CharacterControllerBehaviourTree = {}
 
@@ -124,7 +125,7 @@ function CharacterControllerBehaviourTree.Create(characterController : Character
         builder.PopSelectorNode()
 
         builder.PushSelectorNode(factory.Sequence("DropItem"))
-            builder.PushNode(factory.Condition(function (character) return character.item ~= CellType.None and Actions:IsPickable(character.item) end))
+            builder.PushNode(factory.Condition(function (character) return character.item ~= CellType.None and CellTypeUtils.IsPickable(character.item) end))
             builder.PushNode(factory.Func(
                 function (character, blackboard) 
                     local rule = Actions:GetDropRule(character.item)
