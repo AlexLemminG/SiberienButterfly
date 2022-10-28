@@ -64,12 +64,19 @@ function GameDbg:Update()
                 CellType.Any)))
                 
         table.insert(commandsToAssign,
+            CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.Wood, CellType.Stove,
+                CellType.Any)))
+                
+        table.insert(commandsToAssign,
         CharacterControllerBase.CreateCommandFromRules(Actions:GetAllCombineRules(CellType.FlintStone, CellType.StoveWithWood,
             CellType.Any)))
         
         table.insert(commandsToAssign,
         CharacterControllerBase.CreateBringCommand(CellType.Stone, CellType.FlagRed))
         CharacterControllerBase.AddMarkingToCommand(commandsToAssign[#commandsToAssign], CellType.MarkingRed)
+        
+        table.insert(commandsToAssign,
+        CharacterControllerBase.CreateBringCommand(CellType.Flour, CellType.FlagGreen))
     end
 
     --TODO make player immortal

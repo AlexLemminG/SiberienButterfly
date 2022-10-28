@@ -40,7 +40,7 @@ function Game:GenerateWorldGrid()
 	local probabilitiesItems = {}
 	probabilitiesItems[CellType.Wheat] = 1
 	probabilitiesItems[CellType.Tree] = 1
-	probabilitiesItems[CellType.Stone] = 1
+	probabilitiesItems[CellType.Stone] = 0.5
 	probabilitiesItems[CellType.FlintStone] = 0.1
 	probabilitiesItems[CellType.BushWithBerries] = 0.1
 	probabilitiesItems[CellType.None] = 10
@@ -888,12 +888,12 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	}
 
 	local hiddenItems = {}
-	for i = CellType.Bread_1, CellType.Bread_1 + GameConsts.maxBreadStackSize - 1, 1 do
-		hiddenItems[i] = true
-	end
-	for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
-		hiddenItems[i] = true
-	end
+	-- for i = CellType.Bread_1, CellType.Bread_1 + GameConsts.maxBreadStackSize - 1, 1 do
+	-- 	hiddenItems[i] = true
+	-- end
+	-- for i = CellType.WheatCollected_1, CellType.WheatCollected_1 + GameConsts.maxWheatStackSize - 2, 1 do
+	-- 	hiddenItems[i] = true
+	-- end
 	
 	local CommandType = {
 		Prepare = "Prepare",
@@ -902,6 +902,14 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		Pack = "Pack"
 	}
 	local function GetCommandType(rule : CombineRule)
+		local dialog = rule:GetDialog()
+		if dialog then
+			if #dialog == 0 then
+				return ""--TODO error
+			else
+				return dialog[1]
+			end
+		end
 		if rule.charType == rule.newCharType and rule.itemType == rule.newItemType then
 			return CommandType.Prepare
 		end
@@ -936,27 +944,34 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 	end
 	
 	local CharacterControllerBase = require("CharacterControllerBase")
-	for cellTypeName, cellType in pairs(CellType) do
-		if hiddenItems[cellType] then
-			continue
+	for i, rule in ipairs(Actions:GetAllCombineRules(CellType.Any,CellType.Any,CellType.Any)) do
+		local ruleDialog = rule:GetDialog()
+		local sub = allCommands
+		for i, d in ipairs(ruleDialog) do
+			sub = GetOrCreate(sub, d)
 		end
-		for index, rule in ipairs(Actions:GetAllCombineRules(cellType, CellType.Any, CellType.Any)) do
-			local commandType = GetCommandType(rule)
-			if commandType == CommandType.Bring then
-				continue
+		if not sub.rules then sub.rules = {} end
+		table.insert(sub.rules, rule)
+	end
+	function RulesToCommand(option) 
+		if option.children then
+			for i, child in ipairs(option.children) do
+				RulesToCommand(child)
 			end
-			local sub = GetOrCreate(allCommands, commandType)
-			sub = GetOrCreate(sub, CellTypeInv[cellType])
-			sub = GetOrCreate(sub, CellTypeInv[rule.itemType])
-			sub = GetOrCreate(sub, CellTypeInv[rule.groundType])
-			local rules = Actions:GetAllCombineRules(cellType, rule.itemType, rule.groundType)
-			sub.command = CharacterControllerBase.CreateCommandFromRules(rules)
 		end
-		
+		if option.rules then
+			option.command = CharacterControllerBase.CreateCommandFromRules(option.rules)
+			option.rules = nil
+		end
+	end
+	RulesToCommand(allCommands)
+	
+	for i, cellType in pairs(CellType) do
 		if Actions:IsPickable(cellType) then
 			for flagType = Actions:FlagFirst(), Actions:FlagLast(), 1 do
 				local sub = GetOrCreate(allCommands, CommandType.Bring)
 				sub = GetOrCreate(sub, CellTypeInv[cellType])
+				sub = GetOrCreate(sub, "To")
 				sub = GetOrCreate(sub, CellTypeInv[flagType])
 				sub.command = CharacterControllerBase.CreateBringCommand(cellType, flagType)
 			end
