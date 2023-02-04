@@ -21,12 +21,24 @@
             "console": "externalTerminal"
         },
         {
+            "name": "Manual linux launch",
+            "type": "cppdbg",
+            "request": "launch",
+            // Resolved by CMake Tools2:
+            "program": "${workspaceFolder}/build/bin/SiberienEngine",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "type": "lua-local",
             "request": "launch",
             "name": "Debug Custom Executable",
             "program": {
                 "command": "C:/Projects/SiberienButterfly/.build/bin/RelWithDebInfo/SiberienEngine.exe"
             },
+            "visualizerFile": "${workspaceFolder}/engine/source/libs/EASTL/doc/EASTL.natvis",
+            "showDisplayString": false,
             "args": [
                 "${workspaceFolder}"
             ]

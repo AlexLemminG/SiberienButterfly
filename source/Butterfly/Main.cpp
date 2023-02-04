@@ -7,7 +7,6 @@
 #include "SEngine/System.h"
 #include "SEngine/Common.h"
 
-
 REGISTER_GAME_SYSTEM(Sys);
 DEFINE_LIBRARY(GameLib);
 

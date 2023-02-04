@@ -39,9 +39,16 @@ ShadowSettings:
 TimeSettings:
   fixedDeltaTime: 0.033333335
 RenderSettings:
-  backend: 2
-  debug: true
-  vsync: true
+  backend: 9
+  debug: false
+  vsync: false
+  msaa: 0
+  tryToMinimizeStateChanges: true
+  preSortShadowRenderers: true
+  preSortRenderers: true
+  bgfxDebugStats: false
+  maxAnisotropy: true
+  frustumCulling: true
 LuaSettings:
   optimize: false
   debug: true

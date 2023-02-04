@@ -11,6 +11,7 @@
 #include "SEngine/Collider.h"
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
+#include "bx/string.h"
 #include <EASTL/priority_queue.h>
 #include "SEngine/Dbg.h"
 
@@ -843,8 +844,9 @@ void GridSystem::LoadCellTypes() {
 
 
     this->defaultMesh = nullptr;
+    ASSERT(this->settings->mesh != nullptr);
     for (auto mesh : this->settings->mesh->meshes) {
-        if (_strcmpi(mesh->name.c_str(), "unknown") == 0) {
+        if (bx::strCmpI(mesh->name.c_str(), "unknown") == 0) {
             this->defaultMesh = mesh;
             break;
         }
@@ -887,7 +889,7 @@ void GridSystem::LoadCellTypes() {
                 meshName[0] = std::toupper(meshName[0]);
             }
             for (auto mesh : this->settings->mesh->meshes) {
-                if (_strcmpi(mesh->name.c_str(), meshName.c_str()) == 0) {
+                if (bx::strCmpI(mesh->name.c_str(), meshName.c_str()) == 0) {
                     cellMesh = mesh;
                     break;
                 }

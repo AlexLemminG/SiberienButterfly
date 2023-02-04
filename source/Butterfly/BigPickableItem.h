@@ -6,5 +6,5 @@ class PlayerController;
 
 class BigPickableItem : public Object {
 public:
-	void OnPicked(std::shared_ptr<PlayerController> player);
+	// void OnPicked(std::shared_ptr<PlayerController> player);
 };
