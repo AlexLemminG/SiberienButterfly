@@ -808,14 +808,14 @@ bool GridSystem::Init() {
     navigation = eastl::make_shared<NavigationGrid>();
 
     this->onAfterLuaReloaded = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() { LoadCellTypes(); });
-    this->onAfterAssetDatabaseReloaded = AssetDatabase::Get()->onAfterUnloaded.Subscribe([this]() {LoadCellTypes(); });
+    this->onAfterAssetDatabaseReloaded = AssetDatabase::Get()->onLoadPersistentAssetsRequest.Subscribe([this]() {LoadCellTypes(); });
     LoadCellTypes();
 
     return true;
 }
 
 void GridSystem::Term() {
-    AssetDatabase::Get()->onAfterUnloaded.Unsubscribe(this->onAfterAssetDatabaseReloaded);
+    AssetDatabase::Get()->onLoadPersistentAssetsRequest.Unsubscribe(this->onAfterAssetDatabaseReloaded);
 
     settings = nullptr;
 }

@@ -75,7 +75,8 @@
         "*.tcc": "cpp",
         "forward_list": "cpp",
         "valarray": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "chrono": "cpp"
     },
     "Lua.diagnostics.globals": [
         "AssetDatabase",
