@@ -1032,14 +1032,14 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 
 		if self.updateInput then
 			local input = Input
-			if input:GetKeyDown("S") or input:GetKeyDown("dpdown") then
+			if input:GetButtonDown("UI_MoveDown") then
 				self.selectedOptionIndex = self.selectedOptionIndex + 1
 			end
-			if input:GetKeyDown("W") or input:GetKeyDown("dpup") then
+			if input:GetButtonDown("UI_MoveUp") then
 				self.selectedOptionIndex = self.selectedOptionIndex - 1
 			end
-			local acceptPressed = input:GetKeyDown("Space") or input:GetKeyDown("a")
-			if input:GetKeyDown("Escape") or input:GetKeyDown("b") then
+			local acceptPressed = input:GetButtonDown("UI_Select")
+			if input:GetButtonDown("UI_Back") then
 				acceptPressed = true
 				selectedOption = "Back"
 			end
@@ -1075,7 +1075,7 @@ function Game:Update()
 	GameDbg:Update()
 
 	local input = Input
-	if input:GetKeyDown("Escape") then
+	if input:GetButtonDown("PauseMenu") then
 		if not (self.currentDialog and not self.isPause) then
 			self.isPause = not self.isPause
 		end

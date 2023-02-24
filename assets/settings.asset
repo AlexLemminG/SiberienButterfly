@@ -52,3 +52,66 @@ RenderSettings:
 LuaSettings:
   optimize: false
   debug: true
+InputSettings:
+  buttons:
+    - name: Use
+      keyboardKeys:
+        - 44
+      gamepadKeys:
+        - 0
+    - name: MarkCell
+      keyboardKeys:
+        - 16
+      gamepadKeys:
+        - 2
+    - name: ForceWalk
+      keyboardKeys:
+        - 225
+      gamepadKeys:
+        - 10
+    - name: UI_MoveDown
+      keyboardKeys:
+        - 22
+      gamepadKeys:
+        - 12
+    - name: UI_MoveUp
+      keyboardKeys:
+        - 26
+      gamepadKeys:
+        - 11
+    - name: UI_Back
+      keyboardKeys:
+        - 41
+      gamepadKeys:
+        - 1
+    - name: UI_Select
+      keyboardKeys:
+        - 44
+      gamepadKeys:
+        - 0
+    - name: PauseMenu
+      keyboardKeys:
+        - 41
+      gamepadKeys:
+        - 6
+  axis:
+    - name: MoveX
+      positiveKeyboardKeys:
+        - 7
+      negativeKeyboardKeys:
+        - 4
+      positiveGamepadKeys: []
+      negativeGamepadKeys: []
+      gamepadAxis:
+        - 0
+      positiveGamepadAxis:
+        - 0
+    - name: MoveY
+      positiveKeyboardKeys:
+        - 26
+      negativeKeyboardKeys:
+        - 22
+      positiveGamepadKeys: []
+      negativeGamepadKeys: []
+      negativeGamepadAxis:
+        - 1
