@@ -3,6 +3,7 @@
 /temp/
 /library/
 /build/
+/GameBuild/
 /.build/
 *.blend1
 renderdoc.dll

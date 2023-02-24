@@ -1016,26 +1016,30 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 		imgui.TextUnformatted(text)
 		
 		for index, option in ipairs(currentOptions) do
+			local isSelected = index == self.selectedOptionIndex
 			local optionText = option.name
-			if index == self.selectedOptionIndex then
+			if isSelected then
 				optionText = "[*] "..optionText
 			else
 				optionText = "[ ] "..optionText
 			end
 			imgui.TextUnformatted(optionText)
+			if isSelected then
+				imgui.SetScrollHere(0.5)
+			end
 		end
 		imgui.End()
 
 		if self.updateInput then
 			local input = Input
-			if input:GetKeyDown("S") then
+			if input:GetKeyDown("S") or input:GetKeyDown("dpdown") then
 				self.selectedOptionIndex = self.selectedOptionIndex + 1
 			end
-			if input:GetKeyDown("W") then
+			if input:GetKeyDown("W") or input:GetKeyDown("dpup") then
 				self.selectedOptionIndex = self.selectedOptionIndex - 1
 			end
-			local acceptPressed = input:GetKeyDown("Space")
-			if input:GetKeyDown("Escape") then
+			local acceptPressed = input:GetKeyDown("Space") or input:GetKeyDown("a")
+			if input:GetKeyDown("Escape") or input:GetKeyDown("b") then
 				acceptPressed = true
 				selectedOption = "Back"
 			end

@@ -91,16 +91,16 @@ function PlayerController:Update()
 	local input = Input
 
 	local velocity = vector(0,0,0)
-	if input:GetKey("W") then
+	if input:GetKey("W") or input:GetKey("dpup") then
 		velocity = velocity + vector(0,0,1)
 	end
-	if input:GetKey("S") then
+	if input:GetKey("S") or input:GetKey("dpdown") then
 		velocity = velocity + vector(0,0,-1)
 	end
-	if input:GetKey("A") then
+	if input:GetKey("A") or input:GetKey("dpleft") then
 		velocity = velocity + vector(-1,0,0)
 	end
-	if input:GetKey("D") then
+	if input:GetKey("D") or input:GetKey("dpright") then
 		velocity = velocity + vector(1,0,0)
 	end
 	
@@ -111,7 +111,7 @@ function PlayerController:Update()
 	velocity = vector(-velocity.z, velocity.y, velocity.x)
 	velocity = velocity * self.character.maxSpeed
 
-	self.character.isRunning = not input:GetKey("Left Shift")
+	self.character.isRunning = not (input:GetKey("Left Shift") or input:GetKey("rightshoulder"))
 
 	self.character:SetVelocity(velocity)
 	
@@ -166,7 +166,7 @@ function PlayerController:Update()
 		action = nil
 	end
 	self.wasInDialogPrevFrame = self.character:IsInDialog()
-	if Input:GetKeyDown("Space") then
+	if Input:GetKeyDown("Space") or Input:GetKeyDown("a") then
 		self.character:ExecuteAction(action)
 	end
 
@@ -178,10 +178,10 @@ function PlayerController:Update()
 	end
 
 	--TODO less hacky
-	if Input:GetKey("M") then
+	if Input:GetKey("M") or Input:GetKey("x") then
 		local markings = World.markings
 		local mark = markings:GetCell(intPos)
-		if Input:GetKeyDown("M") then
+		if Input:GetKeyDown("M") or Input:GetKeyDown("x") then
 			self.isInSettingsMarkingMode = mark.type == CellType.None
 		end
 		if self.isInSettingsMarkingMode then
