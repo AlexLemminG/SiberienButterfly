@@ -11,7 +11,6 @@
 #include "SEngine/Collider.h"
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
-#include "bx/string.h"
 #include <EASTL/priority_queue.h>
 #include "SEngine/Dbg.h"
 
@@ -820,13 +819,16 @@ void GridSystem::Term() {
     settings = nullptr;
 }
 
+//TODO move out of here
+static int   Stricmp(const char* str1, const char* str2)         { int d; while ((d = toupper(*str2) - toupper(*str1)) == 0 && *str1) { str1++; str2++; } return d; }
 
 void GridSystem::LoadCellTypes() {
-    LuaSystem::Get()->PushModule("CellTypeDesc");
-    LuaSystem::Get()->PushModule("CellType");
-    auto L = LuaSystem::Get()->L;
+    auto* LuaSystem = LuaSystem::Get();
+    LuaSystem->PushModule("CellTypeDesc");
+    LuaSystem->PushModule("CellType");
+    auto* L = LuaSystem->L;
     if (lua_isnil(L, -1)) {
-        lua_pop(L, 1);
+        lua_pop(L, 2);
         ASSERT("Failed to load CellType lua module");
         return;
     }
@@ -841,12 +843,12 @@ void GridSystem::LoadCellTypes() {
     LuaReflect::DeserializeFromLuaToContext(L, -2, _contextCellTypeDesc);
     this->settings->cellDescs.clear();
     const SerializationContext& contextCellTypeDesc = _contextCellTypeDesc;
-
+    int isize = sizeof(SerializationContext);
 
     this->defaultMesh = nullptr;
     ASSERT(this->settings->mesh != nullptr);
     for (auto mesh : this->settings->mesh->meshes) {
-        if (bx::strCmpI(mesh->name.c_str(), "unknown") == 0) {
+        if (Stricmp(mesh->name.c_str(), "unknown") == 0) {
             this->defaultMesh = mesh;
             break;
         }
@@ -889,7 +891,7 @@ void GridSystem::LoadCellTypes() {
                 meshName[0] = std::toupper(meshName[0]);
             }
             for (auto mesh : this->settings->mesh->meshes) {
-                if (bx::strCmpI(mesh->name.c_str(), meshName.c_str()) == 0) {
+                if (Stricmp(mesh->name.c_str(), meshName.c_str()) == 0) {
                     cellMesh = mesh;
                     break;
                 }
@@ -905,11 +907,9 @@ void GridSystem::LoadCellTypes() {
                 LogWarning("Failed to find prefab '%s' for cellType '%s'", luaDesc.prefabName.c_str(), c.c_str());
             }
         }
-        auto desc = GridCellDesc{ (GridCellType)i, meshName, cellMesh, luaDesc, prefab };
 
-        desc.walkableType = luaDesc.forceMakeWalkable ? WalkableType::FORCE_MAKE_WALKABLE : (luaDesc.isWalkable ? WalkableType::WALKABLE : WalkableType::NOT_WALKABLE);
-
-        this->settings->cellDescs.emplace(desc.type, desc);
+        this->settings->cellDescs.try_emplace((GridCellType)i, (GridCellType)i, meshName, cellMesh, luaDesc, prefab,
+                                 luaDesc.forceMakeWalkable ? WalkableType::FORCE_MAKE_WALKABLE : (luaDesc.isWalkable ? WalkableType::WALKABLE : WalkableType::NOT_WALKABLE));
     }
     lua_pop(L, 2);
 
@@ -1139,19 +1139,112 @@ bool Grid::DbgDrawRad(const Vector2Int& originPos, int minRadius, int maxRadius)
     return FindNearestPosWithPredecate(outPos, originPos, minRadius, maxRadius, [this](const Vector2Int& pos) {Dbg::Draw(Sphere(GetCellWorldCenter(pos), 0.1f)); return false; });
 }
 
+
+//TODO move all base64 stuff out of here
+static const eastl::string base64_chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+
+static inline bool is_base64(unsigned char c) {
+    return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
+static eastl::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+    eastl::string   ret;
+    int           i = 0;
+    int           j = 0;
+    unsigned char char_array_3[3];
+    unsigned char char_array_4[4];
+
+    while (in_len--) {
+        char_array_3[i++] = *(bytes_to_encode++);
+        if (i == 3) {
+            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+            char_array_4[3] = char_array_3[2] & 0x3f;
+
+            for (i = 0; (i < 4); i++)
+                ret += base64_chars[char_array_4[i]];
+            i = 0;
+        }
+    }
+
+    if (i) {
+        for (j = i; j < 3; j++)
+            char_array_3[j] = '\0';
+
+        char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+        char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+        char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+
+        for (j = 0; (j < i + 1); j++)
+            ret += base64_chars[char_array_4[j]];
+
+        while ((i++ < 3))
+            ret += '=';
+    }
+
+    return ret;
+}
+
+static eastl::string base64_decode(eastl::string const& encoded_string) {
+    int           in_len = static_cast<int>(encoded_string.size());
+    int           i      = 0;
+    int           j      = 0;
+    int           in_    = 0;
+    unsigned char char_array_4[4], char_array_3[3];
+    eastl::string   ret;
+
+    while (in_len-- && (encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
+        char_array_4[i++] = encoded_string[in_];
+        in_++;
+        if (i == 4) {
+            for (i = 0; i < 4; i++)
+                char_array_4[i] = static_cast<unsigned char>(base64_chars.find(char_array_4[i]));
+
+            char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+            for (i = 0; (i < 3); i++)
+                ret += char_array_3[i];
+            i = 0;
+        }
+    }
+
+    if (i) {
+        for (j = i; j < 4; j++)
+            char_array_4[j] = 0;
+
+        for (j = 0; j < 4; j++)
+            char_array_4[j] = static_cast<unsigned char>(base64_chars.find(char_array_4[j]));
+
+        char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+        char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+        char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+        for (j = 0; (j < i - 1); j++)
+            ret += char_array_3[j];
+    }
+
+    return ret;
+}
+
 void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)
 {
     ::Serialize(context.Child("sizeX"), grid.sizeX);
     ::Serialize(context.Child("sizeY"), grid.sizeY);
     ::Serialize(context.Child("isInited"), grid.isInited);
     
-    c4::cblob blob;
-    blob.buf = (c4::cbyte*)grid.cells.data();
-    blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
-    eastl::string buffer = eastl::string(((4 * blob.len / 3) + 3) & ~3, '\0');
-    c4::substr bufferSubstr(buffer.data(), buffer.size());
-    size_t size = ryml::base64_encode(bufferSubstr, blob);
-    ASSERT(size == buffer.size());
+    // c4::cblob blob;
+    // blob.buf = (c4::cbyte*)grid.cells.data();
+    // blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
+    // eastl::string buffer = eastl::string(((4 * blob.len / 3) + 3) & ~3, '\0');
+    // c4::substr bufferSubstr(buffer.data(), buffer.size());
+    auto buffer = base64_encode((unsigned char const*)grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+    // TODO ASSERT(size == buffer.length());
 
     context.Child("cells") << buffer;
 }
@@ -1166,15 +1259,12 @@ void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
         eastl::string cellsBase64;
         ::Deserialize(context.Child("cells"), cellsBase64);
 
-
-        c4::csubstr cellsBase64Substr(cellsBase64.c_str(), cellsBase64.size());
-
         grid.SetSize(grid.sizeX, grid.sizeY);
 
-        c4::blob blob(grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
-
-        size_t size = c4::base64_decode(cellsBase64Substr, blob);
+        auto str = base64_decode(cellsBase64);
+        auto size = str.length();
         ASSERT(size == grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+        memcpy(grid.cells.data(), str.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
     }
 
 }

@@ -12,8 +12,8 @@ message(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 set_target_properties(Butterfly PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 #TODO sorry future me, i'm too tired to figure out how to do it properly now
-add_definitions(-DRYML_SHARED)
-add_definitions(-DC4CORE_SHARED)
+# add_definitions(-DRYML_SHARED)
+# add_definitions(-DC4CORE_SHARED)
 
 target_link_libraries(Butterfly PRIVATE SiberienEngine)
 

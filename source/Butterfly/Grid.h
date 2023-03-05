@@ -105,6 +105,19 @@ class GridCellDesc {
     GridCellDescLua luaDesc;
     eastl::shared_ptr<GameObject> prefab;
     WalkableType walkableType = WalkableType::NOT_WALKABLE;
+    GridCellDesc() {}
+    GridCellDesc(GridCellType type,
+                 const eastl::string &meshName,
+                 const eastl::shared_ptr<Mesh> &mesh) : type(type), meshName(meshName), mesh(mesh) {}
+    GridCellDesc(GridCellType type,
+                 const eastl::string &meshName,
+                 const eastl::shared_ptr<Mesh> &mesh,
+                 const GridCellDescLua &luaDesc,
+                 const eastl::shared_ptr<GameObject> &prefab,
+                 WalkableType walkableType)
+        : type(type), meshName(meshName), mesh(mesh), luaDesc(luaDesc), prefab(prefab), walkableType(walkableType)
+    {
+    }
     REFLECT_DECLARE(GridCellDesc);
 };
 

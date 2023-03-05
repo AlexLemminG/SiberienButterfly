@@ -4,8 +4,6 @@
 #include "SEngine/GameObject.h"
 #include "SEngine/STime.h"
 #include "SEngine/Physics.h"
-#include "btBulletCollisionCommon.h"
-#include "btBulletDynamicsCommon.h"
 #include "SEngine/Common.h"
 
 

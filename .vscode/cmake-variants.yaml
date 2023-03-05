@@ -1,0 +1,46 @@
+buildType:
+  default: DebugAsan
+  choices:
+    Debug:
+      short: Debug
+      buildType: Debug
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: false
+        ASSERTIONS: paranoid
+    DebugWithReleaseLibs:
+      short: DebugWithReleaseLibs
+      buildType: Debug
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: true
+        CMAKE_EXPORT_COMPILE_COMMANDS: ON
+        ASSERTIONS: paranoid
+    DebugAsan:
+      short: DebugAsan
+      buildType: DebugAsan
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: false
+        ASSERTIONS: paranoid
+    Release:
+      short: Release
+      buildType: Release
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: true
+        ASSERTIONS: paranoid
+    ReleaseWithSymbols:
+      short: ReleaseWithSymbols
+      buildType: RelWithDebInfo
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: true
+        ASSERTIONS: disabled
+    Retail:
+      short: Retail
+      buildType: Release
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: true
+        ASSERTIONS: disabled

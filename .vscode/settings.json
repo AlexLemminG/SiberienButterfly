@@ -1,5 +1,8 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.configureSettings": {
+        "SE_USE_COMPRESSINATOR":"ON"
+    },
     "files.associations": {
         "*.asset": "yaml",
         "vector": "cpp",
@@ -76,7 +79,14 @@
         "forward_list": "cpp",
         "valarray": "cpp",
         "regex": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "memory_resource": "cpp",
+        "scoped_allocator": "cpp",
+        "complex": "cpp",
+        "string_view": "cpp",
+        "stop_token": "cpp",
+        "shared_mutex": "cpp",
+        "*.def": "cpp"
     },
     "Lua.diagnostics.globals": [
         "AssetDatabase",

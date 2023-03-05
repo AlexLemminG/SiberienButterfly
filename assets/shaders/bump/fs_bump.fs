@@ -86,7 +86,7 @@ ClusterData GetClasterData(vec4 proj){
 	int clusterWidth = 16;
 	int clusterHeight = 8;
 	int clusterDepth = 1;
-	float3 clip;
+	vec3 clip;
 	clip.xy = (proj.xy / proj.w + 1.0) / 2.0;
 	clip.z = (proj.z / proj.w);
 	ivec3 cluster = ivec3(int(clip.x * clusterWidth), int(clip.y * clusterHeight), int(clip.z * clusterDepth));
@@ -99,11 +99,11 @@ ClusterData GetClasterData(vec4 proj){
 	return data;
 }
 
-ItemData GetItemData(int offset){
+ItemData GetItemData(uint offset){
 	
-	int itemsDiv = 1024;
-	int x = offset % itemsDiv;
-	int y = offset / itemsDiv;
+	uint itemsDiv = 1024;
+	uint x = offset % itemsDiv;
+	uint y = offset / itemsDiv;
 	uvec2 rg = texelFetch(s_texItems, ivec2(x,y), 0).rg;
 	
 	ItemData data;
@@ -111,7 +111,7 @@ ItemData GetItemData(int offset){
 	return data;
 }
 
-LightData GetLightData(int offset){
+LightData GetLightData(uint offset){
 	vec4 raw1 = texelFetch(s_texLightParams, ivec2(offset*4,0), 0).rgba;
 	vec4 raw2 = texelFetch(s_texLightParams, ivec2(offset*4+1,0), 0).rgba;
 	vec4 raw3 = texelFetch(s_texLightParams, ivec2(offset*4+2,0), 0).rgba;
@@ -267,7 +267,7 @@ vec4 CalcPBR(Surface surface){
 void main()
 {
 	//mat3 tbn = mtxFromCols(v_tangent, v_bitangent, v_normal);
-	vec2 uv = v_texcoord0 + u_uvOffset;
+	vec2 uv = v_texcoord0 + u_uvOffset.xy;
 	//vec3 localNormal;
 	//localNormal.xy = texture2D(s_texNormal, uv).xy * 2.0 - 1.0;
 	//localNormal.z = sqrt(1.0 - dot(localNormal.xy, localNormal.xy) );
@@ -295,9 +295,9 @@ void main()
 	
 	vec4 color = CalcPBR(surface);
 	
-	color.rgb = color.rgb / (vec4_splat(1.0) + color.rgb); // Reinhard tone mapping
+	color.rgb = color.rgb / (vec3_splat(1.0) + color.rgb); // Reinhard tone mapping
 	color.rgb = toGamma(color.rgb); // gamma correction
-	gl_FragData[0].rgb = color;
+	gl_FragData[0].rgb = color.rgb;
 	
 #if TRANSPARENT
 	gl_FragData[0].a = albedoAlpha.a;
