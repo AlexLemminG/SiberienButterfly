@@ -118,5 +118,8 @@
     "Lua.runtime.plugin": ".vscode/lua/plugin.lua",
     "Lua.workspace.library": [
         "engine\\assets\\scripts"
-    ]
+    ],
+    "lldb.showDisassembly": "auto",
+    "lldb.dereferencePointers": true,
+    "lldb.consoleMode": "commands"
 }
