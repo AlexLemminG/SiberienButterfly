@@ -11,8 +11,10 @@
 #include "SEngine/Collider.h"
 #include "SEngine/BoxCollider.h"
 #include <EASTL/sort.h>
+#include <EASTL/vector.h>
 #include <EASTL/priority_queue.h>
 #include "SEngine/Dbg.h"
+#include "SEngine/Types/StringView.h"
 
 REFLECT_DEFINE(GridSystem);
 REFLECT_DEFINE(GridSettings);
@@ -101,17 +103,17 @@ GridPath NavigationGrid::CalcPath(Vector2Int from, Vector2Int to) const {
     }
 
 
-    eastl::vector<float> costsApprox;
+    se::vector<float> costsApprox;
     costsApprox.resize(sizeX * sizeY, -1.f);
 
-    eastl::vector<float> realCosts;
+    se::vector<float> realCosts;
     realCosts.resize(sizeX * sizeY, -1.f);
 
     class Compare {
     public:
         int sizeX;
         int sizeY;
-        eastl::vector<float>* costs;
+        se::vector<float>* costs;
         bool operator()(const Vector2Int& a, const Vector2Int& b) const
         {
             return (*costs)[a.x * sizeY + a.y] > (*costs)[b.x * sizeY + b.y];
@@ -226,7 +228,7 @@ void NavigationGrid::UpdateIslands() {
     int nextFreeIndex = 1;
 
     auto floodFill = [&](int islandIndex, int x, int y) {
-        eastl::vector<Vector2Int> toVisit;
+        se::vector<Vector2Int> toVisit;
 
         auto visit = [&](Vector2Int pos) {
             if (pos.x < 0 || pos.x >= sizeX || pos.y < 0 || pos.y >= sizeY) {
@@ -318,7 +320,7 @@ void NavigationGrid::Update() {
     }
 }
 
-eastl::shared_ptr<NavigationGrid> GridSystem::GetNavigation() const {
+se::shared_ptr<NavigationGrid> GridSystem::GetNavigation() const {
     return navigation;
 }
 
@@ -387,7 +389,7 @@ GridCellIterator Grid::GetAnimatedCellsIterator() {
 }
 
 
-eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
+se::shared_ptr<Grid> GridSystem::GetGrid(const se::string& name) const {
     for (auto grid : grids) {
         if (grid->gameObject()->tag == name) {
             return grid;
@@ -397,7 +399,7 @@ eastl::shared_ptr<Grid> GridSystem::GetGrid(const eastl::string& name) const {
 }
 
 template<typename T>
-static void Unique(eastl::vector<T>& v) {
+static void Unique(se::vector<T>& v) {
     if (v.size() < 2) {
         return;
     }
@@ -519,22 +521,22 @@ void GridCollider::_Update() {
         
         const auto& desc = gridSystem->GetDesc((GridCellType)cell.type);
         for (const auto& collision : desc.luaDesc.allCollisions) {
-            eastl::shared_ptr<Collider> colliderCurrent;
+            se::shared_ptr<Collider> colliderCurrent;
             if (collision.type == (int)GridCellCollisionType::SPHERE_COLLIDER) {
-                auto collider = eastl::make_shared<SphereCollider>();
+                auto collider = se::make_shared<SphereCollider>();
                 collider->radius = collision.radius;
                 collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
                 colliderCurrent = collider;
             }
             else if (collision.type == (int)GridCellCollisionType::CAPSULE_COLLIDER) {
-                auto collider = eastl::make_shared<CapsuleCollider>();
+                auto collider = se::make_shared<CapsuleCollider>();
                 collider->radius = collision.radius;
                 collider->height = collision.height;
                 collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
                 colliderCurrent = collider;
             }
             else if (collision.type == (int)GridCellCollisionType::BOX_COLLIDER) {
-                auto collider = eastl::make_shared<BoxCollider>();
+                auto collider = se::make_shared<BoxCollider>();
                 collider->size = collision.size;
                 collider->center = grid->GetCellWorldCenter(cell.pos) + collision.center;
                 colliderCurrent = collider;
@@ -678,7 +680,7 @@ void GridDrawer::_Update() {
             if (desc.prefab) {
                 auto matrix = grid->cellsLocalMatrices[i];
                 matrix.GetColumn(3) += Vector4(grid->GetCellWorldCenter(cell), 0);
-                eastl::shared_ptr<GameObject> go;
+                se::shared_ptr<GameObject> go;
                 if (cell.type == cellPrev.type && !isFullUpdate) {
                     go = gameObjects[instanceIndices[i]];
                     go->transform()->SetMatrix(matrix);
@@ -708,7 +710,7 @@ void GridDrawer::_Update() {
             ir->Init(gameObject()->GetScene());
             ir->SetFrustumCullingEnabled(this->useFrustumCulling);
             ir->SetCastShadowsEnabled(this->castsShadows);
-            instancedMeshRenderers.emplace((GridCellType)cell.type, ir);
+            instancedMeshRenderers[(GridCellType)cell.type] = ir;
         }
         InstancedMeshRenderer::InstanceInfo* instance;
         if (cell.type == cellPrev.type && !isFullUpdate) {
@@ -739,7 +741,7 @@ const GridCellDesc& GridSystem::GetDesc(GridCellType type) const {
     }
     //TODO adding desc in a const getter + returning everything by ref is a really really bad idea
     //but I am a comment and not a cop so go on
-    settings->cellDescs.emplace(type, GridCellDesc{ type, "UnknownType", defaultMesh });
+    settings->cellDescs[type] = GridCellDesc( type, "UnknownType", defaultMesh );
     return GetDesc(type);
 }
 
@@ -804,7 +806,7 @@ bool GridSystem::Init() {
         return false;
     }
 
-    navigation = eastl::make_shared<NavigationGrid>();
+    navigation = se::make_shared<NavigationGrid>();
 
     this->onAfterLuaReloaded = LuaSystem::Get()->onAfterScriptsReloading.Subscribe([this]() { LoadCellTypes(); });
     this->onAfterAssetDatabaseReloaded = AssetDatabase::Get()->onLoadPersistentAssetsRequest.Subscribe([this]() {LoadCellTypes(); });
@@ -846,7 +848,7 @@ void GridSystem::LoadCellTypes() {
     int isize = sizeof(SerializationContext);
 
     this->defaultMesh = nullptr;
-    ASSERT(this->settings->mesh != nullptr);
+    ASSERT(this->settings->mesh);
     for (auto mesh : this->settings->mesh->meshes) {
         if (Stricmp(mesh->name.c_str(), "unknown") == 0) {
             this->defaultMesh = mesh;
@@ -869,14 +871,14 @@ void GridSystem::LoadCellTypes() {
         int i = 0;
         contextCellType.Child(c) >> i;
 
-        if (c == "Any") {
+        if (c == se::string("Any")) {
             ASSERT(this->cellTypeAny == -1);
             this->cellTypeAny = i;
         }
 
         //no mesh for util
-        eastl::string meshName = c;
-        eastl::shared_ptr<Mesh> cellMesh = this->defaultMesh;
+        se::string meshName = c;
+        se::shared_ptr<Mesh> cellMesh = this->defaultMesh;
         if (!luaDesc.meshName.empty()) {
             meshName = luaDesc.meshName;
         }
@@ -885,8 +887,7 @@ void GridSystem::LoadCellTypes() {
             cellMesh = nullptr;
         }
         else {
-            eastl::transform(meshName.begin(), meshName.end(), meshName.begin(),
-                [](unsigned char c) { return std::tolower(c); });
+            se::string_utils::ToLowerInplace(meshName);
             if (meshName.size() > 0) {
                 meshName[0] = std::toupper(meshName[0]);
             }
@@ -900,7 +901,7 @@ void GridSystem::LoadCellTypes() {
                 LogError("No mesh found for cell type '%s'", c.c_str());
             }
         }
-        eastl::shared_ptr<GameObject> prefab;
+        se::shared_ptr<GameObject> prefab;
         if (!luaDesc.prefabName.empty()) {
             prefab = AssetDatabase::Get()->Load<GameObject>(luaDesc.prefabName);
             if (!prefab) {
@@ -908,7 +909,7 @@ void GridSystem::LoadCellTypes() {
             }
         }
 
-        this->settings->cellDescs.try_emplace((GridCellType)i, (GridCellType)i, meshName, cellMesh, luaDesc, prefab,
+        this->settings->cellDescs[(GridCellType)i] = GridCellDesc((GridCellType)i, meshName, cellMesh, luaDesc, prefab,
                                  luaDesc.forceMakeWalkable ? WalkableType::FORCE_MAKE_WALKABLE : (luaDesc.isWalkable ? WalkableType::WALKABLE : WalkableType::NOT_WALKABLE));
     }
     lua_pop(L, 2);
@@ -957,7 +958,7 @@ void Grid::SetCellLocalMatrix(const Vector2Int& pos, const Matrix4& matrix) {
     }
 }
 
-eastl::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
+se::shared_ptr<Mesh> GridSystem::GetMeshByCellType(int cellType) const {
     return GetDesc((GridCellType)cellType).mesh;
 }
 
@@ -1141,7 +1142,7 @@ bool Grid::DbgDrawRad(const Vector2Int& originPos, int minRadius, int maxRadius)
 
 
 //TODO move all base64 stuff out of here
-static const eastl::string base64_chars =
+static const se::string base64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     "abcdefghijklmnopqrstuvwxyz"
     "0123456789+/";
@@ -1150,8 +1151,8 @@ static inline bool is_base64(unsigned char c) {
     return (isalnum(c) || (c == '+') || (c == '/'));
 }
 
-static eastl::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
-    eastl::string   ret;
+static se::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+    se::string   ret;
     int           i = 0;
     int           j = 0;
     unsigned char char_array_3[3];
@@ -1166,7 +1167,7 @@ static eastl::string base64_encode(unsigned char const* bytes_to_encode, unsigne
             char_array_4[3] = char_array_3[2] & 0x3f;
 
             for (i = 0; (i < 4); i++)
-                ret += base64_chars[char_array_4[i]];
+                ret.append(base64_chars[char_array_4[i]]);
             i = 0;
         }
     }
@@ -1180,36 +1181,36 @@ static eastl::string base64_encode(unsigned char const* bytes_to_encode, unsigne
         char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
 
         for (j = 0; (j < i + 1); j++)
-            ret += base64_chars[char_array_4[j]];
+            ret.append(base64_chars[char_array_4[j]]);
 
         while ((i++ < 3))
-            ret += '=';
+            ret.append('=');
     }
 
     return ret;
 }
 
-static eastl::string base64_decode(eastl::string const& encoded_string) {
+static se::string base64_decode(se::string const& encoded_string) {
     int           in_len = static_cast<int>(encoded_string.size());
     int           i      = 0;
     int           j      = 0;
     int           in_    = 0;
     unsigned char char_array_4[4], char_array_3[3];
-    eastl::string   ret;
+    se::string   ret;
 
     while (in_len-- && (encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
         char_array_4[i++] = encoded_string[in_];
         in_++;
         if (i == 4) {
             for (i = 0; i < 4; i++)
-                char_array_4[i] = static_cast<unsigned char>(base64_chars.find(char_array_4[i]));
+                char_array_4[i] = static_cast<unsigned char>(se::string_view(base64_chars.c_str()).find(char_array_4[i]));
 
             char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
             char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
             char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
 
             for (i = 0; (i < 3); i++)
-                ret += char_array_3[i];
+                ret.append(char_array_3[i]);
             i = 0;
         }
     }
@@ -1219,14 +1220,14 @@ static eastl::string base64_decode(eastl::string const& encoded_string) {
             char_array_4[j] = 0;
 
         for (j = 0; j < 4; j++)
-            char_array_4[j] = static_cast<unsigned char>(base64_chars.find(char_array_4[j]));
+            char_array_4[j] = static_cast<unsigned char>(se::string_view(base64_chars.c_str()).find(char_array_4[j]));
 
         char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
         char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
         char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
 
         for (j = 0; (j < i - 1); j++)
-            ret += char_array_3[j];
+            ret.append(char_array_3[j]);
     }
 
     return ret;
@@ -1241,7 +1242,7 @@ void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)
     // c4::cblob blob;
     // blob.buf = (c4::cbyte*)grid.cells.data();
     // blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
-    // eastl::string buffer = eastl::string(((4 * blob.len / 3) + 3) & ~3, '\0');
+    // se::string buffer = se::string(((4 * blob.len / 3) + 3) & ~3, '\0');
     // c4::substr bufferSubstr(buffer.data(), buffer.size());
     auto buffer = base64_encode((unsigned char const*)grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
     // TODO ASSERT(size == buffer.length());
@@ -1256,15 +1257,15 @@ void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
     ::Deserialize(context.Child("isInited"), grid.isInited);
 
     if (grid.isInited) {
-        eastl::string cellsBase64;
+        se::string cellsBase64;
         ::Deserialize(context.Child("cells"), cellsBase64);
 
         grid.SetSize(grid.sizeX, grid.sizeY);
 
         auto str = base64_decode(cellsBase64);
-        auto size = str.length();
+        auto size = str.size();
         ASSERT(size == grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
-        memcpy(grid.cells.data(), str.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+        memcpy(grid.cells.data(), str.c_str(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
     }
 
 }

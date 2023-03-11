@@ -28,7 +28,8 @@
             "program": "${workspaceFolder}/build/bin/SiberienEngine",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ]
         },
         {
             "type": "lua-local",

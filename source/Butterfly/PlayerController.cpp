@@ -33,7 +33,7 @@ void PlayerController::Update() {
     }
     if (Input::GetKeyDown(SDL_Scancode::SDL_SCANCODE_F)) {
         auto apple = Scene::Get()->FindGameObjectByTag("apple");
-        if (apple != nullptr) {
+        if (apple) {
             if (hasItem) {
                 apple->GetComponent<ParentedTransform>()->SetParent(nullptr);
                 apple->transform()->SetPosition(gameObject()->transform()->GetPosition() + gameObject()->transform()->GetForward() * 1.5f);
@@ -42,7 +42,7 @@ void PlayerController::Update() {
                 int idx = 0;
                 const auto& bones = gameObject()->GetComponent<MeshRenderer>()->mesh->bones;
                 for (auto bone : bones) {
-                    if (bone.name == "ItemAttachPoint") {
+                    if (bone.name == se::string("ItemAttachPoint")) {
                         idx = bone.idx;
                         break;
                     }

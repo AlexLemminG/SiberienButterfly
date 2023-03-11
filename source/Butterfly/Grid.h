@@ -6,7 +6,9 @@
 #include "SEngine/Transform.h"
 #include "SEngine/System.h"
 #include "SEngine/GameEvents.h"
-#include "SEngine/Vector.h"
+#include "SEngine/Types/Vector.h"
+#include "SEngine/Types/String.h"
+#include "SEngine/Types/UnorderedMap.h"
 #include <functional>
 
 class Grid;
@@ -43,7 +45,7 @@ class GridCellMeshRenderer : public MeshRendererAbstract {
     ~GridCellMeshRenderer() {
         SetEnabled(false);
     }
-    GridCellMeshRenderer(eastl::shared_ptr<Mesh> mesh, eastl::shared_ptr<Material> material) : GridCellMeshRenderer() {
+    GridCellMeshRenderer(se::shared_ptr<Mesh> mesh, se::shared_ptr<Material> material) : GridCellMeshRenderer() {
         this->mesh = mesh;
         this->material = material;
     }
@@ -76,10 +78,10 @@ struct GridCellDescLua {
     bool isWalkable = true;
     bool forceMakeWalkable = false;
     GridCellDescLua_Collision collision;
-    eastl::vector<GridCellDescLua_Collision> extraCollisions;
-    eastl::vector<GridCellDescLua_Collision> allCollisions;
-    eastl::string prefabName;
-    eastl::string meshName;
+    se::vector<GridCellDescLua_Collision> extraCollisions;
+    se::vector<GridCellDescLua_Collision> allCollisions;
+    se::string prefabName;
+    se::string meshName;
     REFLECT_BEGIN(GridCellDescLua);
     REFLECT_VAR(prefabName);
     REFLECT_VAR(meshName);
@@ -100,20 +102,20 @@ enum class WalkableType {
 class GridCellDesc {
    public:
     GridCellType type;
-    eastl::string meshName;
-    eastl::shared_ptr<Mesh> mesh;
+    se::string meshName;
+    se::shared_ptr<Mesh> mesh;
     GridCellDescLua luaDesc;
-    eastl::shared_ptr<GameObject> prefab;
+    se::shared_ptr<GameObject> prefab;
     WalkableType walkableType = WalkableType::NOT_WALKABLE;
     GridCellDesc() {}
     GridCellDesc(GridCellType type,
-                 const eastl::string &meshName,
-                 const eastl::shared_ptr<Mesh> &mesh) : type(type), meshName(meshName), mesh(mesh) {}
+                 const se::string &meshName,
+                 const se::shared_ptr<Mesh> &mesh) : type(type), meshName(meshName), mesh(mesh) {}
     GridCellDesc(GridCellType type,
-                 const eastl::string &meshName,
-                 const eastl::shared_ptr<Mesh> &mesh,
+                 const se::string &meshName,
+                 const se::shared_ptr<Mesh> &mesh,
                  const GridCellDescLua &luaDesc,
-                 const eastl::shared_ptr<GameObject> &prefab,
+                 const se::shared_ptr<GameObject> &prefab,
                  WalkableType walkableType)
         : type(type), meshName(meshName), mesh(mesh), luaDesc(luaDesc), prefab(prefab), walkableType(walkableType)
     {
@@ -164,8 +166,8 @@ struct GridCellIterator {
 };
 class GridSettings : public Object {
    public:
-    eastl::shared_ptr<FullMeshAsset> mesh;
-    eastl::unordered_map<GridCellType, GridCellDesc> cellDescs;
+    se::shared_ptr<FullMeshAsset> mesh;
+    se::unordered_map<GridCellType, GridCellDesc> cellDescs;
     REFLECT_BEGIN(GridSettings);
     REFLECT_VAR(mesh);
     REFLECT_END();
@@ -196,11 +198,11 @@ public:
 
     void LoadFrom(const Grid& otherGrid);
 
-    eastl::vector<GridCell> cells;
-    eastl::vector<Matrix4> cellsLocalMatrices;
+    se::vector<GridCell> cells;
+    se::vector<Matrix4> cellsLocalMatrices;
 
-    eastl::vector<GridCell> cellsPrev;
-    eastl::vector<Matrix4> cellsLocalMatricesPrev;
+    se::vector<GridCell> cellsPrev;
+    se::vector<Matrix4> cellsLocalMatricesPrev;
 
     GridCellIterator GetAnimatedCellsIterator();
     GridCellIterator GetTypeIterator(int cellType);
@@ -237,7 +239,7 @@ public:
 
     bool isInited = false;
 
-    eastl::vector<int> changedIndices;
+    se::vector<int> changedIndices;
 private:
     int modificationsCount = 0;
     int fullyClearedCount = 0;
@@ -265,7 +267,7 @@ struct GridPath {
     Vector2Int from;
     Vector2Int to;
     bool isComplete = false;
-    eastl::vector<Vector2Int> points;
+    se::vector<Vector2Int> points;
 
     REFLECT_DECLARE(GridPath);
 };
@@ -283,9 +285,9 @@ private:
     bool CalcIsWalkable(int x, int y) const;
     int sizeX;
     int sizeY;
-    eastl::vector<int> islandIndex;
-    eastl::vector<bool> walkableCells; //TODO more packed then bool vector
-    eastl::vector<eastl::shared_ptr<Grid>> sourceGrids;
+    se::vector<int> islandIndex;
+    se::vector<bool> walkableCells; //TODO more packed then bool vector
+    se::vector<se::shared_ptr<Grid>> sourceGrids;
 
     REFLECT_DECLARE(NavigationGrid);
 };
@@ -298,18 +300,18 @@ class GridSystem : public GameSystem<GridSystem> {
     void Update() override;
     void Term() override;
 
-    eastl::shared_ptr<GridSettings> settings;
+    se::shared_ptr<GridSettings> settings;
 
-    eastl::shared_ptr<NavigationGrid> navigation;
-    eastl::vector<eastl::shared_ptr<Grid>> grids;
-    eastl::shared_ptr<Mesh> defaultMesh;
+    se::shared_ptr<NavigationGrid> navigation;
+    se::vector<se::shared_ptr<Grid>> grids;
+    se::shared_ptr<Mesh> defaultMesh;
 
-    eastl::shared_ptr<Grid> GetGrid(const eastl::string& name) const;
-    eastl::shared_ptr<NavigationGrid> GetNavigation() const;
+    se::shared_ptr<Grid> GetGrid(const se::string& name) const;
+    se::shared_ptr<NavigationGrid> GetNavigation() const;
 
     void LoadCellTypes();
 
-    eastl::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
+    se::shared_ptr<Mesh> GetMeshByCellType(int cellType) const;
 
     GameEventHandle onAfterLuaReloaded;
     GameEventHandle onAfterAssetDatabaseReloaded;
@@ -340,14 +342,14 @@ class GridDrawer : public Component {
     bool castsShadows = true;
 
    private:
-    eastl::shared_ptr<GameObject> gridCellPrefab;
+    se::shared_ptr<GameObject> gridCellPrefab;
     //eastl::vector<GridCellMeshRenderer> pooledRenderers;
-    eastl::unordered_map<int, eastl::unordered_map<GridCellType, InstancedMeshRenderer*>> instancedMeshRenderers;
-    eastl::vector<eastl::shared_ptr<GameObject>> gameObjects;
+    se::unordered_map<int, se::unordered_map<GridCellType, InstancedMeshRenderer*>> instancedMeshRenderers;
+    se::vector<se::shared_ptr<GameObject>> gameObjects;
     
     int lastModificationsCount = -1;
     int lastFullyClearedCount = -1;
-    eastl::vector<int> instanceIndices;
+    se::vector<int> instanceIndices;
 
     REFLECT_DECLARE(GridDrawer);
 };
@@ -356,7 +358,7 @@ class GridChunkCollider : public Component {
 
 public:
     bool changed = false;
-    eastl::vector<eastl::vector<eastl::shared_ptr<class Collider>>> gridColliders;
+    se::vector<se::vector<se::shared_ptr<class Collider>>> gridColliders;
     REFLECT_COMPONENT_BEGIN(GridChunkCollider);
     REFLECT_END();
 };
@@ -368,8 +370,8 @@ public:
 private:
     int lastModificationsCount = -1;
     int lastFullyClearedCount = -1;
-    eastl::shared_ptr<GameObject> chunkPrefab;
-    eastl::vector<eastl::shared_ptr<GridChunkCollider>> chunks;
+    se::shared_ptr<GameObject> chunkPrefab;
+    se::vector<se::shared_ptr<GridChunkCollider>> chunks;
     
     REFLECT_DECLARE(GridCollider);
 };

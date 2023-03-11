@@ -12,7 +12,7 @@ public:
 	float lerpT = 1.f;
 	float collisionLerpT = 10.f;
 	Vector3 offset = Vector3_zero;
-	eastl::string targetTag;
+	se::string targetTag;
 
 
 	void OnEnable() override;
@@ -34,7 +34,7 @@ void TopDownCameraRig::OnEnable()
 {
 	auto trans = gameObject()->transform();
 	auto target = GameObject::FindWithTag(targetTag);
-	if (target != nullptr) {
+	if (target) {
 		auto targetPos = target->transform()->GetPosition() + offset;
 		trans->SetPosition(targetPos);
 	}
@@ -44,7 +44,7 @@ void TopDownCameraRig::OnEnable()
 void TopDownCameraRig::Update() {
 	OPTICK_EVENT();
 	auto target = GameObject::FindWithTag(targetTag);
-	if (target != nullptr) {
+	if (target) {
 		auto trans = gameObject()->transform();
 
 		auto targetPos = target->transform()->GetPosition() + offset;

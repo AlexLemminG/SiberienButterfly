@@ -41,10 +41,10 @@ private:
 	REFLECT_VAR(standAnimationWithItem);
 	REFLECT_END();
 
-	eastl::shared_ptr<RigidBody> rigidBody = nullptr;
-	eastl::shared_ptr<MeshAnimation> runAnimation;
-	eastl::shared_ptr<MeshAnimation> standAnimation;
-	eastl::shared_ptr<MeshAnimation> runAnimationWithItem;
-	eastl::shared_ptr<MeshAnimation> standAnimationWithItem;
+	se::shared_ptr<RigidBody> rigidBody = nullptr;
+	se::shared_ptr<MeshAnimation> runAnimation;
+	se::shared_ptr<MeshAnimation> standAnimation;
+	se::shared_ptr<MeshAnimation> runAnimationWithItem;
+	se::shared_ptr<MeshAnimation> standAnimationWithItem;
 	float defaultSpeed = 1.f;
 };

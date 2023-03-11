@@ -28,11 +28,11 @@ class ButterflyGame : public GameSystem<ButterflyGame> {
 	virtual bool Init() override;
 	virtual void Term() override;
 
-	bool CreateSave(eastl::shared_ptr<SaveData> save) const;
-	bool LoadSave(const eastl::shared_ptr<SaveData> save);
+	bool CreateSave(se::shared_ptr<SaveData> save) const;
+	bool LoadSave(const se::shared_ptr<SaveData> save);
 
-	bool SaveToDisk(const eastl::string& fileName);
-	bool LoadFromDisk(const eastl::string& fileName);
+	bool SaveToDisk(const se::string& fileName);
+	bool LoadFromDisk(const se::string& fileName);
 
 	REFLECT_BEGIN(ButterflyGame);
 	REFLECT_METHOD(SaveToDisk);

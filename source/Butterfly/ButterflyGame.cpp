@@ -26,7 +26,7 @@ void ButterflyGame::Term() {
 }
 static const char* SavePathBase = "SAVES/";
 
-bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
+bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 {
 	OPTICK_EVENT();
 	if (!save) {
@@ -78,7 +78,7 @@ bool ButterflyGame::CreateSave(eastl::shared_ptr<SaveData> save) const
 	return true;
 }
 
-bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
+bool ButterflyGame::LoadSave(const se::shared_ptr<SaveData> save)
 {
 	OPTICK_EVENT();
 	if (!save) {
@@ -131,17 +131,17 @@ bool ButterflyGame::LoadSave(const eastl::shared_ptr<SaveData> save)
 	return true;
 }
 
-bool ButterflyGame::SaveToDisk(const eastl::string& fileName)
+bool ButterflyGame::SaveToDisk(const se::string& fileName)
 {
 	//TODO generic save system
-	auto save = eastl::make_shared<SaveData>();
+	auto save = se::make_shared<SaveData>();
 	CreateSave(save);
 	if (!save->isValid) {
 		return false;
 	}
 
 	{
-		eastl::string savePath = SavePathBase + fileName + ".sav";
+		se::string savePath = (se::string(SavePathBase) + fileName).append(".sav");
 		std::ofstream output(savePath.c_str());
 		if (!output.is_open()) {
 			LogError("Failed to open '%s' for saving", savePath.c_str());
@@ -153,13 +153,13 @@ bool ButterflyGame::SaveToDisk(const eastl::string& fileName)
 	return true;
 }
 
-bool ButterflyGame::LoadFromDisk(const eastl::string& fileName)
+bool ButterflyGame::LoadFromDisk(const se::string& fileName)
 {
 	//TODO generic save system
-	auto save = eastl::make_shared<SaveData>();
+	auto save = se::make_shared<SaveData>();
 
 	{
-		eastl::string savePath = SavePathBase + fileName + ".sav";
+		se::string savePath = (se::string(SavePathBase) + fileName).append(".sav");
 
 		std::ifstream input(savePath.c_str(), std::ifstream::binary);
 		if (!input.is_open()) {
@@ -167,14 +167,14 @@ bool ButterflyGame::LoadFromDisk(const eastl::string& fileName)
 			return false;
 		}
 
-		eastl::vector<char> buffer;
+		se::vector<char> buffer;
 		input.seekg(0, input.end);
 		std::streamsize size = input.tellg();
 		input.seekg(0, std::ios::beg);
 
 		ResizeVectorNoInit(buffer, size);
 		input.read((char*)buffer.data(), size);
-		auto tree = eastl::make_unique<ryml::Tree>(ryml::parse(c4::csubstr(&buffer[0], buffer.size())));
+		auto tree = se::make_unique<ryml::Tree>(ryml::parse(c4::csubstr(&buffer[0], buffer.size())));
 		//TODO pull some AssetDatabase methods
 		auto context = SerializationContext(tree->rootref());
 		::Deserialize(context.Child(0), *save);

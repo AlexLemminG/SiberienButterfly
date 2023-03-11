@@ -86,7 +86,16 @@
         "string_view": "cpp",
         "stop_token": "cpp",
         "shared_mutex": "cpp",
-        "*.def": "cpp"
+        "*.def": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "future": "cpp",
+        "variant": "cpp",
+        "typeindex": "cpp",
+        "semaphore": "cpp",
+        "random": "cpp",
+        "*.inc": "cpp",
+        "mutex": "cpp"
     },
     "Lua.diagnostics.globals": [
         "AssetDatabase",
