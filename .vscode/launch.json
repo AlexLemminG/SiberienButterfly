@@ -29,7 +29,9 @@
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ]
+            "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ],
+            "visualizerFile": "/home/alexlemming/Projects/SiberienButterfly/engine/source/libs/tinystl/tinystl.natvis",
+            "showDisplayString": true
         },
         {
             "type": "lua-local",
