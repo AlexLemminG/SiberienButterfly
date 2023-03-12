@@ -5,9 +5,7 @@
 #include "SEngine/LuaReflect.h"
 #include "SEngine/Resources.h"
 
-REFLECT_DEFINE(ButterflyGame);
 REGISTER_GAME_SYSTEM(ButterflyGame);
-REFLECT_DEFINE(SaveData);
 
 static GameEventHandle onBeforeReloadingHandle;
 static GameEventHandle onAfterReloadingHandle;
@@ -57,7 +55,7 @@ bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 			callResult = lua_pcall(L, 0, 1, 0);
 		}
 		if (callResult != 0) {
-			eastl::string error = lua_tostring(L, -1);
+			se::string error = se::string(lua_tostring(L, -1));
 			LogError(error.c_str());
 			lua_pop(L, 2);//module + message
 			return true;
@@ -115,7 +113,7 @@ bool ButterflyGame::LoadSave(const se::shared_ptr<SaveData> save)
 		callResult = lua_pcall(L, 1, 1, 0);
 	}
 	if (callResult != 0) {
-		eastl::string error = lua_tostring(L, -1);
+		se::string error = se::string(lua_tostring(L, -1));
 		lua_pop(L, 2); //module + error
 		LogError(error.c_str());
 		return false;
@@ -130,6 +128,22 @@ bool ButterflyGame::LoadSave(const se::shared_ptr<SaveData> save)
 	Log("Loaded");
 	return true;
 }
+
+	REFLECT_DEFINE_BEGIN(ButterflyGame);
+	REFLECT_METHOD(SaveToDisk);
+	REFLECT_METHOD(LoadFromDisk);
+	REFLECT_METHOD(CreateSave);
+	REFLECT_METHOD(LoadSave);
+	REFLECT_DEFINE_END();
+
+	REFLECT_DEFINE_BEGIN(SaveData);
+	REFLECT_VAR(isValid);
+	REFLECT_VAR(itemsGrid);
+	REFLECT_VAR(groundGrid);
+	REFLECT_VAR(markingsGrid);
+	REFLECT_VAR(i);
+	REFLECT_VAR(luaData);
+	REFLECT_DEFINE_END();
 
 bool ButterflyGame::SaveToDisk(const se::string& fileName)
 {
@@ -148,7 +162,8 @@ bool ButterflyGame::SaveToDisk(const se::string& fileName)
 			return false;
 		}
 
-		output << Object::Serialize(save);
+		//TODO
+		// output << Object::Serialize(save);
 	}
 	return true;
 }

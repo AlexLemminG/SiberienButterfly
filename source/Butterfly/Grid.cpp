@@ -16,12 +16,43 @@
 #include "SEngine/Dbg.h"
 #include "SEngine/Types/StringView.h"
 
-REFLECT_DEFINE(GridSystem);
-REFLECT_DEFINE(GridSettings);
 REGISTER_GAME_SYSTEM(GridSystem);
-REFLECT_DEFINE(GridChunkCollider);
-REFLECT_DEFINE(Grid);
 
+REFLECT_DEFINE_BEGIN(GridSystem);
+REFLECT_METHOD(GetGrid);
+REFLECT_METHOD(GetNavigation);
+REFLECT_METHOD(GetMeshByCellType);
+REFLECT_METHOD(FindNearestPosWithTypes);
+REFLECT_METHOD(FindNearestWalkable);
+REFLECT_DEFINE_END();
+
+    REFLECT_DEFINE_BEGIN(GridCellIterator);
+    REFLECT_METHOD(GetNextCell);
+    REFLECT_DEFINE_END();
+
+    REFLECT_DEFINE_BEGIN(GridSettings);
+    REFLECT_VAR(mesh);
+    REFLECT_DEFINE_END();
+
+REFLECT_DEFINE_COMPONENT_BEGIN(Grid);
+REFLECT_METHOD(GetClosestIntPos);
+REFLECT_METHOD_EXPLICIT("GetCellWorldCenter", static_cast<Vector3(Grid::*)(const Vector2Int&) const>(&Grid::GetCellWorldCenter));
+REFLECT_METHOD(GetCell);
+REFLECT_METHOD(SetCellLocalMatrix);
+REFLECT_METHOD(GetCellOut);
+REFLECT_METHOD(SetCell);
+REFLECT_METHOD(SetSize);
+REFLECT_METHOD(GetAnimatedCellsIterator);
+REFLECT_METHOD(GetTypeIterator);
+REFLECT_METHOD(GetTypeWithAnimIterator);
+REFLECT_METHOD(FindNearestPosWithType);
+REFLECT_METHOD(DbgDrawRad);
+REFLECT_VAR(sizeX);
+REFLECT_VAR(sizeY);
+REFLECT_DEFINE_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
+
+REFLECT_DEFINE_COMPONENT_BEGIN(GridChunkCollider);
+REFLECT_DEFINE_END();
 
 REFLECT_DEFINE_BEGIN(GridCellDesc);
 REFLECT_VAR(type);
@@ -58,8 +89,33 @@ REFLECT_VAR(isComplete);
 REFLECT_VAR(points);
 REFLECT_DEFINE_END();
 
-REFLECT_DEFINE(GridCellIterator);
+    REFLECT_DEFINE_BEGIN(GridCell);
+    REFLECT_VAR(type);
+    REFLECT_VAR(pos);
+    REFLECT_VAR(z);
+    REFLECT_VAR(animType);
+    REFLECT_VAR(animT);
+    REFLECT_VAR(animStopT);
+    REFLECT_VAR(float4);
+    REFLECT_DEFINE_END();
+    
+    REFLECT_DEFINE_BEGIN(GridCellDescLua);
+    REFLECT_VAR(prefabName);
+    REFLECT_VAR(meshName);
+    REFLECT_VAR(collision);
+    REFLECT_VAR(extraCollisions);
+    REFLECT_VAR(isUtil);
+    REFLECT_VAR(isWalkable);
+    REFLECT_VAR(forceMakeWalkable);
+    REFLECT_DEFINE_END();
 
+    REFLECT_DEFINE_BEGIN(GridCellDescLua_Collision);
+    REFLECT_VAR(type);
+    REFLECT_VAR(radius);
+    REFLECT_VAR(height);
+    REFLECT_VAR(size);
+    REFLECT_VAR(center);
+    REFLECT_DEFINE_END();
 
 void GridSystem::Update() {
     navigation->Update();

@@ -29,17 +29,7 @@ private:
 	float jumpPushRadius = 5.f;
 	bool hasItem = false;
 
-	REFLECT_COMPONENT_BEGIN(PlayerController);
-	REFLECT_VAR(speed);
-	REFLECT_VAR(speedWithItem);
-	REFLECT_VAR(jumpVelocity);
-	REFLECT_VAR(jumpPushImpulse);
-	REFLECT_VAR(jumpPushRadius);
-	REFLECT_VAR(runAnimation);
-	REFLECT_VAR(standAnimation);
-	REFLECT_VAR(runAnimationWithItem);
-	REFLECT_VAR(standAnimationWithItem);
-	REFLECT_END();
+	REFLECT_DECLARE(PlayerController);
 
 	se::shared_ptr<RigidBody> rigidBody = nullptr;
 	se::shared_ptr<MeshAnimation> runAnimation;

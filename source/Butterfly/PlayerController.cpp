@@ -20,6 +20,18 @@
 #include "Grid.h"
 #include "SEngine/BoxCollider.h"
 
+	REFLECT_DEFINE_COMPONENT_BEGIN(PlayerController);
+	REFLECT_VAR(speed);
+	REFLECT_VAR(speedWithItem);
+	REFLECT_VAR(jumpVelocity);
+	REFLECT_VAR(jumpPushImpulse);
+	REFLECT_VAR(jumpPushRadius);
+	REFLECT_VAR(runAnimation);
+	REFLECT_VAR(standAnimation);
+	REFLECT_VAR(runAnimationWithItem);
+	REFLECT_VAR(standAnimationWithItem);
+	REFLECT_DEFINE_END();
+
 void PlayerController::OnEnable() {
     rigidBody = gameObject()->GetComponent<RigidBody>();
     defaultSpeed = speed;
@@ -183,4 +195,3 @@ bool PlayerController::CanJump() {
     return true;
 }
 
-REFLECT_DEFINE(PlayerController);

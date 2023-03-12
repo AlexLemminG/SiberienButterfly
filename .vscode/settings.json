@@ -95,7 +95,18 @@
         "semaphore": "cpp",
         "random": "cpp",
         "*.inc": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "csignal": "cpp",
+        "cwctype": "cpp",
+        "numeric": "cpp",
+        "ratio": "cpp",
+        "source_location": "cpp",
+        "numbers": "cpp",
+        "thread": "cpp",
+        "cfenv": "cpp",
+        "*.moc": "cpp"
     },
     "Lua.diagnostics.globals": [
         "AssetDatabase",

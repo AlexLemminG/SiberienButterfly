@@ -18,17 +18,17 @@ public:
 	void OnEnable() override;
 	void Update() override;
 
-	REFLECT_COMPONENT_BEGIN(TopDownCameraRig);
-	REFLECT_VAR(targetTag);
-	REFLECT_VAR(lerpT);
-	REFLECT_VAR(collisionLerpT);
-	REFLECT_VAR(offset);
-	REFLECT_END();
+	REFLECT_DECLARE(TopDownCameraRig);
 
 private:
 	Vector3 currentPosWithoutCollision;
 };
-REFLECT_DEFINE(TopDownCameraRig);
+REFLECT_DEFINE_COMPONENT_BEGIN(TopDownCameraRig);
+REFLECT_VAR(targetTag);
+REFLECT_VAR(lerpT);
+REFLECT_VAR(collisionLerpT);
+REFLECT_VAR(offset);
+REFLECT_DEFINE_END();
 
 void TopDownCameraRig::OnEnable()
 {

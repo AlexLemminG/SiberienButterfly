@@ -14,14 +14,7 @@ public:
 	Grid itemsGrid;
 	Grid markingsGrid;
 
-	REFLECT_BEGIN(SaveData);
-	REFLECT_VAR(isValid);
-	REFLECT_VAR(itemsGrid);
-	REFLECT_VAR(groundGrid);
-	REFLECT_VAR(markingsGrid);
-	REFLECT_VAR(i);
-	REFLECT_VAR(luaData);
-	REFLECT_END();
+	REFLECT_DECLARE(SaveData);
 };
 
 class ButterflyGame : public GameSystem<ButterflyGame> {
@@ -34,10 +27,5 @@ class ButterflyGame : public GameSystem<ButterflyGame> {
 	bool SaveToDisk(const se::string& fileName);
 	bool LoadFromDisk(const se::string& fileName);
 
-	REFLECT_BEGIN(ButterflyGame);
-	REFLECT_METHOD(SaveToDisk);
-	REFLECT_METHOD(LoadFromDisk);
-	REFLECT_METHOD(CreateSave);
-	REFLECT_METHOD(LoadSave);
-	REFLECT_END();
+	REFLECT_DECLARE(ButterflyGame);
 };

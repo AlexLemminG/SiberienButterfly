@@ -9,6 +9,7 @@
 #include "SEngine/Types/Vector.h"
 #include "SEngine/Types/String.h"
 #include "SEngine/Types/UnorderedMap.h"
+#include "SEngine/ReflectEnum.h"
 #include <functional>
 
 class Grid;
@@ -65,13 +66,7 @@ struct GridCellDescLua_Collision {
     Vector3 size = Vector3_zero;
     Vector3 center = Vector3_zero;
 
-    REFLECT_BEGIN(GridCellDescLua_Collision);
-    REFLECT_VAR(type);
-    REFLECT_VAR(radius);
-    REFLECT_VAR(height);
-    REFLECT_VAR(size);
-    REFLECT_VAR(center);
-    REFLECT_END();
+    REFLECT_DECLARE(GridCellDescLua_Collision);
 };
 struct GridCellDescLua {
     bool isUtil = false;
@@ -82,15 +77,7 @@ struct GridCellDescLua {
     se::vector<GridCellDescLua_Collision> allCollisions;
     se::string prefabName;
     se::string meshName;
-    REFLECT_BEGIN(GridCellDescLua);
-    REFLECT_VAR(prefabName);
-    REFLECT_VAR(meshName);
-    REFLECT_VAR(collision);
-    REFLECT_VAR(extraCollisions);
-    REFLECT_VAR(isUtil);
-    REFLECT_VAR(isWalkable);
-    REFLECT_VAR(forceMakeWalkable);
-    REFLECT_END();
+    REFLECT_DECLARE(GridCellDescLua);
 };
 
 enum class WalkableType {
@@ -133,15 +120,7 @@ class GridCell {
     float animStopT = 0.f;
     float float4 = 0.f;
 
-    REFLECT_BEGIN(GridCell);
-    REFLECT_VAR(type);
-    REFLECT_VAR(pos);
-    REFLECT_VAR(z);
-    REFLECT_VAR(animType);
-    REFLECT_VAR(animT);
-    REFLECT_VAR(animStopT);
-    REFLECT_VAR(float4);
-    REFLECT_END();
+    REFLECT_DECLARE(GridCell);
 
     bool operator ==(const GridCell& otherCell) const {
         return std::memcmp(this, &otherCell, sizeof(GridCell)) == 0;
@@ -160,17 +139,13 @@ struct GridCellIterator {
     int totalSize = 0;
     Grid* grid = nullptr;
     bool GetNextCell(GridCell& outCell);
-    REFLECT_BEGIN(GridCellIterator);
-    REFLECT_METHOD(GetNextCell);
-    REFLECT_END();
+    REFLECT_DECLARE(GridCellIterator);
 };
 class GridSettings : public Object {
    public:
     se::shared_ptr<FullMeshAsset> mesh;
     se::unordered_map<GridCellType, GridCellDesc> cellDescs;
-    REFLECT_BEGIN(GridSettings);
-    REFLECT_VAR(mesh);
-    REFLECT_END();
+    REFLECT_DECLARE(GridSettings);
 };
 class Grid : public Component {
 public:
@@ -245,22 +220,7 @@ private:
     int fullyClearedCount = 0;
     int typeModificationsCount = 0;
 
-    REFLECT_COMPONENT_BEGIN(Grid);
-    REFLECT_METHOD(GetClosestIntPos);
-    REFLECT_METHOD_EXPLICIT("GetCellWorldCenter", static_cast<Vector3(Grid::*)(const Vector2Int&) const>(&Grid::GetCellWorldCenter));
-    REFLECT_METHOD(GetCell);
-    REFLECT_METHOD(SetCellLocalMatrix);
-    REFLECT_METHOD(GetCellOut);
-    REFLECT_METHOD(SetCell);
-    REFLECT_METHOD(SetSize);
-    REFLECT_METHOD(GetAnimatedCellsIterator);
-    REFLECT_METHOD(GetTypeIterator);
-    REFLECT_METHOD(GetTypeWithAnimIterator);
-    REFLECT_METHOD(FindNearestPosWithType);
-    REFLECT_METHOD(DbgDrawRad);
-    REFLECT_VAR(sizeX);
-    REFLECT_VAR(sizeY);
-    REFLECT_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
+    REFLECT_DECLARE(Grid);
 };
 
 struct GridPath {
@@ -321,13 +281,7 @@ class GridSystem : public GameSystem<GridSystem> {
 
     int cellTypeAny = 0;
 
-    REFLECT_BEGIN(GridSystem);
-    REFLECT_METHOD(GetGrid);
-    REFLECT_METHOD(GetNavigation);
-    REFLECT_METHOD(GetMeshByCellType);
-    REFLECT_METHOD(FindNearestPosWithTypes);
-    REFLECT_METHOD(FindNearestWalkable);
-    REFLECT_END();
+    REFLECT_DECLARE(GridSystem);
 };
 
 class GridDrawer : public Component {
@@ -359,8 +313,7 @@ class GridChunkCollider : public Component {
 public:
     bool changed = false;
     se::vector<se::vector<se::shared_ptr<class Collider>>> gridColliders;
-    REFLECT_COMPONENT_BEGIN(GridChunkCollider);
-    REFLECT_END();
+    REFLECT_DECLARE(GridChunkCollider);
 };
 
 class GridCollider : public Component {
