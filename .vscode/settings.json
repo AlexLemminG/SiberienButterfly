@@ -1,7 +1,8 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureSettings": {
-        "SE_USE_COMPRESSINATOR":"ON"
+        "SE_USE_COMPRESSINATOR":"ON",
+        "SE_NAVIGATION":"ON"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
     "files.associations": {

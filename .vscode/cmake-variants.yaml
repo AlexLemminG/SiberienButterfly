@@ -1,6 +1,13 @@
 buildType:
   default: DebugAsan
   choices:
+    DebugAsan:
+      short: DebugAsan
+      buildType: DebugAsan
+      settings:
+        OPTICK_ENABLED: true
+        SE_USE_RELEASE_LIBS: false
+        ASSERTIONS: paranoid
     Debug:
       short: Debug
       buildType: Debug
@@ -15,13 +22,6 @@ buildType:
         OPTICK_ENABLED: true
         SE_USE_RELEASE_LIBS: true
         CMAKE_EXPORT_COMPILE_COMMANDS: ON
-        ASSERTIONS: paranoid
-    DebugAsan:
-      short: DebugAsan
-      buildType: DebugAsan
-      settings:
-        OPTICK_ENABLED: true
-        SE_USE_RELEASE_LIBS: false
         ASSERTIONS: paranoid
     Release:
       short: Release

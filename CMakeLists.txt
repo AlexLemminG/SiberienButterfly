@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(SiberienButterfly)
 
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #TODO enable in retail
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #TODO enable in retail
 cmake_policy(SET CMP0069 NEW) #to force lto
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 
