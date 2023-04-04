@@ -9,8 +9,9 @@ godMode: true
 soundEnabled: false
 showFps: true
 assetConvertionEnabled: true
+librariesRoot: ""
 libraries:
-  - ./libButterfly.so
+  - libButterfly.so
   # - Game.dll
 mountAssets:
   - engine/assets

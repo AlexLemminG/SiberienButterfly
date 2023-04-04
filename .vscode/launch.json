@@ -2,6 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "cmake launch",
+            "type": "cppdbg",
+            "request": "launch",
+            // Resolved by CMake Tools2:
+            "program": "${command:cmake.launchTargetPath}",
+            "args": ["--setcfg", "librariesRoot", "${command:cmake.getLaunchTargetDirectory}"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ],
+            "visualizerFile": "${workspaceFolder}/engine/source/libs/tinystl/tinystl.natvis",
+            "showDisplayString": true
+        },
+        {
             "name": "(msvc) Launch",
             "type": "cppvsdbg",
             "request": "launch",

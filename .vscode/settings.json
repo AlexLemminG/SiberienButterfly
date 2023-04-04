@@ -3,6 +3,7 @@
     "cmake.configureSettings": {
         "SE_USE_COMPRESSINATOR":"ON"
     },
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
     "files.associations": {
         "*.asset": "yaml",
         "vector": "cpp",
