@@ -16,19 +16,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(ASSERTIONS STREQUAL "disabled")
   message("-------------------${SDL_DEFAULT_ASSERT_LEVEL}")
 endif()
-#TODO lto
+
 set(CMAKE_CONFIGURATION_TYPES "DebugAsan;Debug;Release;RelWithDebInfo")
 
 set(CMAKE_MESSAGE_LOG_LEVEL "NOTICE")
 
-# set(CMAKE_BUILD_TYPE "DebugWithReleaseLibs")
-
 set(CMAKE_DEBUGASAN_POSTFIX "")
-set(CMAKE_DEBUGWITHRELEASELIBS_POSTFIX "")
 set(CMAKE_DEBUG_POSTFIX "")
 set(CMAKE_RELESE_POSTFIX "")
 set(CMAKE_RELWITHDEBINFO_POSTFIX "")
-set(CMAKE_RETAIL_POSTFIX "")
 
 # add_compile_definitions($<$<CONFIG:DebugWithReleaseLibs>:_ITERATOR_DEBUG_LEVEL=1>)
 
