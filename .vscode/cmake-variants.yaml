@@ -34,7 +34,7 @@ buildType:
       short: ReleaseWithSymbols
       buildType: RelWithDebInfo
       settings:
-        OPTICK_ENABLED: true
+        OPTICK_ENABLED: false
         SE_USE_RELEASE_LIBS: true
         ASSERTIONS: disabled
     Retail:
