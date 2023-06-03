@@ -1,10 +1,19 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureSettings": {
-        "SE_USE_COMPRESSINATOR":"ON",
-        "SE_NAVIGATION":"ON"
+        "SE_USE_COMPRESSINATOR":"OFF",
+        "SE_NAVIGATION":"OFF",
+        "SE_HAS_ASSIMP":"OFF",
+        "SE_HAS_EDITOR":"OFF"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
+    "search.exclude": {
+        "**/build": true,
+        "**/GameBuild": true,
+        "**/assets": true,
+        "**/SAVES": true,
+        "**/temp": true
+    },
     "files.associations": {
         "*.asset": "yaml",
         "vector": "cpp",

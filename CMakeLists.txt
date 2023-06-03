@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.1)
 
 project(SiberienButterfly)
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #TODO enable in retail
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${SIBERIEN_LTO})
 cmake_policy(SET CMP0069 NEW) #to force lto
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+message("-------------------${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
@@ -77,7 +78,9 @@ endif()
 add_subdirectory(engine)
 # set(CMAKE_CXX_FLAGS_DEBUGWITHRELEASELIBS "${CMAKE_CXX_FLAGS_DEBUG} /MD")
 
+#TODO move to butterfly cmakelists
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 add_subdirectory(source/Butterfly)

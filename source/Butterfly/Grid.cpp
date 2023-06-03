@@ -49,7 +49,7 @@ REFLECT_METHOD(FindNearestPosWithType);
 REFLECT_METHOD(DbgDrawRad);
 REFLECT_VAR(sizeX);
 REFLECT_VAR(sizeY);
-REFLECT_DEFINE_END_CUSTOM(Grid::SerializeGrid, Grid::DeserializeGrid);
+REFLECT_DEFINE_END();
 
 REFLECT_DEFINE_COMPONENT_BEGIN(GridChunkCollider);
 REFLECT_DEFINE_END();
@@ -1289,39 +1289,39 @@ static se::string base64_decode(se::string const& encoded_string) {
     return ret;
 }
 
-void Grid::SerializeGrid(SerializationContext& context, const Grid& grid)
+void Grid::Serialize(SerializationContext& context) const
 {
-    ::Serialize(context.Child("sizeX"), grid.sizeX);
-    ::Serialize(context.Child("sizeY"), grid.sizeY);
-    ::Serialize(context.Child("isInited"), grid.isInited);
+    ::Serialize(context.Child("sizeX"), this->sizeX);
+    ::Serialize(context.Child("sizeY"), this->sizeY);
+    ::Serialize(context.Child("isInited"), this->isInited);
     
     // c4::cblob blob;
     // blob.buf = (c4::cbyte*)grid.cells.data();
     // blob.len = grid.cells.size() * sizeof(decltype(grid.cells)::value_type);
     // se::string buffer = se::string(((4 * blob.len / 3) + 3) & ~3, '\0');
     // c4::substr bufferSubstr(buffer.data(), buffer.size());
-    auto buffer = base64_encode((unsigned char const*)grid.cells.data(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+    auto buffer = base64_encode((unsigned char const*)this->cells.data(), this->cells.size() * sizeof(decltype(this->cells)::value_type));
     // TODO ASSERT(size == buffer.length());
 
     context.Child("cells") << buffer;
 }
 
-void Grid::DeserializeGrid(const SerializationContext& context, Grid& grid)
+void Grid::Deserialize(const SerializationContext& context)
 {
-    ::Deserialize(context.Child("sizeX"), grid.sizeX);
-    ::Deserialize(context.Child("sizeY"), grid.sizeY);
-    ::Deserialize(context.Child("isInited"), grid.isInited);
+    ::Deserialize(context.Child("sizeX"), this->sizeX);
+    ::Deserialize(context.Child("sizeY"), this->sizeY);
+    ::Deserialize(context.Child("isInited"), this->isInited);
 
-    if (grid.isInited) {
+    if (this->isInited) {
         se::string cellsBase64;
         ::Deserialize(context.Child("cells"), cellsBase64);
 
-        grid.SetSize(grid.sizeX, grid.sizeY);
+        this->SetSize(this->sizeX, this->sizeY);
 
         auto str = base64_decode(cellsBase64);
         auto size = str.size();
-        ASSERT(size == grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
-        memcpy(grid.cells.data(), str.c_str(), grid.cells.size() * sizeof(decltype(grid.cells)::value_type));
+        ASSERT(size == this->cells.size() * sizeof(decltype(this->cells)::value_type));
+        memcpy(this->cells.data(), str.c_str(), this->cells.size() * sizeof(decltype(this->cells)::value_type));
     }
 
 }

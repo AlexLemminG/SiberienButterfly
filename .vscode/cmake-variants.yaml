@@ -14,6 +14,7 @@ buildType:
       settings:
         OPTICK_ENABLED: true
         SE_USE_RELEASE_LIBS: false
+        SIBERIEN_LTO: false
         ASSERTIONS: paranoid
     DebugWithReleaseLibs:
       short: DebugWithReleaseLibs
@@ -36,11 +37,14 @@ buildType:
       settings:
         OPTICK_ENABLED: false
         SE_USE_RELEASE_LIBS: true
+        SIBERIEN_LTO: true
         ASSERTIONS: disabled
+        SE_HAS_ASSIMP: false
     Retail:
       short: Retail
       buildType: Release
       settings:
         OPTICK_ENABLED: true
         SE_USE_RELEASE_LIBS: true
+        SIBERIEN_LTO: true
         ASSERTIONS: disabled

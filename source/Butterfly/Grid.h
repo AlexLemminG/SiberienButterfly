@@ -147,7 +147,7 @@ class GridSettings : public Object {
     se::unordered_map<GridCellType, GridCellDesc> cellDescs;
     REFLECT_DECLARE(GridSettings);
 };
-class Grid : public Component {
+class Grid : public Component, public ISerializable {
 public:
     virtual void OnEnable() override;
     virtual void OnDisable() override;
@@ -207,8 +207,8 @@ public:
     //TODO flip min/max order
     bool FindNearestPosWithType(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, int itemType) const;
 
-    static void SerializeGrid(SerializationContext& context, const Grid& grid);
-    static void DeserializeGrid(const SerializationContext& context, Grid& grid);
+    void Serialize(SerializationContext& context) const override;
+    void Deserialize(const SerializationContext& context) override;
 
     void SetSize(int sizeX, int sizeY);
 

@@ -2,7 +2,7 @@
 # scene: engine\test\pbrScene\scene #engine\modelPreview\scene #gameplayScene
 # scene: engine\test\sponza-gltf-pbr\scene
 # scene: gameplayScene
-scene: scenes\first_test
+scene: 'scenes\first_test.asset'
 fullscreen: false
 debugSceneLoading: false
 godMode: true
