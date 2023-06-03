@@ -1291,6 +1291,7 @@ static se::string base64_decode(se::string const& encoded_string) {
 
 void Grid::Serialize(SerializationContext& context) const
 {
+    // TODO auto binary serialisation in engine
     ::Serialize(context.Child("sizeX"), this->sizeX);
     ::Serialize(context.Child("sizeY"), this->sizeY);
     ::Serialize(context.Child("isInited"), this->isInited);
