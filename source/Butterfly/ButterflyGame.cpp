@@ -7,6 +7,8 @@
 
 REGISTER_GAME_SYSTEM(ButterflyGame);
 
+//TODO save random
+
 static GameEventHandle onBeforeReloadingHandle;
 static GameEventHandle onAfterReloadingHandle;
 bool ButterflyGame::Init() {
@@ -22,7 +24,7 @@ void ButterflyGame::Term() {
 	LuaSystem::Get()->onBeforeScriptsReloading.Unsubscribe(onBeforeReloadingHandle);
 	LuaSystem::Get()->onAfterScriptsReloading.Unsubscribe(onAfterReloadingHandle);
 }
-static const char* SavePathBase = "SAVES/";
+static const char* SavePathBase = "SAVES/"; // TODO path from engine
 
 bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 {
@@ -162,8 +164,7 @@ bool ButterflyGame::SaveToDisk(const se::string& fileName)
 			return false;
 		}
 
-		//TODO
-		// output << Object::Serialize(save);
+		output << Object::Serialize(save).GetYamlNode();
 	}
 	return true;
 }

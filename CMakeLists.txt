@@ -8,8 +8,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 message("-------------------${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden -ftime-report")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -ftime-report")
 
 set_property(GLOBAL PROPERTY POSITION_INDEPENDENT_CODE ON)
 
