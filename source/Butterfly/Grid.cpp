@@ -15,6 +15,12 @@
 #include <EASTL/priority_queue.h>
 #include "SEngine/Dbg.h"
 #include "SEngine/Types/StringView.h"
+#include "optick.h"
+#include "SEngine/StringUtils.h"
+
+REFLECT_DEFINE_ENUM(GridCellType);
+REFLECT_DEFINE_ENUM(GridCellCollisionType);
+REFLECT_DEFINE_ENUM(GridCellAnimType);
 
 REGISTER_GAME_SYSTEM(GridSystem);
 

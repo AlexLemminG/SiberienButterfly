@@ -5,6 +5,7 @@
 #include "SEngine/STime.h"
 #include "SEngine/Physics.h"
 #include "SEngine/Common.h"
+#include "optick.h"
 
 
 class TopDownCameraRig : public Component {

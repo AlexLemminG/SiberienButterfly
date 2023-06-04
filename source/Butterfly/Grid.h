@@ -18,7 +18,7 @@ enum class GridCellType : int {
     NONE,
     GROUND
 };
-REFLECT_ENUM(GridCellType);
+REFLECT_ENUM_DECLARE(GridCellType);
 
 enum class GridCellCollisionType : int {
     ZERO,
@@ -27,13 +27,13 @@ enum class GridCellCollisionType : int {
     CAPSULE_COLLIDER,
     BOX_COLLIDER
 };
-REFLECT_ENUM(GridCellCollisionType);
+REFLECT_ENUM_DECLARE(GridCellCollisionType);
 
 enum class GridCellAnimType : int {
     ZERO,
     NONE
 };
-REFLECT_ENUM(GridCellAnimType);
+REFLECT_ENUM_DECLARE(GridCellAnimType);
 
 class InstancedMeshRenderer;
 

@@ -6,6 +6,8 @@
 #include "SEngine/Component.h"
 #include "SEngine/System.h"
 #include "SEngine/Common.h"
+#include "SEngine/LibraryDefinition.h"
+#include "optick.h"
 
 REGISTER_GAME_SYSTEM(Sys);
 DEFINE_LIBRARY(GameLib);

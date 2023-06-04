@@ -4,6 +4,7 @@
 #include "SEngine/Common.h"
 #include "SEngine/LuaReflect.h"
 #include "SEngine/Resources.h"
+#include "optick.h"
 
 REGISTER_GAME_SYSTEM(ButterflyGame);
 
