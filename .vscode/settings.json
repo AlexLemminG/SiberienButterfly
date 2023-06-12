@@ -1,10 +1,10 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "cmake.configureSettings": {
-        "SE_USE_COMPRESSINATOR":"OFF",
+        "SE_USE_COMPRESSINATOR":"ON",
         "SE_NAVIGATION":"OFF",
-        "SE_HAS_ASSIMP":"OFF",
-        "SE_HAS_EDITOR":"OFF"
+        "SE_HAS_ASSIMP":"ON",
+        "SE_HAS_EDITOR":"ON"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
     "search.exclude": {
