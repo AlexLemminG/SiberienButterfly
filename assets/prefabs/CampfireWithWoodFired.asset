@@ -47,8 +47,7 @@ ParentedTransform$ParentedTransform:
       - 0.73
       - 0
 LuaComponent$LuaComponent:
-  luaObj:
-    scriptName: CampfireLightComponent
+  scriptName: CampfireLightComponent
 GameObject$Light2:
   tag: 'CampfireWithWoodFired_Light2'
   components:
@@ -65,5 +64,4 @@ ParentedTransform$ParentedTransform2:
       - -0.5
       - 0
 LuaComponent$LuaComponent2:
-  luaObj:
-    scriptName: CampfireLightComponent
+  scriptName: CampfireLightComponent

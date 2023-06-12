@@ -157,7 +157,7 @@ function CreatePlayerGO()
 	-- local pointLight = luaPlayerGO:AddComponent("PointLight")
 	local playerScript = luaPlayerGO:AddComponent("LuaComponent")
 	
-	playerScript.luaObj = { scriptName = "PlayerController", data = {}}
+	playerScript.scriptName = "PlayerController"
 
 	SceneManager.GetCurrentScene():AddGameObject(luaPlayerGO)
 	-- playerScript.scriptName = "Character"	--- TODO support from engine
@@ -193,7 +193,7 @@ function Game.CreateNpcGO()
 
 	local character = Instantiate(characterPrefab)
 	local characterControllerScript = character:AddComponent("LuaComponent")
-	characterControllerScript.luaObj = { scriptName = "CharacterController" }
+	characterControllerScript.scriptName = "CharacterController"
 	characterControllerScript.type = "Character"
 	character:GetComponent("Transform"):SetPosition(vector(Game.gridSizeX / 2.0,0.0,Game.gridSizeY / 2.0))
 
@@ -212,7 +212,7 @@ function CreateSheepGO()
 	characterComponent.type = "Sheep"
 	
 	local characterControllerScript = character:AddComponent("LuaComponent")
-	characterControllerScript.luaObj = { scriptName = "SheepCharacterController"}
+	characterControllerScript.scriptName = "SheepCharacterController"
 
 	SceneManager.GetCurrentScene():AddGameObject(character)
 	return character

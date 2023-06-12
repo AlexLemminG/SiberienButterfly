@@ -24,8 +24,4 @@ ParentedTransform:
       - 0
 LuaComponent:
   script: Appledf
-  luaObj:
-    scriptName: Apple
-    data:
-      editor:
-        i: 3333
+  scriptName: Apple

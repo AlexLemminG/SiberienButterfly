@@ -37,7 +37,4 @@ Animator:
   speed: 1
   defaultAnimation: models\Vintik.blend$Stand
 LuaComponent$LuaComponent:
-  luaObj:
-    scriptName: Character
-    data:
-      scale: 0.5
+  scriptName: Character
