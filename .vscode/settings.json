@@ -117,7 +117,8 @@
         "numbers": "cpp",
         "thread": "cpp",
         "cfenv": "cpp",
-        "*.moc": "cpp"
+        "*.moc": "cpp",
+        "span": "cpp"
     },
     "Lua.diagnostics.globals": [
         "AssetDatabase",

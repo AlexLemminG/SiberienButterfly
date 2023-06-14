@@ -9,6 +9,7 @@ REFLECT_VAR(gameObjectToSpawn);
 //REFLECT_VAR(destroyOnDisable);
 REFLECT_DEFINE_END();
 
+//TODO this should probably be replaced with proper hierarchy of game objects
 void SpawnOnEnableComponent::OnEnable() {
 	if (gameObjectToSpawn) {
 		spawnedGameObject = Instantiate(gameObjectToSpawn);
