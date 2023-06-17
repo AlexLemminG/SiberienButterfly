@@ -13,6 +13,7 @@ REFLECT_DEFINE_END();
 void SpawnOnEnableComponent::OnEnable() {
 	if (gameObjectToSpawn) {
 		spawnedGameObject = Instantiate(gameObjectToSpawn);
+		spawnedGameObject->SetParent(gameObject());
 		auto parented = spawnedGameObject->GetComponent<ParentedTransform>();
 		if (parented) {
 			parented->SetParent(gameObject()->transform());
