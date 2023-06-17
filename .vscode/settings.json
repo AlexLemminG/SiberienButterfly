@@ -4,7 +4,8 @@
         "SE_USE_COMPRESSINATOR":"ON",
         "SE_NAVIGATION":"OFF",
         "SE_HAS_ASSIMP":"ON",
-        "SE_HAS_EDITOR":"ON"
+        "SE_HAS_EDITOR":"ON",
+        "SE_DISABLE_LOG":"OFF"
     },
     "cmake.buildDirectory": "${workspaceFolder}/build/${buildType}",
     "search.exclude": {

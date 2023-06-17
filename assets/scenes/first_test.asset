@@ -67,7 +67,7 @@ Scene:
           sourceGrids:
             - ''
             - ''
-    - prefab: prefabs\StoveWithWoodFired.asset
+    - prefab: prefabs\CampfireWithWoodFired.asset
       overrides: {}
   gameObjects:
     - prefabs\camera.asset

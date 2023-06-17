@@ -44,7 +44,7 @@ buildType:
       short: Retail
       buildType: Release
       settings:
-        OPTICK_ENABLED: true
+        OPTICK_ENABLED: false
         SE_USE_RELEASE_LIBS: true
         SIBERIEN_LTO: true
         ASSERTIONS: disabled

@@ -1,18 +1,15 @@
 GameObject:
   tag: 'StoveWithWoodFired'
+  children:
+    - $Light
+    - $Light2
   components:
     - $Transform
     - $MeshRenderer
-    - $SpawnOnEnableComponent
-    - $SpawnOnEnableComponent2
 Transform: ~
 MeshRenderer:
   mesh: models/GridCells.blend$StoveWithWoodFired
   material: materials/grid.asset$Material
-SpawnOnEnableComponent$SpawnOnEnableComponent:
-  gameObjectToSpawn: prefabs/StoveWithWoodFired.asset$Light
-SpawnOnEnableComponent$SpawnOnEnableComponent2:
-  gameObjectToSpawn: prefabs/StoveWithWoodFired.asset$Light2
 GameObject$Light:
   tag: 'StoveWithWoodFired_Light'
   components:
