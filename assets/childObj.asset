@@ -1,0 +1,6 @@
+Transform:
+  __parent: parentObj.asset$Transform
+  scale:
+    - 2
+    - 2
+    - 2
