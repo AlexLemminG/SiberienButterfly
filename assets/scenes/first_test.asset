@@ -1,80 +1,113 @@
 Scene:
   sphericalHarmonics: $sh
   prefabInstances:
-    - prefab: prefabs\grid.asset
-      overrides:
-        GameObject:
-          tag: ItemsGrid
-        RigidBody: {}
-    - prefab: prefabs\grid.asset
-      overrides:
-        GameObject:
-          tag: GroundGrid
-        GridDrawer: {}
-        RigidBody: {}
-    - prefab: prefabs\grid.asset
-      overrides:
-        GameObject:
-          tag: MarkingsGrid
-        GridDrawer: {}
-        RigidBody: {}
-    - prefab: prefabs\column.asset
-      overrides:
-        Transform:
-          pos:
-            - 3
-            - 0
-            - 3
-        RigidBody:
-          isStatic: 1
-    - prefab: prefabs\column.asset
-      overrides:
-        Transform:
-          pos:
-            - -3
-            - 0
-            - -3
-    - prefab: prefabs\column.asset
-      overrides:
-        Transform:
-          pos:
-            - 3
-            - 0
-            - -3
-    - prefab: prefabs\column.asset
-      overrides:
-        Transform:
-          pos:
-            - -3
-            - 0
-            - 3
-        RigidBody:
-          isStatic: 0
-          centerOfMass:
-            - 0
-            - 2
-            - 0
-          mass: 1000
-          friction: 1
-          restitution: 0
-          layer: ''
-        MeshCollider:
-          isConvex: 1
-        MeshRenderer: {}
-    - prefab: prefabs\game.asset
-      overrides:
-        NavigationGrid:
-          sourceGrids:
-            - ''
-            - ''
-    - prefab: prefabs\CampfireWithWoodFired.asset
-      overrides: {}
+    - $Column1
+    - $Column2
+    - $Column3
+    - $Column4
+    - $ItemsGrid
+    - $GroundGrid
+    - $MarkingsGrid
+    - $Game
   gameObjects:
     - prefabs\camera.asset
     - prefabs\groundPlane.asset
     - prefabs\torch.asset
     - prefabs\torch2.asset
     - $Light
+PrefabInstance$Game:
+  tag: Game
+  prefab: prefabs\game.asset
+PrefabInstance$ItemsGrid:
+  tag: ItemsGrid
+  prefab: prefabs\grid.asset
+PrefabInstance$GroundGrid:
+  tag: GroundGrid
+  prefab: prefabs\grid.asset
+PrefabInstance$MarkingsGrid:
+  tag: MarkingsGrid
+  prefab: prefabs\grid.asset
+PrefabInstance$Column1:
+  prefab: prefabs\column.asset$GameObject
+  overridenComponents:
+    - originalComponent: prefabs\column.asset$Transform
+      newComponent: $Column1Transform
+    - originalComponent: prefabs\column.asset$RigidBody
+      newComponent: $Column1RigidBody
+Transform$Column1Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - 3
+    - 0
+    - 3
+RigidBody$Column1RigidBody:
+  __parent: prefabs\column.asset$RigidBody
+  isStatic: 1
+PrefabInstance$Column2:
+  prefab: prefabs\column.asset$GameObject
+  overridenComponents:
+    - originalComponent: prefabs\column.asset$Transform
+      newComponent: $Column2Transform
+    - originalComponent: prefabs\column.asset$MeshCollider
+      newComponent: $Column2MeshCollider
+Transform$Column2Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - -3
+    - 0
+    - -3
+MeshCollider$Column2MeshCollider:
+  __parent: prefabs\column.asset$MeshCollider
+  isConvex: true
+PrefabInstance$Column3:
+  prefab: prefabs\column.asset$GameObject
+  overridenComponents:
+    - originalComponent: prefabs\column.asset$Transform
+      newComponent: $Column3Transform
+Transform$Column3Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - 3
+    - 0
+    - -3
+PrefabInstance$Column4:
+  prefab: prefabs\column.asset$GameObject
+  overridenComponents:
+    - originalComponent: prefabs\column.asset$Transform
+      newComponent: $Column4Transform
+    - originalComponent: prefabs\column.asset$RigidBody
+      newComponent: $Column4RigidBody
+    - originalComponent: prefabs\column.asset$MeshCollider
+      newComponent: $Column4MeshCollider
+    - originalComponent: prefabs\column.asset$MeshRenderer
+      newComponent: $Column4MeshRenderer
+  newlyAddedComponents:
+    - $ColumnLight
+PointLight$ColumnLight:
+  radius: 15.8281
+  intensity: 22.8126
+Transform$Column4Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - -3
+    - 0
+    - 3
+RigidBody$Column4RigidBody:
+  __parent: prefabs\column.asset$RigidBody
+  isStatic: 0
+  centerOfMass:
+    - 0
+    - 2
+    - 0
+  mass: 10
+  friction: 1
+  restitution: 0
+  layer: ''
+MeshCollider$Column4MeshCollider:
+  __parent: prefabs\column.asset$MeshCollider
+  isConvex: 1
+MeshRenderer$Column4MeshRenderer:
+  __parent: prefabs\column.asset$MeshRenderer
 GameObject$Light:
   tag: DirLight
   components:
