@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "cmake launch",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             // Resolved by CMake Tools2:
             "program": "${command:cmake.launchTargetPath}",
