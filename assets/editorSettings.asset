@@ -3,4 +3,4 @@ AssetPreviewSettings:
   defaultMesh: engine/models/sphere.blend$Cube.001
   previewScene: engine/previewScene/scene.asset
 EditorSettings:
-  defaultScene: test/scenes/everything.asset$Scene
+  defaultScene: scenes/first_test.asset$Scene
