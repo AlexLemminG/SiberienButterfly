@@ -11,7 +11,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ],
-            "visualizerFile": "${workspaceFolder}/engine/source/libs/tinystl/tinystl.natvis",
+            "visualizerFile": "${workspaceFolder}/engine/source/combined.natvis",
             "showDisplayString": true
         },
         {
