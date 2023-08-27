@@ -10,9 +10,17 @@
             "args": ["--setcfg", "librariesRoot", "${command:cmake.getLaunchTargetDirectory}"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ],
+			"environment":  [ { "name": "ASAN_OPTIONS", "value": "halt_on_error=0" } ],
             "visualizerFile": "${workspaceFolder}/engine/source/combined.natvis",
-            "showDisplayString": true
+            "showDisplayString": true,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "set print object on",
+                    "ignoreFailures": true
+                },
+			],
+			
         },
         {
             "type": "luau_dap",
