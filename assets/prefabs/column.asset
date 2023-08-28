@@ -1,16 +1,24 @@
-GameObject:
+Prefab:
   tag: column
-  components:
+  addedComponents:
     - $Transform
     - $MeshRenderer
     - $MeshCollider
     - $RigidBody
 Transform:
+  pos:
+    - 0
+    - 0
+    - 0
+  euler:
+    - 0
+    - 0
+    - 0
   scale:
     - 1
     - 1
     - 1
-MeshRenderer:
+MeshRenderer$MeshRenderer:
   mesh: models/column.blend$Column
   material: engine/materials/standard.asset$Material
 Material$M1:

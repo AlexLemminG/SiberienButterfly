@@ -1,6 +1,6 @@
-GameObject:
+Prefab:
   tag: Grid
-  components:
+  addedComponents:
     - $Transform
     - $GridDrawer
     - $GridCollider
