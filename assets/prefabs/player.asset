@@ -9,6 +9,14 @@ GameObject:
     - $Animator
     - $SpotLight
 Transform:
+  pos:
+    - 0
+    - 0
+    - 0
+  euler:
+    - 0
+    - 0
+    - 0
   scale:
     - 1
     - 1

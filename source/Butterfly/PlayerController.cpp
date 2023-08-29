@@ -146,13 +146,15 @@ void PlayerController::UpdateMovement() {
 
     auto animator = gameObject()->GetComponent<Animator>();
     float currentSpeed = vel.Length();
-    if (currentSpeed > 0.1f) {
-        animator->speed = 1.8f;
-        animator->SetAnimation(hasItem ? runAnimationWithItem : runAnimation);
-    } else {
-        animator->speed = 1.0f;
-        animator->SetAnimation(hasItem ? standAnimationWithItem : standAnimation);
-    }
+	if(animator){
+		if (currentSpeed > 0.1f) {
+			animator->speed = 1.8f;
+			animator->SetAnimation(hasItem ? runAnimationWithItem : runAnimation);
+		} else {
+			animator->speed = 1.0f;
+			animator->SetAnimation(hasItem ? standAnimationWithItem : standAnimation);
+		}
+	}
 }
 
 void PlayerController::UpdateLook() {

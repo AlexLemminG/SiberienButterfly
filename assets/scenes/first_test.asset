@@ -1,0 +1,151 @@
+Scene:
+  sphericalHarmonics: $sh
+  gameObjects:
+    - prefabs\camera.asset
+    - prefabs\groundPlane.asset
+    - prefabs\torch.asset
+    - prefabs\torch2.asset
+    - $Light
+    - $Column1
+    - $Column2
+    - $Column3
+    - $Column4
+    - $ItemsGrid
+    - $GroundGrid
+    - $MarkingsGrid
+    - $Game
+Prefab$Game:
+  tag: Game
+  __parent: prefabs\game.asset$Prefab
+Prefab$ItemsGrid:
+  __parent: prefabs\grid.asset$Prefab
+  tag: ItemsGrid
+Prefab$GroundGrid:
+  tag: GroundGrid
+  __parent: prefabs\grid.asset$Prefab
+Prefab$MarkingsGrid:
+  tag: MarkingsGrid
+  __parent: prefabs\grid.asset$Prefab
+Prefab$Column1:
+  __parent: prefabs\column.asset$Prefab
+Transform$Column1/Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - 3
+    - 0
+    - 3
+RigidBody$Column1/RigidBody:
+  __parent: prefabs\column.asset$RigidBody
+  isStatic: 1
+Prefab$Column2:
+  __parent: prefabs\column.asset$Prefab
+Transform$Column2/Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - -3
+    - 0
+    - -3
+MeshCollider$Column2/MeshCollider:
+  __parent: prefabs\column.asset$MeshCollider
+  isConvex: true
+Prefab$Column3:
+  __parent: prefabs\column.asset$Prefab
+Transform$Column3/Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - 3
+    - 0
+    - -3
+Prefab$Column4:
+  __parent: prefabs\column.asset$Prefab
+  addedComponents:
+    - $ColumnLight
+PointLight$ColumnLight:
+  radius: 15.8281
+  intensity: 22.8126
+Transform$Column4/Transform:
+  __parent: prefabs\column.asset$Transform
+  pos:
+    - -3
+    - 0
+    - 3
+RigidBody$Column4/RigidBody:
+  __parent: prefabs\column.asset$RigidBody
+  isStatic: 0
+  centerOfMass:
+    - 0
+    - 2
+    - 0
+  mass: 10
+  friction: 1
+  restitution: 0
+  layer: ''
+MeshCollider$Column4/MeshCollider:
+  __parent: prefabs\column.asset$MeshCollider
+  isConvex: 1
+MeshRenderer$Column4/MeshRenderer:
+  __parent: prefabs\column.asset$MeshRenderer
+GameObject$Light:
+  tag: DirLight
+  components:
+    - $DirLightTransform
+    - $0
+Transform$DirLightTransform:
+  euler:
+    - 23.140997
+    - 49.39188
+    - -90.000404
+  pos:
+    - -10.037189
+    - 0
+    - 7.8597984
+  scale:
+    - 0.99999994
+    - 0.99999994
+    - 0.99999994
+DirLight$0:
+  drawShadows: true
+  intensity: 4
+  color:
+    r: 1
+    g: 0.9607843
+    b: 0.85490197
+    a: 1
+SphericalHarmonics$sh:
+  coeffs:
+    - r: 0.36940417
+      g: 0.4553028
+      b: 0.5405406
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
+    - r: 0
+      g: 0
+      b: 0
+      a: 0
