@@ -1,10 +1,10 @@
 Scene:
   sphericalHarmonics: $sh
   gameObjects:
-    - prefabs\camera.asset
-    - prefabs\groundPlane.asset
-    - prefabs\torch.asset
-    - prefabs\torch2.asset
+    - prefabs/camera.asset$GameObject
+    - prefabs/groundPlane.asset$GameObject
+    - prefabs/torch.asset$GameObject
+    - prefabs/torch2.asset$GameObject
     - $Light
     - $Column1
     - $Column2
@@ -49,7 +49,10 @@ MeshCollider$Column2/MeshCollider:
   __parent: prefabs\column.asset$MeshCollider
   isConvex: true
 Prefab$Column3:
-  __parent: prefabs\column.asset$Prefab
+  addedComponents: []
+  addedChildren: []
+  tag: column
+  __parent: prefabs/column.asset$Prefab
 Transform$Column3/Transform:
   __parent: prefabs\column.asset$Transform
   pos:
@@ -57,12 +60,11 @@ Transform$Column3/Transform:
     - 0
     - -3
 Prefab$Column4:
-  __parent: prefabs\column.asset$Prefab
-  addedComponents:
-    - $ColumnLight
-PointLight$ColumnLight:
-  radius: 15.8281
-  intensity: 22.8126
+  addedComponents: []
+  addedChildren:
+    - scenes/first_test.asset$Prefab
+  tag: column
+  __parent: prefabs/column.asset$Prefab
 Transform$Column4/Transform:
   __parent: prefabs\column.asset$Transform
   pos:
@@ -149,3 +151,31 @@ SphericalHarmonics$sh:
       g: 0
       b: 0
       a: 0
+Prefab$Prefab:
+  addedComponents:
+    - scenes/first_test.asset$Transform
+    - scenes/first_test.asset$PointLight
+  addedChildren: []
+  tag: Light
+Transform$Transform:
+  pos:
+    - 0
+    - 2.543
+    - 0
+  euler:
+    - 0
+    - -0
+    - 0
+  scale:
+    - 1
+    - 1
+    - 1
+PointLight$PointLight:
+  radius: 12.9606
+  innerRadius: 0.580904
+  color:
+    r: 1
+    g: 1
+    b: 1
+    a: 1
+  intensity: 344.808
