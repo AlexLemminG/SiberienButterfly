@@ -1,6 +1,6 @@
 Prefab:
   tag: '[Game]'
-  addedComponents:
+  components:
     - $Transform
     - $LuaComponent
 Transform: ~

@@ -1,9 +1,9 @@
 Prefab:
   tag: 'CampfireWithWoodFired'
-  addedChildren:
+  children:
     - $Light
     - $Light2
-  addedComponents:
+  components:
     - $Transform
     - $MeshRenderer
 Transform: ~
@@ -29,11 +29,11 @@ PointLight$PointLight2:
     a: 1
   innerRadius: 0
 Prefab$Light:
-  addedComponents:
+  components:
     - $LightTransform
     - $PointLight
     - $LuaComponent
-  addedChildren: []
+  children: []
   tag: CampfireWithWoodFired_Light
 Transform$LightTransform:
   pos:
@@ -43,11 +43,11 @@ Transform$LightTransform:
 LuaComponent$LuaComponent:
   scriptName: CampfireLightComponent
 Prefab$Light2:
-  addedComponents:
+  components:
     - $LightTransform2
     - $PointLight2
     - $LuaComponent2
-  addedChildren: []
+  children: []
   tag: CampfireWithWoodFired_Light2
 Transform$LightTransform2:
   pos:

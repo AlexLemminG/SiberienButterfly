@@ -1,6 +1,6 @@
 Prefab:
   tag: Grid
-  addedComponents:
+  components:
     - $Transform
     - $GridDrawer
     - $GridCollider

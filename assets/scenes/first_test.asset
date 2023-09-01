@@ -27,7 +27,7 @@ Prefab$MarkingsGrid:
   tag: MarkingsGrid
   __parent: prefabs\grid.asset$Prefab
 Prefab$Column1:
-  __parent: prefabs\column.asset$Prefab
+  __parent: prefabs/column.asset$Prefab
 Transform$Column1/Transform:
   __parent: prefabs\column.asset$Transform
   pos:
@@ -49,8 +49,6 @@ MeshCollider$Column2/MeshCollider:
   __parent: prefabs\column.asset$MeshCollider
   isConvex: true
 Prefab$Column3:
-  addedComponents: []
-  addedChildren: []
   tag: column
   __parent: prefabs/column.asset$Prefab
 Transform$Column3/Transform:
@@ -60,8 +58,6 @@ Transform$Column3/Transform:
     - 0
     - -3
 Prefab$Column4:
-  addedComponents: []
-  addedChildren:
     - scenes/first_test.asset$Prefab
   tag: column
   __parent: prefabs/column.asset$Prefab
@@ -152,10 +148,9 @@ SphericalHarmonics$sh:
       b: 0
       a: 0
 Prefab$Prefab:
-  addedComponents:
+  components:
     - scenes/first_test.asset$Transform
     - scenes/first_test.asset$PointLight
-  addedChildren: []
   tag: Light
 Transform$Transform:
   pos:

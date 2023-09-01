@@ -1,6 +1,6 @@
 Prefab:
   tag: column
-  addedComponents:
+  components:
     - $Transform
     - $MeshRenderer
     - $MeshCollider
