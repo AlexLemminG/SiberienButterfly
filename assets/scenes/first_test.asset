@@ -58,6 +58,7 @@ Transform$Column3/Transform:
     - 0
     - -3
 Prefab$Column4:
+  children:
     - scenes/first_test.asset$Prefab
   tag: column
   __parent: prefabs/column.asset$Prefab

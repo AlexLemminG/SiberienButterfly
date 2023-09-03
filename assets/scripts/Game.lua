@@ -694,13 +694,14 @@ function Game:DrawStats(character : Character)
 	end
 	local isPlayer = character == World.playerCharacter
 	
-	local screenSize = Graphics:GetScreenSize()
+	local screenSize = Graphics:GetGameViewSize()
+	local screenPos = Graphics:GetGameViewPos()
 	
 	imgui.SetNextWindowSize(200,100)
 	if isPlayer then
-		imgui.SetNextWindowPos(0, screenSize.y, imgui.constant.Cond.Always, 0,1.0)
+		imgui.SetNextWindowPos(screenPos.x + 0, screenPos.y + screenSize.y, imgui.constant.Cond.Always, 0,1.0)
 	else
-		imgui.SetNextWindowPos(screenSize.x, screenSize.y, imgui.constant.Cond.Always, 1.0,1.0)
+		imgui.SetNextWindowPos(screenPos.x + screenSize.x, screenPos.y + screenSize.y, imgui.constant.Cond.Always, 1.0,1.0)
 	end
 	imgui.SetNextWindowBgAlpha(0.1)
 	local winFlags = imgui.constant.WindowFlags
@@ -713,13 +714,14 @@ function Game:DrawStats(character : Character)
 end
 
 function Game:DrawWorldStats()
-	local screenSize = Graphics:GetScreenSize()
+	local screenSize = Graphics:GetGameViewSize()
+	local screenPos = Graphics:GetGameViewPos()
 
 	imgui.SetNextWindowSize(300,250)
-	imgui.SetNextWindowPos(30, 350, imgui.constant.Cond.Always, 0.0,0.5)
+	imgui.SetNextWindowPos(screenPos.x + 30, screenPos.y + 350, imgui.constant.Cond.Always, 0.0,0.5)
 	imgui.SetNextWindowBgAlpha(0.0)
 	local winFlags = imgui.constant.WindowFlags
-	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
+	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs + winFlags.NoScrollbar)
 	imgui.Begin("World Stats", nil, flags)
 	imgui.SetWindowFontScale(1.5)
 
@@ -774,7 +776,8 @@ end
 function Game:DrawHealthAndHungerUI(character : Character, onRightSideOfScreen : boolean)
 	local scale = 5.0
 	imgui.SetNextWindowBgAlpha(0.0)
-	local screenSize = Graphics:GetScreenSize()
+	local screenSize = Graphics:GetGameViewSize()
+	local screenPos = Graphics:GetGameViewPos()
 	imgui.SetNextWindowSize(250,350)
 	local windowPosX = 20
 	local windowAlignX = 0
@@ -783,7 +786,8 @@ function Game:DrawHealthAndHungerUI(character : Character, onRightSideOfScreen :
 		windowAlignX = 1.0
 		windowPosX = screenSize.x - windowPosX
 	end
-	imgui.SetNextWindowPos(windowPosX,20, imgui.constant.Cond.Always, windowAlignX, 0.0)
+	windowPosX = screenPos.x + windowPosX
+	imgui.SetNextWindowPos(windowPosX,screenPos.y + 20, imgui.constant.Cond.Always, windowAlignX, 0.0)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
 
@@ -847,8 +851,9 @@ function DrawPauseMenu()
 	local windowWidth = 200
 	local windowHeight = 100
 	imgui.SetNextWindowSize(windowWidth,windowHeight)
-	local screenSize = Graphics:GetScreenSize()
-	imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0, imgui.constant.Cond.Always, 0.5,0.5)
+	local screenSize = Graphics:GetGameViewSize()
+	local screenPos = Graphics:GetGameViewPos()
+	imgui.SetNextWindowPos(screenPos.x + screenSize.x / 2.0, screenPos.y + screenSize.y / 2.0, imgui.constant.Cond.Always, 0.5,0.5)
 	imgui.SetNextWindowBgAlpha(0.8)
 	local winFlags = imgui.constant.WindowFlags
 	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs)
@@ -1001,9 +1006,10 @@ function Game:BeginDialog(characterA : Character, characterB : Character)
 
 		local selectedOption = currentOptions[self.selectedOptionIndex] --TODO nil check
 
-		local screenSize = Graphics:GetScreenSize()
+		local screenSize = Graphics:GetGameViewSize()
+		local screenPos = Graphics:GetGameViewPos()
 		imgui.SetNextWindowSize(400,250)
-		imgui.SetNextWindowPos(screenSize.x / 2.0, screenSize.y / 2.0 + 400, imgui.constant.Cond.Always, 0.5,0.5)
+		imgui.SetNextWindowPos(screenPos.x + screenSize.x / 2.0, screenPos.y + screenSize.y / 2.0 + 400, imgui.constant.Cond.Always, 0.5,0.5)
 		imgui.SetNextWindowBgAlpha(1.0)
 		local winFlags = imgui.constant.WindowFlags
 		local flags = 0--bit32.bor(winFlags.NoDrag)
