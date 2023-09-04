@@ -160,6 +160,9 @@ function CreatePlayerGO()
 	playerScript.scriptName = "PlayerController"
 
 	SceneManager.GetCurrentScene():AddGameObject(luaPlayerGO)
+
+	local playerScript = luaPlayerGO:AddComponent("AudioListenerComponent")
+
 	-- playerScript.scriptName = "Character"	--- TODO support from engine
 	-- playerScript.scale = 0.8
 	return luaPlayerGO
@@ -789,7 +792,7 @@ function Game:DrawHealthAndHungerUI(character : Character, onRightSideOfScreen :
 	windowPosX = screenPos.x + windowPosX
 	imgui.SetNextWindowPos(windowPosX,screenPos.y + 20, imgui.constant.Cond.Always, windowAlignX, 0.0)
 	local winFlags = imgui.constant.WindowFlags
-	local flags = bit32.bor(winFlags.NoTitleBar + winFlags.NoInputs)
+	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs, winFlags.NoSavedSettings)
 
 	imgui.Begin("HealthAndHungerUI"..tostring(onRightSideOfScreen), nil, flags)
 	--imgui.Dummy(0,-100)

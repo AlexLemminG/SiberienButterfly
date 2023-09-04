@@ -16,7 +16,7 @@ Scene:
     - $Game
 Prefab$Game:
   tag: Game
-  __parent: prefabs\game.asset$Prefab
+  __parent: prefabs/game.asset$Prefab
 Prefab$ItemsGrid:
   __parent: prefabs\grid.asset$Prefab
   tag: ItemsGrid
@@ -152,6 +152,7 @@ Prefab$Prefab:
   components:
     - scenes/first_test.asset$Transform
     - scenes/first_test.asset$PointLight
+    - $AudioSourceComponent
   tag: Light
 Transform$Transform:
   pos:
@@ -175,3 +176,6 @@ PointLight$PointLight:
     b: 1
     a: 1
   intensity: 344.808
+AudioSourceComponent$AudioSourceComponent:
+  clip: Audio/CantinaBand60.wav$clip
+  looping: true

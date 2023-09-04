@@ -408,7 +408,7 @@ function Character:DrawName()
 	imgui.SetNextWindowPos(pos.x,pos.y, imgui.constant.Cond.Always, 0.0,0.5)
 	imgui.SetNextWindowBgAlpha(0.0)
 	local winFlags = imgui.constant.WindowFlags
-	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs, winFlags.NoScrollbar)
+	local flags = bit32.bor(winFlags.NoTitleBar, winFlags.NoInputs, winFlags.NoScrollbar, winFlags.NoSavedSettings)
 	imgui.PushID(tostring(self))
 	imgui.Begin(string.format("CharacterName##%s",tostring(self)), nil, flags)
 	imgui.TextUnformatted(textOut)
