@@ -29,6 +29,8 @@ uniform vec4 u_sphericalHarmonics[9];
 uniform vec4 u_cameraPos;
 //uniform vec4 u_emissiveColor;
 uniform vec4 u_uvOffset;
+uniform mat4 u_viewInv;
+uniform mat4 u_projInv;
 
 vec3 SampleSH(vec3 normal, vec4 sph[9]) {
   float x = normal.x;
@@ -295,6 +297,7 @@ void main()
 	
 	vec4 color = CalcPBR(surface);
 	
+	//TODO we probably dont need tonemapping and gamma correction in this forward shader
 	color.rgb = color.rgb / (vec3_splat(1.0) + color.rgb); // Reinhard tone mapping
 	color.rgb = toGamma(color.rgb); // gamma correction
 	gl_FragData[0].rgb = color.rgb;

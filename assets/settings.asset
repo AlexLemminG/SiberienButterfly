@@ -29,26 +29,26 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  stabilize: true
-  near_far: 30.502783
-  far: 7.1912413
-  near: 1.9539989
+  resolution: 2048
   numSplits: 1
-  resolution: 1024
+  stabilize: true
+  near: 1.954
+  far: 7.19124
+  near_far: 30.5028
   hardShadows: true
 TimeSettings:
   fixedDeltaTime: 0.033333335
 RenderSettings:
-  backend: 9
-  debug: false
-  vsync: false
+  frustumCulling: true
   msaa: 0
-  tryToMinimizeStateChanges: true
-  preSortShadowRenderers: true
+  vsync: false
+  debug: true
   preSortRenderers: true
+  preSortShadowRenderers: true
+  tryToMinimizeStateChanges: true
   bgfxDebugStats: false
   maxAnisotropy: true
-  frustumCulling: true
+  backend: 9
 LuaSettings:
   optimize: false
   debug: true
