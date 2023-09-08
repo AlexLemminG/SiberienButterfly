@@ -12,7 +12,7 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 20,
+	gridSizeX = 20
 	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
@@ -1093,15 +1093,15 @@ function Game:Update()
 	self:DrawUI()
 
 	if input:GetKeyDown("0") then
-		local loaded = ButterflyGame:LoadFromDisk("Save")
+		-- local loaded = ButterflyGame:LoadFromDisk("Save")
 	elseif input:GetKeyDown("9") then
-		ButterflyGame:SaveToDisk("Save")
+		-- ButterflyGame:SaveToDisk("Save")
 	end
 	if input:GetKeyDown("8") then
-		ButterflyGame:SaveToDisk("Save")
-		local loaded = ButterflyGame:LoadFromDisk("Save")
-		ButterflyGame:SaveToDisk("Save")	
-		local loaded = ButterflyGame:LoadFromDisk("Save")
+		-- ButterflyGame:SaveToDisk("Save")
+		-- local loaded = ButterflyGame:LoadFromDisk("Save")
+		-- ButterflyGame:SaveToDisk("Save")	
+		-- local loaded = ButterflyGame:LoadFromDisk("Save")
 	end
 
 	if input:GetKeyDown("PageDown") then 

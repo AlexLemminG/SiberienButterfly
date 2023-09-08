@@ -29,12 +29,12 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  resolution: 2048
+  resolution: 4096
   numSplits: 1
   stabilize: true
-  near: 1.954
-  far: 7.19124
-  near_far: 30.5028
+  far: 9.75455
+  near_far: 67.255
+  near_far2: 0
   hardShadows: true
 TimeSettings:
   fixedDeltaTime: 0.033333335
@@ -42,7 +42,7 @@ RenderSettings:
   frustumCulling: true
   msaa: 0
   vsync: false
-  debug: true
+  debug: false
   preSortRenderers: true
   preSortShadowRenderers: true
   tryToMinimizeStateChanges: true

@@ -103,13 +103,14 @@ Transform$DirLightTransform:
     - 0.99999994
     - 0.99999994
 DirLight$0:
-  drawShadows: true
-  intensity: 4
   color:
     r: 1
-    g: 0.9607843
-    b: 0.85490197
+    g: 0.960784
+    b: 0.854902
     a: 1
+  intensity: 4
+  shadowBias: 0.0004
+  drawShadows: true
 SphericalHarmonics$sh:
   coeffs:
     - r: 0.36940417
@@ -179,3 +180,6 @@ PointLight$PointLight:
 AudioSourceComponent$AudioSourceComponent:
   clip: Audio/CantinaBand60.wav$clip
   looping: true
+GridDrawer$GroundGrid/GridDrawer:
+  castsShadows: false
+  __parent: prefabs/grid.asset$GridDrawer
