@@ -29,12 +29,13 @@ PhysicsSettings:
       doNotCollideWith:
         - staticGeom
 ShadowSettings:
-  resolution: 4096
+  resolution: 1024
   numSplits: 1
   stabilize: true
-  far: 9.75455
-  near_far: 67.255
-  near_far2: 0
+  near: 3
+  far: 20
+  near_far: 33.2965
+  shadowMapCenterOffsetFromCamera: 25
   hardShadows: true
 TimeSettings:
   fixedDeltaTime: 0.033333335

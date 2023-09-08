@@ -181,5 +181,5 @@ AudioSourceComponent$AudioSourceComponent:
   clip: Audio/CantinaBand60.wav$clip
   looping: true
 GridDrawer$GroundGrid/GridDrawer:
-  castsShadows: false
+  castsShadows: true
   __parent: prefabs/grid.asset$GridDrawer
