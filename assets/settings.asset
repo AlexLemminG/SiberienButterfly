@@ -35,8 +35,8 @@ ShadowSettings:
   near: 3
   far: 20
   near_far: 33.2965
-  shadowMapCenterOffsetFromCamera: 25
   hardShadows: true
+  meshNormalOffset: 0
 TimeSettings:
   fixedDeltaTime: 0.033333335
 RenderSettings:

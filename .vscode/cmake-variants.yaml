@@ -30,6 +30,7 @@ buildType:
       settings:
         OPTICK_ENABLED: true
         SE_USE_RELEASE_LIBS: true
+        SIBERIEN_LTO: false
         ASSERTIONS: paranoid
     ReleaseWithSymbols:
       short: ReleaseWithSymbols

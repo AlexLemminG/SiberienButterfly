@@ -12,8 +12,8 @@ local Game = {
 	characterPrefab = nil,
 	currentDialog = nil,
 	isInited = false,
-	gridSizeX = 200,
-	gridSizeY = 200,
+	gridSizeX = 20,
+	gridSizeY = 20,
 	newGrowTreePercent = 0.0,
 	dayTime = 0.3,
 	dayDeltaTime = 0.0,
@@ -404,6 +404,7 @@ function Game:HandleAnimationFinished(cell, finishedAnimType)
 end
 
 function Game:AnimateCells(dt)
+	tracy.ZoneBegin()
 	local v = Vector2Int:new()
 	local cell = GridCell:new()
 
@@ -425,9 +426,11 @@ function Game:AnimateCells(dt)
 			grid:SetCell(cell)
 		end
 	end
+	tracy.ZoneEnd()
 end
 
 function Game:FillGroundWithGrass(deltaTime : number)
+	tracy.ZoneBegin()
 	local ground = World.ground
 	local cell = GridCell:new()
 	local iterator = ground:GetTypeWithAnimIterator(CellType.Ground, CellAnimType.None)
@@ -445,9 +448,11 @@ function Game:FillGroundWithGrass(deltaTime : number)
 		cell.animStopT = GameConsts.eatenGrassGrowingDurationSeconds
 		ground:SetCell(cell)
 	end
+	tracy.ZoneEnd()
 end
 
 function Game:GrowNewTrees(deltaTime : number)
+	tracy.ZoneBegin()
 	local secondsPerMinute = 60.0
 	local numToAppear = GameConsts.newTreeApearProbabilityPerCellPerMinute * deltaTime / secondsPerMinute * self.gridSizeX * self.gridSizeY
 	
@@ -497,6 +502,7 @@ function Game:GrowNewTrees(deltaTime : number)
 		CellAnimations.SetAppearFromGround(itemsCell)
 		World.items:SetCell(itemsCell)
 	end
+	tracy.ZoneEnd()
 end
 
 function Game.DbgDrawPath(path)
@@ -601,6 +607,7 @@ function CalcHumansFromWheatCell()
 end
 
 function Game:MainLoop()
+	tracy.ZoneBegin()
 	-- print(CalcHumansFromWheatCell())
 	local dt = Time.fixedDeltaTime()
 
@@ -688,6 +695,7 @@ function Game:MainLoop()
 		self.goodConditionsToSpawnCharacterDuration = 0.0
 		self.CreateNpcGO()
 	end
+	tracy.ZoneEnd()
 end
 
 function Game:DrawStats(character : Character)

@@ -230,7 +230,7 @@ vec3 CalcPointLightPBR(LightData light, Surface surface, vec3 viewDir){
 
 //TODO more than 1 light
 vec3 CalcDirLightPBR(Surface surface, vec3 viewDir){
-	float visibility = dirLightVisibility(surface.pos);
+	float visibility = dirLightVisibility(surface.pos, surface.normal);
 	if(visibility <= 0.0){
 		return vec3_splat(0.0);
 	}

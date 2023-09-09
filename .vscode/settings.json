@@ -124,28 +124,29 @@
 		"sndfile.h": "c"
 	},
     "Lua.diagnostics.globals": [
-        "AssetDatabase",
-        "Instantiate",
-        "Mathf",
-        "vector",
-        "GridSystem",
-        "Time",
-        "Quaternion",
-        "Vector2Int",
-        "Vector2",
-        "LogError",
-        "continue",
-        "SceneManager",
-        "ButterflyGame",
-        "Vector3",
-        "imgui",
-        "LogWarning",
-        "length",
-        "Grid"
-    ],
+		"AssetDatabase",
+		"Instantiate",
+		"Mathf",
+		"vector",
+		"GridSystem",
+		"Time",
+		"Quaternion",
+		"Vector2Int",
+		"Vector2",
+		"LogError",
+		"continue",
+		"SceneManager",
+		"ButterflyGame",
+		"Vector3",
+		"imgui",
+		"LogWarning",
+		"length",
+		"Grid",
+		"tracy"
+	],
     "robloxLsp.diagnostics.globals": [
-        "AssetDatabase"
-    ],
+		"AssetDatabase"
+	],
     "robloxLsp.develop.enable": true,
     "Lua.misc.parameters": [
         "--develop=true"
@@ -157,5 +158,6 @@
     "lldb.showDisassembly": "auto",
     "lldb.dereferencePointers": true,
     "lldb.consoleMode": "commands",
-    "lldb.displayFormat": "auto"
+	"lldb.displayFormat": "auto",
+	"robloxLsp.suggestedImports.importPathType": "Relative Only"
 }

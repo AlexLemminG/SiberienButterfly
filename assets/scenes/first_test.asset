@@ -109,7 +109,7 @@ DirLight$0:
     b: 0.854902
     a: 1
   intensity: 4
-  shadowBias: 0.0004
+  shadowBias: 1
   drawShadows: true
 SphericalHarmonics$sh:
   coeffs:
