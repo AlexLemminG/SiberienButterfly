@@ -15,7 +15,7 @@
 #include <EASTL/priority_queue.h>
 #include "SEngine/Dbg.h"
 #include "SEngine/Types/StringView.h"
-#include "optick.h"
+#include "SEngine/Profiler.h"
 #include "SEngine/StringUtils.h"
 
 REFLECT_DEFINE_ENUM(GridCellType);
@@ -477,7 +477,7 @@ static void Unique(se::vector<T>& v) {
 }
 
 void Grid::Update() {
-    OPTICK_EVENT();
+    PROFILER_SCOPE();
     //TODO ensure this is happening before everything else
     ASSERT(this->cellsPrev.size() == this->cells.size());
     ASSERT(this->cellsLocalMatricesPrev.size() == this->cellsLocalMatrices.size());
@@ -497,13 +497,13 @@ void Grid::Update() {
     bool a = false;
     if (a) {
         {
-            OPTICK_EVENT("update cellsLocalMatricesPrev");
+            PROFILER_SCOPE_NAMED("update cellsLocalMatricesPrev");
             int matricesSize = sizeof(Matrix4) * this->cellsLocalMatricesPrev.size();
             memcpy(this->cellsLocalMatricesPrev.data(), this->cellsLocalMatrices.data(), matricesSize);
         }
 
         {
-            OPTICK_EVENT("update cellsPrev");
+            PROFILER_SCOPE_NAMED("update cellsPrev");
             int cellsSize = sizeof(GridCell) * this->cells.size();
             memcpy(this->cellsPrev.data(), this->cells.data(), cellsSize);
         }
@@ -518,7 +518,7 @@ void Grid::Update() {
 }
 
 void GridCollider::_Update() {
-    OPTICK_EVENT();
+    PROFILER_SCOPE();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
         LogError("no Grid with GridCollider");
@@ -650,7 +650,7 @@ int Grid::GetChunkIndex(const Vector2Int& pos) const {
 
 // TODO on before camera render actually
 void GridDrawer::_Update() {
-    OPTICK_EVENT();
+    PROFILER_SCOPE();
     auto grid = gameObject()->GetComponent<Grid>();
     if (grid == nullptr) {
         LogError("no Grid with gridDrawer");
@@ -1032,7 +1032,7 @@ void Grid::GetCellOut(GridCell& outCell, Vector2Int pos) const {
 template<class CheckFunc>
 static bool FindNearestPosWithPredecate(Vector2Int& outPos, const Vector2Int& originPos, int minRadius, int maxRadius, CheckFunc checkFunc)
 {
-    OPTICK_EVENT();
+    PROFILER_SCOPE();
     minRadius = Mathf::Max(0, minRadius);
     if (minRadius == 0 && checkFunc(originPos)) {
         outPos = originPos;

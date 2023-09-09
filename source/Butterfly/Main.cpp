@@ -7,7 +7,7 @@
 #include "SEngine/System.h"
 #include "SEngine/Common.h"
 #include "SEngine/LibraryDefinition.h"
-#include "optick.h"
+#include "SEngine/Profiler.h"
 
 REGISTER_GAME_SYSTEM(Sys);
 DEFINE_LIBRARY(GameLib);
@@ -18,7 +18,7 @@ bool Sys::Init() {
 }
 
 bool GameLib::Init(Engine* engine) {
-	OPTICK_EVENT();
+	PROFILER_SCOPE();
 	if (!GameLibrary::Init(engine)) {
 		return false;
 	}

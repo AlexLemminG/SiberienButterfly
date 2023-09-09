@@ -5,7 +5,7 @@
 #include "SEngine/STime.h"
 #include "SEngine/Physics.h"
 #include "SEngine/Common.h"
-#include "optick.h"
+#include "SEngine/Profiler.h"
 
 
 class TopDownCameraRig : public Component {
@@ -43,7 +43,7 @@ void TopDownCameraRig::OnEnable()
 }
 
 void TopDownCameraRig::Update() {
-	OPTICK_EVENT();
+	PROFILER_SCOPE();
 	auto target = GameObject::FindWithTag(targetTag);
 	if (target) {
 		auto trans = gameObject()->transform();

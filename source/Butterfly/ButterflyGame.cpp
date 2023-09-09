@@ -4,7 +4,7 @@
 #include "SEngine/Common.h"
 #include "SEngine/LuaReflect.h"
 #include "SEngine/Resources.h"
-#include "optick.h"
+#include "SEngine/Profiler.h"
 
 REGISTER_GAME_SYSTEM(ButterflyGame);
 
@@ -29,7 +29,7 @@ static const char* SavePathBase = "SAVES/"; // TODO path from engine
 
 bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 {
-	OPTICK_EVENT();
+	PROFILER_SCOPE();
 	if (!save) {
 		LogError("Got null save to CreateSave func");
 		return false;
@@ -54,7 +54,7 @@ bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 		//lua_pushvalue(L, -2);
 		int callResult;
 		{
-			OPTICK_EVENT("Lua Game:CreateSave");
+			PROFILER_SCOPE_NAMED("Lua Game:CreateSave");
 			callResult = lua_pcall(L, 0, 1, 0);
 		}
 		if (callResult != 0) {
@@ -81,7 +81,7 @@ bool ButterflyGame::CreateSave(se::shared_ptr<SaveData> save) const
 
 bool ButterflyGame::LoadSave(const se::shared_ptr<SaveData> save)
 {
-	OPTICK_EVENT();
+	PROFILER_SCOPE();
 	if (!save) {
 		LogError("Got null save to CreateSave func");
 		return false;
@@ -112,7 +112,7 @@ bool ButterflyGame::LoadSave(const se::shared_ptr<SaveData> save)
 	LuaReflect::MergeToLua(L, save->luaData, -1, "");
 	int callResult;
 	{
-		OPTICK_EVENT("Lua Game:LoadSave");
+		PROFILER_SCOPE_NAMED("Lua Game:LoadSave");
 		callResult = lua_pcall(L, 1, 1, 0);
 	}
 	if (callResult != 0) {
