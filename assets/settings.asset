@@ -32,12 +32,12 @@ ShadowSettings:
   resolution: 2048
   numSplits: 1
   stabilize: true
-  near: 3
+  near: 0
   far: 20
   near_far: 33.2965
   pcfOffset: 0
   hardShadows: true
-  meshNormalOffset: 0
+  meshNormalOffset: -30
 TimeSettings:
   fixedDeltaTime: 0.033333335
 RenderSettings:

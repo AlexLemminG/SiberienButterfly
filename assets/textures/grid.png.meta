@@ -1,4 +1,6 @@
 TextureMeta:
   hasMips: false
   format: ARGB_8888
-  samplingMode: 1
+  wrapMode: 1
+  isNormalMap: false
+  samplingMode: 0
