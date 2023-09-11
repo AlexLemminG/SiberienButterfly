@@ -1,3 +1,4 @@
-format: ARGB_8888
-hasMips: false
-samplingMode: 0
+TextureMeta:
+  hasMips: false
+  format: ARGB_8888
+  samplingMode: 1
